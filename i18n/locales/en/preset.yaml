@@ -40,15 +40,6 @@ layout:
 note:
   value: "Note"
   description: "Preset name"
-choose:
-  value: "Choose what you see"
-  description: "Heading of a preset choice popover"
-chooseEdge:
-  value: "Which edge or centre"
-  description: "Heading of the alignment edge choice"
-chooseAxis:
-  value: "Along which axis"
-  description: "Heading of the equal gaps axis choice"
 consistentPadding:
   value: "Inconsistent padding"
   description: "Preset name"
@@ -73,9 +64,6 @@ consistentColor:
 offScale:
   value: "Off the spacing scale"
   description: "Preset name"
-chooseScale:
-  value: "Which scale"
-  description: "Heading of the scale choice"
 touchTarget:
   value: "Too small to tap"
   description: "Preset name"
@@ -108,4 +96,43 @@ a11yName:
   description: "Preset name"
 responsive:
   value: "Breaks at another size"
+  description: "Preset name"
+edgeRoom:
+  value: "Too close to the edge"
+  description: "Preset name"
+scrollbarCovers:
+  value: "Scrollbar covers it"
+  description: "Preset name"
+placement:
+  value: "In the wrong place"
+  description: "Preset name"
+shape:
+  value: "Wrong shape"
+  description: "Preset name"
+control:
+  value: "Should be another control"
+  description: "Preset name"
+designSystem:
+  value: "Not from the design system"
+  description: "Preset name"
+likeApp:
+  value: "Should match another app"
+  description: "Preset name"
+wrongState:
+  value: "Shows the wrong state"
+  description: "Preset name"
+visibility:
+  value: "Shown or hidden wrongly"
+  description: "Preset name"
+jumps:
+  value: "Jumps around"
+  description: "Preset name"
+motion:
+  value: "Animation"
+  description: "Preset name"
+simplify:
+  value: "Too complicated"
+  description: "Preset name"
+remove:
+  value: "Should go"
   description: "Preset name"

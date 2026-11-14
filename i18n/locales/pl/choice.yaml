@@ -181,3 +181,72 @@ wide:
 zoom:
   value: "Po powiększeniu"
   description: "Choice in the issue form"
+toLeft:
+  value: "Po lewej"
+  description: "Where it belongs"
+toRight:
+  value: "Po prawej"
+  description: "Where it belongs"
+toTop:
+  value: "Na górze"
+  description: "Where it belongs"
+toBottom:
+  value: "Na dole"
+  description: "Where it belongs"
+square:
+  value: "Powinien być kwadratowy"
+  description: "Shape observation"
+round:
+  value: "Powinien być okrągły"
+  description: "Shape observation"
+stretched:
+  value: "Rozciągnięty"
+  description: "Shape observation"
+buttonGroup:
+  value: "Grupa przycisków"
+  description: "The control it should be"
+tabs:
+  value: "Karty"
+  description: "The control it should be"
+switch:
+  value: "Przełącznik"
+  description: "The control it should be"
+menu:
+  value: "Menu"
+  description: "The control it should be"
+iconButtons:
+  value: "Przyciski z ikonami"
+  description: "The control it should be"
+shouldHide:
+  value: "Powinien być ukryty"
+  description: "Visibility observation"
+shouldShow:
+  value: "Powinien być widoczny"
+  description: "Visibility observation"
+staysBehind:
+  value: "Zostaje po wyjściu"
+  description: "Visibility observation: stays on screen after its view is left"
+navigates:
+  value: "Przechodzi na inną stronę"
+  description: "Unwanted movement observation"
+scrolls:
+  value: "Przewija stronę"
+  description: "Unwanted movement observation"
+layoutShift:
+  value: "Układ skacze"
+  description: "Unwanted movement observation"
+noTransition:
+  value: "Bez przejścia"
+  description: "Animation observation"
+tooSlow:
+  value: "Za wolna"
+  description: "Animation observation"
+tooFast:
+  value: "Za szybka"
+  description: "Animation observation"
+janky:
+  value: "Przycina się"
+  description: "Animation observation"
+poorTranslation:
+  value: "Słabe tłumaczenie"
+  description: "Text observation"

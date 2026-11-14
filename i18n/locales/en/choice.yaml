@@ -181,3 +181,72 @@ wide:
 zoom:
   value: "When zoomed in"
   description: "Choice in the issue form"
+toLeft:
+  value: "On the left"
+  description: "Where it belongs"
+toRight:
+  value: "On the right"
+  description: "Where it belongs"
+toTop:
+  value: "At the top"
+  description: "Where it belongs"
+toBottom:
+  value: "At the bottom"
+  description: "Where it belongs"
+square:
+  value: "Should be square"
+  description: "Shape observation"
+round:
+  value: "Should be round"
+  description: "Shape observation"
+stretched:
+  value: "Stretched"
+  description: "Shape observation"
+buttonGroup:
+  value: "Button group"
+  description: "The control it should be"
+tabs:
+  value: "Tabs"
+  description: "The control it should be"
+switch:
+  value: "Switch"
+  description: "The control it should be"
+menu:
+  value: "Menu"
+  description: "The control it should be"
+iconButtons:
+  value: "Icon buttons"
+  description: "The control it should be"
+shouldHide:
+  value: "Should be hidden"
+  description: "Visibility observation"
+shouldShow:
+  value: "Should be shown"
+  description: "Visibility observation"
+staysBehind:
+  value: "Stays after leaving"
+  description: "Visibility observation: stays on screen after its view is left"
+navigates:
+  value: "Goes to another page"
+  description: "Unwanted movement observation"
+scrolls:
+  value: "Scrolls the page"
+  description: "Unwanted movement observation"
+layoutShift:
+  value: "Layout jumps"
+  description: "Unwanted movement observation"
+noTransition:
+  value: "No transition"
+  description: "Animation observation"
+tooSlow:
+  value: "Too slow"
+  description: "Animation observation"
+tooFast:
+  value: "Too fast"
+  description: "Animation observation"
+janky:
+  value: "Stutters"
+  description: "Animation observation"
+poorTranslation:
+  value: "Poor translation"
+  description: "Text observation"

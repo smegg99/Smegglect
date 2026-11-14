@@ -40,15 +40,6 @@ layout:
 note:
   value: "Notatka"
   description: "Preset name"
-choose:
-  value: "Wybierz, co widzisz"
-  description: "Heading of a preset choice popover"
-chooseEdge:
-  value: "Która krawędź lub środek"
-  description: "Heading of the alignment edge choice"
-chooseAxis:
-  value: "Wzdłuż której osi"
-  description: "Heading of the equal gaps axis choice"
 consistentPadding:
   value: "Niespójny padding"
   description: "Preset name"
@@ -73,9 +64,6 @@ consistentColor:
 offScale:
   value: "Poza skalą odstępów"
   description: "Preset name"
-chooseScale:
-  value: "Która skala"
-  description: "Heading of the scale choice"
 touchTarget:
   value: "Za mały do kliknięcia"
   description: "Preset name"
@@ -108,4 +96,43 @@ a11yName:
   description: "Preset name"
 responsive:
   value: "Psuje się przy innym rozmiarze"
+  description: "Preset name"
+edgeRoom:
+  value: "Za blisko krawędzi"
+  description: "Preset name"
+scrollbarCovers:
+  value: "Zasłania go pasek przewijania"
+  description: "Preset name"
+placement:
+  value: "W złym miejscu"
+  description: "Preset name"
+shape:
+  value: "Zły kształt"
+  description: "Preset name"
+control:
+  value: "Powinna być inna kontrolka"
+  description: "Preset name"
+designSystem:
+  value: "Spoza design systemu"
+  description: "Preset name"
+likeApp:
+  value: "Jak w innej aplikacji"
+  description: "Preset name"
+wrongState:
+  value: "Pokazuje zły stan"
+  description: "Preset name"
+visibility:
+  value: "Źle pokazany lub ukryty"
+  description: "Preset name"
+jumps:
+  value: "Skacze po aplikacji"
+  description: "Preset name"
+motion:
+  value: "Animacja"
+  description: "Preset name"
+simplify:
+  value: "Zbyt skomplikowane"
+  description: "Preset name"
+remove:
+  value: "Do usunięcia"
   description: "Preset name"
