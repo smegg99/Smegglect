@@ -1,0 +1,23 @@
+# .gitignore
+node_modules/
+dist/
+test-results/
+playwright-report/
+# Review evidence and screenshots are kept out unless deliberately selected.
+docs/smegglect/evidence/
+# Runtime data written by the optional bridge.
+.smegglect/
+*.tgz
+fixtures/*/node_modules/
+fixtures/*/.nuxt/
+fixtures/*/.output/
+fixtures/*/dist
+fixtures/*/bin/
+fixtures/*/build/bin/
+fixtures/*/frontend/dist/
+fixtures/*/frontend/node_modules/
+# Fixture lockfiles: the packed tarball changes on every build, so fixtures reinstall each time.
+fixtures/*/bun.lock
+fixtures/*/frontend/bun.lock
+fixtures/pack/
+fixtures/*/dist-debug/
