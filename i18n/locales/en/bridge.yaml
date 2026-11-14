@@ -1,0 +1,45 @@
+share:
+  value: "Make available to agent"
+  description: "Key that submits the batch to the local agent bridge"
+connected:
+  value: "Agent bridge connected at {url}"
+  description: "Drawer status when the local bridge answers"
+  placeholders:
+    url: {type: string}
+offline:
+  value: "Agent bridge not reachable"
+  description: "Drawer status when the configured bridge does not answer"
+shared:
+  value: "Available to agents as {id}. Claude Code picks it up while /smegglect is running."
+  description: "Message after the bridge accepted a batch"
+  placeholders:
+    id: {type: string}
+failed:
+  value: "The bridge did not accept the batch. It stays submitted here."
+  description: "Message when posting to the bridge failed"
+available:
+  value: "Available to agents"
+  description: "Submitted batch row label for a batch the bridge holds"
+copyRequest:
+  value: "Copy request for the agent"
+  description: "Key that copies text to paste into an agent session"
+request:
+  value: "Use the smegglect MCP tools on batch {id}: read it with get_batch, fix each issue, and record each outcome with report_result."
+  description: "Copyable request text for an agent session"
+  placeholders:
+    id: {type: string}
+copied:
+  value: "Request copied"
+  description: "Toast after copying the agent request"
+refresh:
+  value: "Refresh agent results"
+  description: "Key that fetches results from the bridge"
+toCheck:
+  plural:
+    argument: count
+    forms:
+      one: "The agent answered: {count} issue to check"
+      other: "The agent answered: {count} issues to check"
+  description: "Message when agent results arrive on the page; count is issues waiting for the person's review"
+  placeholders:
+    count: {type: integer}

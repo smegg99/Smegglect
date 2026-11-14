@@ -1,0 +1,29 @@
+add:
+  value: "Dołącz obraz"
+  description: "Key that opens the image file picker"
+approve:
+  value: "Zatwierdź do eksportu"
+  description: "Key that stores and includes a reviewed image"
+remove:
+  value: "Usuń obraz"
+  description: "Key that removes an attached image"
+pending:
+  value: "Niezatwierdzony: tylko w pamięci, bez eksportu"
+  description: "State of an image the user has not approved"
+approved:
+  value: "Zatwierdzony do eksportu"
+  description: "State of an approved image"
+type:
+  value: "Można dołączyć tylko obrazy PNG, JPEG lub WebP."
+  description: "Error for an unsupported file type"
+size:
+  value: "Obraz może mieć najwyżej 5 MB."
+  description: "Error for a file that is too large"
+alt:
+  value: "Dołączony obraz {name}"
+  description: "Alternative text of an attachment preview"
+  placeholders:
+    name: {type: string}
+noRedaction:
+  value: "Obrazy nie są anonimizowane. Sprawdź ich zawartość przed zatwierdzeniem."
+  description: "Warning shown next to attachments"

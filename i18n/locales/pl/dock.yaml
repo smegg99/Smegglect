@@ -1,0 +1,98 @@
+toolbar:
+  value: "Narzędzia Smegglect"
+  description: "Accessible name of the dock toolbar"
+open:
+  value: "Otwórz Smegglect"
+  description: "Launcher key accessible name and tooltip"
+drafts:
+  plural:
+    argument: count
+    forms:
+      one: "{count} szkic zgłoszenia"
+      few: "{count} szkice zgłoszeń"
+      many: "{count} szkiców zgłoszeń"
+      other: "{count} szkicu zgłoszeń"
+  description: "Launcher description with the number of draft issues"
+  placeholders:
+    count: {type: integer}
+pick:
+  value: "Wybierz element"
+  description: "Dock key that starts element picking"
+pickShort:
+  value: "Wybierz"
+  description: "Persistent caption under the pick key"
+region:
+  value: "Zaznacz obszar"
+  description: "Dock key that starts region drawing"
+regionShort:
+  value: "Obszar"
+  description: "Persistent caption under the region key"
+measure:
+  value: "Pomiary"
+  description: "Dock key that shows or hides measurement guides"
+measureShort:
+  value: "Pomiary"
+  description: "Persistent caption under the measurements key"
+issues:
+  value: "Zgłoszenia"
+  description: "Dock key that opens the issue drawer"
+more:
+  value: "Więcej"
+  description: "Dock key that opens the settings menu"
+collapse:
+  value: "Zwiń do przycisku"
+  description: "Menu item that collapses the dock"
+placement:
+  value: "Położenie paska"
+  description: "Menu section heading for dock placement"
+placeBottom:
+  value: "Na dole"
+  description: "Dock placement option"
+placeTop:
+  value: "Na górze"
+  description: "Dock placement option"
+placeLeft:
+  value: "Po lewej"
+  description: "Dock placement option"
+placeRight:
+  value: "Po prawej"
+  description: "Dock placement option"
+display:
+  value: "Wygląd"
+  description: "Menu section heading for display options"
+labels:
+  value: "Pokaż etykiety"
+  description: "Menu toggle for persistent key captions"
+large:
+  value: "Większe przyciski"
+  description: "Menu toggle for 36px keys"
+theme:
+  value: "Motyw"
+  description: "Menu section heading for overlay theme"
+themeAuto:
+  value: "Jak strona"
+  description: "Overlay theme option that follows the host page"
+themeLight:
+  value: "Jasny"
+  description: "Overlay theme option"
+themeDark:
+  value: "Ciemny"
+  description: "Overlay theme option"
+annotations:
+  value: "Pokaż zgłoszenia na stronie"
+  description: "Dock key toggling on-page annotations"
+annotationsShort:
+  value: "Pokaż"
+  description: "Persistent caption under the annotations key"
+undo:
+  value: "Cofnij"
+  description: "Dock key that undoes the last change"
+undoShort:
+  value: "Cofnij"
+  description: "Caption under the undo key"
+redo:
+  value: "Ponów"
+  description: "Dock key that redoes the last undone change"
+redoShort:
+  value: "Ponów"
+  description: "Caption under the redo key"

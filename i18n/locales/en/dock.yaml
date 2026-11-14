@@ -1,0 +1,96 @@
+toolbar:
+  value: "Smegglect tools"
+  description: "Accessible name of the dock toolbar"
+open:
+  value: "Open Smegglect"
+  description: "Launcher key accessible name and tooltip"
+drafts:
+  plural:
+    argument: count
+    forms:
+      one: "{count} draft issue"
+      other: "{count} draft issues"
+  description: "Launcher description with the number of draft issues"
+  placeholders:
+    count: {type: integer}
+pick:
+  value: "Pick element"
+  description: "Dock key that starts element picking"
+pickShort:
+  value: "Pick"
+  description: "Persistent caption under the pick key"
+region:
+  value: "Draw region"
+  description: "Dock key that starts region drawing"
+regionShort:
+  value: "Region"
+  description: "Persistent caption under the region key"
+measure:
+  value: "Measurements"
+  description: "Dock key that shows or hides measurement guides"
+measureShort:
+  value: "Measure"
+  description: "Persistent caption under the measurements key"
+issues:
+  value: "Issues"
+  description: "Dock key that opens the issue drawer"
+more:
+  value: "More"
+  description: "Dock key that opens the settings menu"
+collapse:
+  value: "Collapse to launcher"
+  description: "Menu item that collapses the dock"
+placement:
+  value: "Dock position"
+  description: "Menu section heading for dock placement"
+placeBottom:
+  value: "Bottom"
+  description: "Dock placement option"
+placeTop:
+  value: "Top"
+  description: "Dock placement option"
+placeLeft:
+  value: "Left"
+  description: "Dock placement option"
+placeRight:
+  value: "Right"
+  description: "Dock placement option"
+display:
+  value: "Display"
+  description: "Menu section heading for display options"
+labels:
+  value: "Show labels"
+  description: "Menu toggle for persistent key captions"
+large:
+  value: "Larger controls"
+  description: "Menu toggle for 36px keys"
+theme:
+  value: "Theme"
+  description: "Menu section heading for overlay theme"
+themeAuto:
+  value: "Match the page"
+  description: "Overlay theme option that follows the host page"
+themeLight:
+  value: "Light"
+  description: "Overlay theme option"
+themeDark:
+  value: "Dark"
+  description: "Overlay theme option"
+annotations:
+  value: "Show issues on the page"
+  description: "Dock key toggling on-page annotations"
+annotationsShort:
+  value: "Show"
+  description: "Persistent caption under the annotations key"
+undo:
+  value: "Undo"
+  description: "Dock key that undoes the last change"
+undoShort:
+  value: "Undo"
+  description: "Caption under the undo key"
+redo:
+  value: "Redo"
+  description: "Dock key that redoes the last undone change"
+redoShort:
+  value: "Redo"
+  description: "Caption under the redo key"

@@ -1,0 +1,183 @@
+tooWide:
+  value: "Za szeroki"
+  description: "Size observation"
+tooNarrow:
+  value: "Za wąski"
+  description: "Size observation"
+tooTall:
+  value: "Za wysoki"
+  description: "Size observation"
+tooShort:
+  value: "Za niski"
+  description: "Size observation"
+tooLarge:
+  value: "Za duży"
+  description: "Size observation"
+tooSmall:
+  value: "Za mały"
+  description: "Size observation"
+excessive:
+  value: "Za dużo miejsca"
+  description: "Spacing observation"
+cramped:
+  value: "Za mało miejsca"
+  description: "Spacing observation"
+left:
+  value: "Lewe krawędzie"
+  description: "Alignment edge"
+right:
+  value: "Prawe krawędzie"
+  description: "Alignment edge"
+top:
+  value: "Górne krawędzie"
+  description: "Alignment edge"
+bottom:
+  value: "Dolne krawędzie"
+  description: "Alignment edge"
+centerX:
+  value: "Środki w poziomie"
+  description: "Alignment of horizontal centres"
+centerY:
+  value: "Środki w pionie"
+  description: "Alignment of vertical centres"
+horizontal:
+  value: "W poziomie"
+  description: "Equal gaps axis"
+vertical:
+  value: "W pionie"
+  description: "Equal gaps axis"
+lowContrast:
+  value: "Słaby kontrast"
+  description: "Readability observation"
+tooSmallText:
+  value: "Za mały tekst"
+  description: "Readability observation"
+tooDense:
+  value: "Zbyt gęsto"
+  description: "Readability observation"
+doesNothing:
+  value: "Nic nie robi"
+  description: "Behaviour observation"
+wrongResult:
+  value: "Zły wynik"
+  description: "Behaviour observation"
+misaligned:
+  value: "Nierówno"
+  description: "Layout observation"
+crowded:
+  value: "Ciasno"
+  description: "Layout observation"
+missingContent:
+  value: "Brakuje treści"
+  description: "Layout observation"
+broken:
+  value: "Rozjechany układ"
+  description: "Layout observation"
+grid4:
+  value: "Siatka 4 px"
+  description: "Spacing scale option"
+grid8:
+  value: "Siatka 8 px"
+  description: "Spacing scale option"
+sticksOut:
+  value: "Wystaje poza pole"
+  description: "Choice in the issue form"
+unwantedScrollbar:
+  value: "Niepotrzebny pasek przewijania"
+  description: "Choice in the issue form"
+pushesLayout:
+  value: "Rozpycha układ"
+  description: "Choice in the issue form"
+both:
+  value: "W obu kierunkach"
+  description: "Choice in the issue form"
+typo:
+  value: "Literówka"
+  description: "Choice in the issue form"
+unclear:
+  value: "Niejasne sformułowanie"
+  description: "Choice in the issue form"
+notTranslated:
+  value: "Nieprzetłumaczone"
+  description: "Choice in the issue form"
+placeholder:
+  value: "Został tekst zastępczy"
+  description: "Choice in the issue form"
+breaksBadly:
+  value: "Łamie się w złym miejscu"
+  description: "Choice in the issue form"
+shouldNotWrap:
+  value: "Powinien być w jednej linii"
+  description: "Choice in the issue form"
+shouldWrap:
+  value: "Powinien się zawijać"
+  description: "Choice in the issue form"
+text:
+  value: "Tekst"
+  description: "Choice in the issue form"
+background:
+  value: "Tło"
+  description: "Choice in the issue form"
+border:
+  value: "Obramowanie"
+  description: "Choice in the issue form"
+icon:
+  value: "Ikona"
+  description: "Choice in the issue form"
+wrongIcon:
+  value: "Zła ikona"
+  description: "Choice in the issue form"
+missingIcon:
+  value: "Brak ikony"
+  description: "Choice in the issue form"
+blurry:
+  value: "Rozmyta"
+  description: "Choice in the issue form"
+iconSize:
+  value: "Zły rozmiar"
+  description: "Choice in the issue form"
+hover:
+  value: "Najechanie"
+  description: "Choice in the issue form"
+focus:
+  value: "Obwódka fokusu"
+  description: "Choice in the issue form"
+pressed:
+  value: "Wciśnięcie"
+  description: "Choice in the issue form"
+disabled:
+  value: "Wyłączony"
+  description: "Choice in the issue form"
+loading:
+  value: "Ładowanie"
+  description: "Choice in the issue form"
+empty:
+  value: "Pusty"
+  description: "Choice in the issue form"
+error:
+  value: "Błąd"
+  description: "Choice in the issue form"
+notFocusable:
+  value: "Nie da się do niego dojść klawiszem Tab"
+  description: "Choice in the issue form"
+focusOrder:
+  value: "Zła kolejność fokusu"
+  description: "Choice in the issue form"
+focusTrap:
+  value: "Fokus się zacina"
+  description: "Choice in the issue form"
+noName:
+  value: "Brak"
+  description: "Choice in the issue form"
+wrongName:
+  value: "Zła lub niejasna"
+  description: "Choice in the issue form"
+narrow:
+  value: "Na wąskich ekranach"
+  description: "Choice in the issue form"
+wide:
+  value: "Na szerokich ekranach"
+  description: "Choice in the issue form"
+zoom:
+  value: "Po powiększeniu"
+  description: "Choice in the issue form"

@@ -1,0 +1,20 @@
+pickB:
+  value: "Pick B, the reference for: {preset}"
+  description: "Hint bar instruction while choosing the reference"
+  placeholders:
+    preset: {type: string}
+pickAnchor:
+  value: "Pick the group member the others align to"
+  description: "Hint bar instruction while choosing a group anchor"
+cancel:
+  value: "Cancel"
+  description: "Hint bar key that cancels reference picking"
+same:
+  value: "B must be a different element than A."
+  description: "Warning when the reference equals the target"
+member:
+  value: "B must be outside the group."
+  description: "Warning when the reference is a group member"
+outsideGroup:
+  value: "Pick one of the group members."
+  description: "Warning when the anchor is not a member"

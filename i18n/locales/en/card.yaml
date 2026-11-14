@@ -1,0 +1,18 @@
+title:
+  value: "Issue {number}"
+  description: "Issue card heading"
+  placeholders:
+    number: {type: integer}
+show:
+  value: "Show on page"
+  description: "Row key that scrolls to the target"
+captured:
+  value: "Captured {when}"
+  description: "Capture time line"
+  placeholders:
+    when: {type: string}
+dismiss:
+  value: "Delete issue {number}"
+  description: "X key on an on-page issue plate"
+  placeholders:
+    number: {type: integer}

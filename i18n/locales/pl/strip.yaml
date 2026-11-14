@@ -1,0 +1,32 @@
+parent:
+  value: "Zaznacz rodzica"
+  description: "Strip key that selects the containing element"
+group:
+  value: "Dodawaj kolejne do grupy"
+  description: "Menu toggle: picks extend the selection into a group"
+elements:
+  plural:
+    argument: count
+    forms:
+      one: "{count} element"
+      few: "{count} elementy"
+      many: "{count} elementów"
+      other: "{count} elementu"
+  description: "Chip text for a group selection"
+  placeholders:
+    count: {type: integer}
+region:
+  value: "Obszar"
+  description: "Chip text for a region selection"
+rendered:
+  value: "renderowane"
+  description: "Suffix after dimensions when an element is transformed"
+canvas:
+  value: "Zawartości canvas nie da się zbadać. Zaznacz obszar."
+  description: "Chip warning for a canvas target"
+iframe:
+  value: "Zawartości ramki nie da się zbadać. Zaznacz obszar."
+  description: "Chip warning for an iframe target"
+closedRoot:
+  value: "Ten komponent ukrywa swoją zawartość. Zaznacz obszar."
+  description: "Chip warning for a closed shadow root"

@@ -1,0 +1,176 @@
+size:
+  value: "Size of {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+spacing:
+  value: "Spacing around {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+align:
+  value: "Align {a} with {b}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+    choice: {type: string}
+groupAlign:
+  value: "Align the group to its anchor: {choice}"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+matchHeight:
+  value: "Make {a} as tall as {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+matchWidth:
+  value: "Make {a} as wide as {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+equalGaps:
+  value: "Make the gaps in this group equal ({choice})"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+clipped:
+  value: "Text in {a} is cut off"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+overlap:
+  value: "{a} overlaps {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+readability:
+  value: "{a} is hard to read: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+inconsistent:
+  value: "{a} looks different from {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+feedback:
+  value: "{a}: {choice}"
+  description: "Issue description for a behaviour problem"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+layout:
+  value: "Layout problem in this region: {choice}"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+note:
+  value: "Note on {a}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+compareB:
+  value: "{a} differs from {b}"
+  description: "Consistency issue against a reference"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+compareGroup:
+  value: "These {count} elements differ from each other"
+  description: "Consistency issue across a group"
+  placeholders:
+    count: {type: integer}
+offScale:
+  value: "{a} has values off the {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+region:
+  value: "this region"
+  description: "Target name for a region"
+group:
+  value: "these {count} elements"
+  description: "Target name for a group"
+  placeholders:
+    count: {type: integer}
+property:
+  value: "Property"
+  description: "Comparison table header"
+flagged:
+  value: "differs"
+  description: "Accessible marker for a flagged comparison row"
+touchTarget:
+  value: "{a} is too small to tap"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+overflow:
+  value: "Content of {a} overflows: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+center:
+  value: "{a} is not centred: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+textWrong:
+  value: "Text of {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+textWrap:
+  value: "Text in {a} wraps badly: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+wrongColor:
+  value: "Wrong colour of {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+icon:
+  value: "Icon in {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+stateMissing:
+  value: "{a} has no state: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+keyboard:
+  value: "Keyboard access to {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+a11yName:
+  value: "Screen reader name of {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+responsive:
+  value: "{a} breaks: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}

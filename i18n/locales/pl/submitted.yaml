@@ -1,0 +1,32 @@
+title:
+  value: "Wysłane"
+  description: "Drawer section heading for frozen batches"
+issues:
+  plural:
+    argument: count
+    forms:
+      one: "{count} zgłoszenie"
+      few: "{count} zgłoszenia"
+      many: "{count} zgłoszeń"
+      other: "{count} zgłoszenia"
+  description: "Submitted batch row: number of issues"
+  placeholders:
+    count: {type: integer}
+delete:
+  value: "Usuń partię"
+  description: "Deletes a submitted batch from this browser"
+copy:
+  value: "Kopiuj prompt"
+  description: "Copies a submitted batch again"
+export:
+  value: "Eksportuj"
+  description: "Exports a submitted batch again"
+frozen:
+  value: "Wysłane dane się nie zmieniają. Notatki dodaje się jako uzupełnienia."
+  description: "Explains why submitted issues are read-only"
+note:
+  value: "Notatka uzupełniająca"
+  description: "Label of the follow-up note field"
+addNote:
+  value: "Dodaj notatkę"
+  description: "Key that appends a follow-up note"

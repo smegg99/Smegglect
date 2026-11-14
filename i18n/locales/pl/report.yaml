@@ -1,0 +1,35 @@
+open:
+  value: "Przejrzyj raport ({count})"
+  description: "Drawer footer primary key"
+  placeholders:
+    count: {type: integer}
+title:
+  value: "Raport"
+  description: "Report panel heading"
+summary:
+  value: "Podsumowanie"
+  description: "Report tab"
+markdown:
+  value: "Markdown"
+  description: "Report tab"
+copy:
+  value: "Kopiuj prompt"
+  description: "Report action"
+download:
+  value: "Pobierz .zip"
+  description: "Report action"
+share:
+  value: "Udostępnij agentowi"
+  description: "Report action"
+freezes:
+  value: "Wysłanie raportu zamraża te zgłoszenia. Nowe trafią do następnego raportu."
+  description: "Report footer explanation"
+note:
+  value: "Notatka"
+  description: "Report issue label"
+keep:
+  value: "Zachowaj"
+  description: "Report issue label"
+scope:
+  value: "Zakres"
+  description: "Report issue label"

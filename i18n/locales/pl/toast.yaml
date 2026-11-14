@@ -1,0 +1,17 @@
+added:
+  value: "Dodano zgłoszenie {number}"
+  description: "Toast after a preset adds an issue"
+  placeholders:
+    number: {type: integer}
+removed:
+  value: "Usunięto zgłoszenie"
+  description: "Toast after deleting an issue"
+undone:
+  value: "Cofnięto"
+  description: "Toast after undo"
+undo:
+  value: "Cofnij"
+  description: "Toast key that undoes the last change"
+redone:
+  value: "Ponowiono"
+  description: "Toast after redo"

@@ -1,0 +1,30 @@
+parent:
+  value: "Select parent"
+  description: "Strip key that selects the containing element"
+group:
+  value: "Add to group with each pick"
+  description: "Menu toggle: picks extend the selection into a group"
+elements:
+  plural:
+    argument: count
+    forms:
+      one: "{count} element"
+      other: "{count} elements"
+  description: "Chip text for a group selection"
+  placeholders:
+    count: {type: integer}
+region:
+  value: "Region"
+  description: "Chip text for a region selection"
+rendered:
+  value: "rendered"
+  description: "Suffix after dimensions when an element is transformed"
+canvas:
+  value: "Canvas content cannot be inspected. Draw a region for a part of it."
+  description: "Chip warning for a canvas target"
+iframe:
+  value: "Frame content cannot be inspected. Draw a region over it."
+  description: "Chip warning for an iframe target"
+closedRoot:
+  value: "This component hides its internals. Draw a region for a part of it."
+  description: "Chip warning for a closed shadow root"

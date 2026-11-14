@@ -1,0 +1,66 @@
+submitted:
+  value: "Submitted"
+  description: "Issue state"
+inProgress:
+  value: "In progress"
+  description: "Issue state reported by an agent"
+partial:
+  value: "Partially fixed"
+  description: "Issue state"
+blocked:
+  value: "Blocked"
+  description: "Issue state reported by an agent"
+needsReview:
+  value: "Needs review"
+  description: "Issue state reported by an agent"
+accepted:
+  value: "Accepted"
+  description: "Issue state set by a person"
+reopened:
+  value: "Reopened"
+  description: "Issue state set by a person"
+accept:
+  value: "Accept"
+  description: "Review key"
+markPartial:
+  value: "Partially fixed"
+  description: "Review key"
+reopen:
+  value: "Reopen"
+  description: "Review key opening the reason menu"
+stillHappens:
+  value: "Still happens"
+  description: "Reopen reason"
+wrongTarget:
+  value: "Wrong target"
+  description: "Reopen reason"
+oneViewport:
+  value: "Fixed in one viewport only"
+  description: "Reopen reason"
+newProblem:
+  value: "Introduced another problem"
+  description: "Reopen reason"
+agentSays:
+  value: "Reported by the agent, not verified by Smegglect"
+  description: "Label above agent result text"
+files:
+  value: "Files"
+  description: "Label before the files an agent says it changed"
+checks:
+  value: "Checks the agent says it ran"
+  description: "Label before agent-reported checks"
+passed:
+  value: "passed"
+  description: "Agent-reported check outcome"
+failedCheck:
+  value: "failed"
+  description: "Agent-reported check outcome"
+notRun:
+  value: "not run"
+  description: "Agent-reported check outcome"
+sendBack:
+  value: "Send back"
+  description: "Sends a reopened issue back to the agent with the chosen reason and note"
+whatWrong:
+  value: "What is still wrong?"
+  description: "Placeholder of the note sent back with a reopened issue"

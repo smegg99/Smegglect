@@ -1,0 +1,29 @@
+add:
+  value: "Attach image"
+  description: "Key that opens the image file picker"
+approve:
+  value: "Approve for export"
+  description: "Key that stores and includes a reviewed image"
+remove:
+  value: "Remove image"
+  description: "Key that removes an attached image"
+pending:
+  value: "Not approved: kept in memory and not exported"
+  description: "State of an image the user has not approved"
+approved:
+  value: "Approved for export"
+  description: "State of an approved image"
+type:
+  value: "Only PNG, JPEG or WebP images can be attached."
+  description: "Error for an unsupported file type"
+size:
+  value: "Images can be up to 5 MB."
+  description: "Error for a file that is too large"
+alt:
+  value: "Attached image {name}"
+  description: "Alternative text of an attachment preview"
+  placeholders:
+    name: {type: string}
+noRedaction:
+  value: "Images are not redacted. Check what they show before approving."
+  description: "Warning shown next to attachments"

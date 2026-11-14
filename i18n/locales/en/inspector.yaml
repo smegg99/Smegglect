@@ -1,0 +1,159 @@
+title:
+  value: "Inspector"
+  description: "Accessible name of the side panel that holds the selection, its actions and the issue list"
+element:
+  value: "Element"
+  description: "Inspector tab showing the selected element"
+close:
+  value: "Close inspector"
+  description: "Key that closes the side panel; the selection stays"
+empty:
+  value: "Pick an element or draw a region on the page to see what you can report about it."
+  description: "Element tab when nothing is selected"
+needsB:
+  value: "asks for a second element, B"
+  description: "Screen-reader text on an action tile that will ask for a reference element"
+here:
+  value: "Reported here"
+  description: "Heading above issues already reported on the selected element"
+clear:
+  value: "Clear selection"
+  description: "Key that clears the selection"
+removeMember:
+  value: "Remove from group"
+  description: "Key on a group member's row that takes it out of the selection"
+drawInstead:
+  value: "Draw a region instead"
+  description: "Link next to a notice that the element cannot be inspected inside"
+picking:
+  value: "Click an element to select it."
+  description: "Inspector header while pick mode is on"
+grouping:
+  value: "Click elements to add or remove."
+  description: "Inspector header while picks extend a group"
+drawing:
+  value: "Drag across the page to draw a region."
+  description: "Inspector header while region mode is on"
+measurements:
+  value: "Measurements"
+  description: "Heading of the live measurements of the selection"
+size:
+  value: "Size"
+  description: "Label of the rendered width and height in the measurements block"
+back:
+  value: "Back"
+  description: "Key that returns from an issue or the report to the previous tab"
+needsBTip:
+  value: "Then click a second element, B, to compare with."
+  description: "Tooltip on an action that will ask for a reference element"
+nothingSelected:
+  value: "Nothing selected"
+  description: "Empty state title or action in the inspector"
+noIssues:
+  value: "No issues yet"
+  description: "Empty state title or action in the inspector"
+noHistory:
+  value: "No history yet"
+  description: "Empty state title or action in the inspector"
+startPicking:
+  value: "Pick an element to start"
+  description: "Empty state title or action in the inspector"
+actions:
+  value: "What to report"
+  description: "Accessible name of the tree of actions"
+readout:
+  size:
+    value: "Size"
+    description: "Row name in the measurements tree"
+  padding:
+    value: "Padding"
+    description: "Row name in the measurements tree"
+  margin:
+    value: "Margin"
+    description: "Row name in the measurements tree"
+  border:
+    value: "Border"
+    description: "Row name in the measurements tree"
+  font:
+    value: "Font"
+    description: "Row name in the measurements tree"
+  family:
+    value: "Typeface"
+    description: "Row name in the measurements tree"
+  lineHeight:
+    value: "Line height"
+    description: "Row name in the measurements tree"
+  color:
+    value: "Colour"
+    description: "Row name in the measurements tree"
+  background:
+    value: "Background"
+    description: "Row name in the measurements tree"
+onLeft:
+  value: "On the left"
+  description: "More menu: put the inspector on the left"
+onRight:
+  value: "On the right"
+  description: "More menu: put the inspector on the right"
+done:
+  value: "Done"
+  description: "Ends adding elements to a group"
+members:
+  value: "Elements"
+  description: "Branch listing the elements of a selected group"
+group:
+  fit:
+    value: "Fit"
+    description: "Heading of a group of actions in the inspector"
+  differs:
+    value: "Differs from another"
+    description: "Heading of a group of actions in the inspector"
+  look:
+    value: "Look"
+    description: "Heading of a group of action tiles in the inspector"
+  access:
+    value: "Behaviour and access"
+    description: "Heading of a group of action tiles in the inspector"
+  favourites:
+    value: "Favourites"
+    description: "Heading of a group of action tiles in the inspector"
+  size:
+    value: "Size and space"
+    description: "Heading of a group of action tiles in the inspector"
+  align:
+    value: "Alignment"
+    description: "Heading of a group of action tiles in the inspector"
+  other:
+    value: "Other"
+    description: "Heading of a group of action tiles in the inspector"
+  project:
+    value: "Project"
+    description: "Heading of a group of action tiles in the inspector"
+consistency:
+  other:
+    value: "Something else"
+    description: "Short tile label under the Consistency heading"
+  padding:
+    value: "Padding"
+    description: "Short tile label under the Consistency heading"
+  margin:
+    value: "Margin"
+    description: "Short tile label under the Consistency heading"
+  gap:
+    value: "Gap"
+    description: "Short tile label under the Consistency heading"
+  size:
+    value: "Size"
+    description: "Short tile label under the Consistency heading"
+  radius:
+    value: "Corner radius"
+    description: "Short tile label under the Consistency heading"
+  type:
+    value: "Text style"
+    description: "Short tile label under the Consistency heading"
+  color:
+    value: "Colour"
+    description: "Short tile label under the Consistency heading"
+answers:
+  value: "Agent results"
+  description: "Issues tab branch listing sent issues the agent has answered, until the person accepts them"

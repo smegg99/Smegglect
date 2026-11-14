@@ -1,0 +1,183 @@
+tooWide:
+  value: "Too wide"
+  description: "Size observation"
+tooNarrow:
+  value: "Too narrow"
+  description: "Size observation"
+tooTall:
+  value: "Too tall"
+  description: "Size observation"
+tooShort:
+  value: "Too short"
+  description: "Size observation"
+tooLarge:
+  value: "Too large"
+  description: "Size observation"
+tooSmall:
+  value: "Too small"
+  description: "Size observation"
+excessive:
+  value: "Too much space"
+  description: "Spacing observation"
+cramped:
+  value: "Too little space"
+  description: "Spacing observation"
+left:
+  value: "Left edges"
+  description: "Alignment edge"
+right:
+  value: "Right edges"
+  description: "Alignment edge"
+top:
+  value: "Top edges"
+  description: "Alignment edge"
+bottom:
+  value: "Bottom edges"
+  description: "Alignment edge"
+centerX:
+  value: "Horizontal centres"
+  description: "Alignment of horizontal centres"
+centerY:
+  value: "Vertical centres"
+  description: "Alignment of vertical centres"
+horizontal:
+  value: "Horizontal"
+  description: "Equal gaps axis"
+vertical:
+  value: "Vertical"
+  description: "Equal gaps axis"
+lowContrast:
+  value: "Low contrast"
+  description: "Readability observation"
+tooSmallText:
+  value: "Text too small"
+  description: "Readability observation"
+tooDense:
+  value: "Too dense"
+  description: "Readability observation"
+doesNothing:
+  value: "Does nothing"
+  description: "Behaviour observation"
+wrongResult:
+  value: "Wrong result"
+  description: "Behaviour observation"
+misaligned:
+  value: "Misaligned"
+  description: "Layout observation"
+crowded:
+  value: "Crowded"
+  description: "Layout observation"
+missingContent:
+  value: "Missing content"
+  description: "Layout observation"
+broken:
+  value: "Broken layout"
+  description: "Layout observation"
+grid4:
+  value: "4 px grid"
+  description: "Spacing scale option"
+grid8:
+  value: "8 px grid"
+  description: "Spacing scale option"
+sticksOut:
+  value: "Sticks out of its box"
+  description: "Choice in the issue form"
+unwantedScrollbar:
+  value: "Unwanted scrollbar"
+  description: "Choice in the issue form"
+pushesLayout:
+  value: "Pushes the layout wider"
+  description: "Choice in the issue form"
+both:
+  value: "Both"
+  description: "Choice in the issue form"
+typo:
+  value: "Typo"
+  description: "Choice in the issue form"
+unclear:
+  value: "Unclear wording"
+  description: "Choice in the issue form"
+notTranslated:
+  value: "Not translated"
+  description: "Choice in the issue form"
+placeholder:
+  value: "Placeholder left in"
+  description: "Choice in the issue form"
+breaksBadly:
+  value: "Breaks in a bad place"
+  description: "Choice in the issue form"
+shouldNotWrap:
+  value: "Should stay on one line"
+  description: "Choice in the issue form"
+shouldWrap:
+  value: "Should wrap"
+  description: "Choice in the issue form"
+text:
+  value: "Text"
+  description: "Choice in the issue form"
+background:
+  value: "Background"
+  description: "Choice in the issue form"
+border:
+  value: "Border"
+  description: "Choice in the issue form"
+icon:
+  value: "Icon"
+  description: "Choice in the issue form"
+wrongIcon:
+  value: "Wrong icon"
+  description: "Choice in the issue form"
+missingIcon:
+  value: "Missing icon"
+  description: "Choice in the issue form"
+blurry:
+  value: "Blurry"
+  description: "Choice in the issue form"
+iconSize:
+  value: "Wrong size"
+  description: "Choice in the issue form"
+hover:
+  value: "Hover"
+  description: "Choice in the issue form"
+focus:
+  value: "Focus ring"
+  description: "Choice in the issue form"
+pressed:
+  value: "Pressed"
+  description: "Choice in the issue form"
+disabled:
+  value: "Disabled"
+  description: "Choice in the issue form"
+loading:
+  value: "Loading"
+  description: "Choice in the issue form"
+empty:
+  value: "Empty"
+  description: "Choice in the issue form"
+error:
+  value: "Error"
+  description: "Choice in the issue form"
+notFocusable:
+  value: "Cannot be reached with Tab"
+  description: "Choice in the issue form"
+focusOrder:
+  value: "Wrong focus order"
+  description: "Choice in the issue form"
+focusTrap:
+  value: "Focus gets stuck"
+  description: "Choice in the issue form"
+noName:
+  value: "Missing"
+  description: "Choice in the issue form"
+wrongName:
+  value: "Wrong or unclear"
+  description: "Choice in the issue form"
+narrow:
+  value: "On narrow screens"
+  description: "Choice in the issue form"
+wide:
+  value: "On wide screens"
+  description: "Choice in the issue form"
+zoom:
+  value: "When zoomed in"
+  description: "Choice in the issue form"

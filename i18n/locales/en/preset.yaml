@@ -1,0 +1,111 @@
+size:
+  value: "Size"
+  description: "Preset name"
+spacing:
+  value: "Spacing"
+  description: "Preset name"
+align:
+  value: "Align to another"
+  description: "Preset name: align A to reference B"
+groupAlign:
+  value: "Align group"
+  description: "Preset name: align group members to an anchor"
+matchHeight:
+  value: "Match height"
+  description: "Preset name"
+matchWidth:
+  value: "Match width"
+  description: "Preset name"
+equalGaps:
+  value: "Equal gaps"
+  description: "Preset name"
+clipped:
+  value: "Text clipped"
+  description: "Preset name"
+overlap:
+  value: "Overlaps another"
+  description: "Preset name"
+readability:
+  value: "Hard to read"
+  description: "Preset name"
+inconsistent:
+  value: "Inconsistent with another"
+  description: "Preset name"
+feedback:
+  value: "Behaviour"
+  description: "Preset name"
+layout:
+  value: "Layout"
+  description: "Preset name"
+note:
+  value: "Note"
+  description: "Preset name"
+choose:
+  value: "Choose what you see"
+  description: "Heading of a preset choice popover"
+chooseEdge:
+  value: "Which edge or centre"
+  description: "Heading of the alignment edge choice"
+chooseAxis:
+  value: "Along which axis"
+  description: "Heading of the equal gaps axis choice"
+consistentPadding:
+  value: "Inconsistent padding"
+  description: "Preset name"
+consistentMargin:
+  value: "Inconsistent margin"
+  description: "Preset name"
+consistentGap:
+  value: "Inconsistent gap"
+  description: "Preset name"
+consistentSize:
+  value: "Inconsistent size"
+  description: "Preset name"
+consistentRadius:
+  value: "Inconsistent corner radius"
+  description: "Preset name"
+consistentType:
+  value: "Inconsistent text style"
+  description: "Preset name"
+consistentColor:
+  value: "Inconsistent colour"
+  description: "Preset name"
+offScale:
+  value: "Off the spacing scale"
+  description: "Preset name"
+chooseScale:
+  value: "Which scale"
+  description: "Heading of the scale choice"
+touchTarget:
+  value: "Too small to tap"
+  description: "Preset name"
+overflow:
+  value: "Overflows its box"
+  description: "Preset name"
+center:
+  value: "Not centred"
+  description: "Preset name"
+textWrong:
+  value: "Wrong text"
+  description: "Preset name"
+textWrap:
+  value: "Wraps badly"
+  description: "Preset name"
+wrongColor:
+  value: "Wrong colour"
+  description: "Preset name"
+icon:
+  value: "Icon problem"
+  description: "Preset name"
+stateMissing:
+  value: "Missing state"
+  description: "Preset name"
+keyboard:
+  value: "Keyboard access"
+  description: "Preset name"
+a11yName:
+  value: "Screen reader name"
+  description: "Preset name"
+responsive:
+  value: "Breaks at another size"
+  description: "Preset name"

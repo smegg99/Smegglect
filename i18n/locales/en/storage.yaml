@@ -1,0 +1,24 @@
+saved:
+  value: "Saved locally"
+  description: "Storage status after a successful save"
+idle:
+  value: "Drafts are saved locally"
+  description: "Storage status before the first save"
+memory:
+  value: "Kept in memory only; lost on reload"
+  description: "Storage status when nothing is durable"
+quota:
+  value: "Not saved: storage is full"
+  description: "Storage status after a quota error"
+failed:
+  value: "Not saved: storage error"
+  description: "Storage status after another storage error"
+corrupt:
+  value: "Stored drafts could not be read. They were kept; discard them to save new drafts."
+  description: "Storage status when the stored record is invalid"
+discard:
+  value: "Discard stored drafts"
+  description: "Key that deletes the unreadable stored drafts"
+forked:
+  value: "Another window changed the same drafts. This window now saves separately."
+  description: "Storage status after a write conflict"

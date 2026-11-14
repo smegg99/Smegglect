@@ -1,0 +1,23 @@
+copied:
+  value: "Prompt copied. The batch is submitted."
+  description: "Toast after copying the prompt"
+exported:
+  value: "Saved {name}. The batch is submitted."
+  description: "Toast after exporting; name is the file name"
+  placeholders:
+    name: {type: string}
+copyFailed:
+  value: "Copy did not work. Select the text below and copy it."
+  description: "Shown when the clipboard is unavailable"
+exportFailed:
+  value: "The file could not be saved. The batch text is below."
+  description: "Shown when the download or native save failed"
+invalid:
+  value: "The batch did not pass validation and was not submitted."
+  description: "Error when the batch is invalid"
+storageFailed:
+  value: "The batch could not be stored and was not submitted."
+  description: "Error when storing the submitted batch failed"
+missing:
+  value: "Missing image files are named in the Markdown and left out."
+  description: "Note when approved images could not be read"

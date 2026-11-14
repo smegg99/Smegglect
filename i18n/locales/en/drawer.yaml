@@ -1,0 +1,71 @@
+empty:
+  value: "Issues you add appear here, grouped by page. They stay marked on the page until you send the report."
+  description: "Drawer text when there are no issues"
+toB:
+  value: "to {target}"
+  description: "Row subtitle after the target when a reference exists"
+  placeholders:
+    target: {type: string}
+scope:
+  value: "Scope"
+  description: "Details section heading"
+scopeOccurrence:
+  value: "This one"
+  description: "Scope option: this occurrence only"
+scopeScreen:
+  value: "This screen"
+  description: "Scope option"
+scopeComponent:
+  value: "Shared component"
+  description: "Scope option"
+keep:
+  value: "Keep"
+  description: "Details section heading for preservation constraints"
+keepResponsive:
+  value: "Responsive behaviour"
+  description: "Constraint"
+keepTokens:
+  value: "Theme tokens"
+  description: "Constraint"
+noFixedSize:
+  value: "No fixed sizes"
+  description: "Constraint"
+keepBehaviour:
+  value: "Existing behaviour"
+  description: "Constraint"
+keepOtherInstances:
+  value: "Other instances unchanged"
+  description: "Constraint"
+keepText:
+  value: "Text content"
+  description: "Constraint"
+note:
+  value: "Note"
+  description: "Details section heading"
+evidence:
+  value: "Captured evidence"
+  description: "Details section heading"
+delete:
+  value: "Delete"
+  description: "Details key that deletes the issue"
+statusUnavailable:
+  value: "Target not found on this page"
+  description: "Row state for a target that cannot be resolved"
+statusAmbiguous:
+  value: "Several elements match the target"
+  description: "Row state for an ambiguous target"
+statusElsewhere:
+  value: "Captured on another page"
+  description: "Row state for an issue from another location"
+unsupported:
+  value: "This preset is not registered here; the issue stays readable."
+  description: "Details note for an unknown preset id or version"
+task:
+  value: "Exported task"
+  description: "Details section heading showing the generated task sentence"
+favourite:
+  value: "Add preset to favourites"
+  description: "Toggle that saves the preset and choice as a favourite"
+unfavourite:
+  value: "Remove preset from favourites"
+  description: "Toggle that removes a favourite"

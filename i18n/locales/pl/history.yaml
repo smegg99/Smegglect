@@ -1,0 +1,61 @@
+tab:
+  value: "Historia"
+  description: "Drawer tab"
+issuesTab:
+  value: "Zgłoszenia"
+  description: "Drawer tab"
+empty:
+  value: "To, co dodasz, zmienisz, cofniesz i wyeksportujesz, pojawi się tutaj, od najnowszych."
+  description: "History empty state"
+added:
+  value: "Dodano {number}: {title}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    title: {type: string}
+edited:
+  value: "Zmieniono {number}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+removed:
+  value: "Usunięto {number}: {title}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    title: {type: string}
+undone:
+  value: "Cofnięto ostatnią zmianę"
+  description: "History line"
+submitted:
+  value: "Wysłano raport ({count})"
+  description: "History line"
+  placeholders:
+    count: {type: integer}
+copied:
+  value: "Skopiowano raport jako prompt"
+  description: "History line"
+exported:
+  value: "Zapisano raport do pliku"
+  description: "History line"
+shared:
+  value: "Udostępniono raport agentom"
+  description: "History line"
+reviewed:
+  value: "Oznaczono {number} jako: {state}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    state: {type: string}
+reports:
+  value: "Wysłane raporty"
+  description: "History section heading"
+thisPage:
+  value: "Ta strona"
+  description: "Page group label for the current page"
+goTo:
+  value: "Przejdź do strony"
+  description: "Key that opens the page an issue was captured on"
+redone:
+  value: "Ponowiono cofniętą zmianę"
+  description: "History line"

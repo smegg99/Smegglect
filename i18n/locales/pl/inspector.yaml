@@ -1,0 +1,159 @@
+title:
+  value: "Inspektor"
+  description: "Accessible name of the side panel that holds the selection, its actions and the issue list"
+element:
+  value: "Element"
+  description: "Inspector tab showing the selected element"
+close:
+  value: "Zamknij inspektor"
+  description: "Key that closes the side panel; the selection stays"
+empty:
+  value: "Wskaż element albo zaznacz obszar na stronie, żeby zobaczyć, co możesz o nim zgłosić."
+  description: "Element tab when nothing is selected"
+needsB:
+  value: "poprosi o drugi element, B"
+  description: "Screen-reader text on an action tile that will ask for a reference element"
+here:
+  value: "Zgłoszone tutaj"
+  description: "Heading above issues already reported on the selected element"
+clear:
+  value: "Wyczyść zaznaczenie"
+  description: "Key that clears the selection"
+removeMember:
+  value: "Usuń z grupy"
+  description: "Key on a group member's row that takes it out of the selection"
+drawInstead:
+  value: "Zaznacz obszar zamiast tego"
+  description: "Link next to a notice that the element cannot be inspected inside"
+picking:
+  value: "Kliknij element, żeby go zaznaczyć."
+  description: "Inspector header while pick mode is on"
+grouping:
+  value: "Klikaj elementy, by dodać lub usunąć."
+  description: "Inspector header while picks extend a group"
+drawing:
+  value: "Przeciągnij po stronie, żeby zaznaczyć obszar."
+  description: "Inspector header while region mode is on"
+measurements:
+  value: "Pomiary"
+  description: "Heading of the live measurements of the selection"
+size:
+  value: "Rozmiar"
+  description: "Label of the rendered width and height in the measurements block"
+back:
+  value: "Wstecz"
+  description: "Key that returns from an issue or the report to the previous tab"
+needsBTip:
+  value: "Potem kliknij drugi element, B, do porównania."
+  description: "Tooltip on an action that will ask for a reference element"
+nothingSelected:
+  value: "Nic nie jest zaznaczone"
+  description: "Empty state title or action in the inspector"
+noIssues:
+  value: "Nie ma jeszcze zgłoszeń"
+  description: "Empty state title or action in the inspector"
+noHistory:
+  value: "Historia jest pusta"
+  description: "Empty state title or action in the inspector"
+startPicking:
+  value: "Wskaż element, żeby zacząć"
+  description: "Empty state title or action in the inspector"
+actions:
+  value: "Co zgłosić"
+  description: "Accessible name of the tree of actions"
+readout:
+  size:
+    value: "Rozmiar"
+    description: "Row name in the measurements tree"
+  padding:
+    value: "Padding"
+    description: "Row name in the measurements tree"
+  margin:
+    value: "Margines"
+    description: "Row name in the measurements tree"
+  border:
+    value: "Obramowanie"
+    description: "Row name in the measurements tree"
+  font:
+    value: "Czcionka"
+    description: "Row name in the measurements tree"
+  family:
+    value: "Krój"
+    description: "Row name in the measurements tree"
+  lineHeight:
+    value: "Wysokość linii"
+    description: "Row name in the measurements tree"
+  color:
+    value: "Kolor"
+    description: "Row name in the measurements tree"
+  background:
+    value: "Tło"
+    description: "Row name in the measurements tree"
+onLeft:
+  value: "Po lewej"
+  description: "More menu: put the inspector on the left"
+onRight:
+  value: "Po prawej"
+  description: "More menu: put the inspector on the right"
+done:
+  value: "Gotowe"
+  description: "Ends adding elements to a group"
+members:
+  value: "Elementy"
+  description: "Branch listing the elements of a selected group"
+group:
+  fit:
+    value: "Mieszczenie się"
+    description: "Heading of a group of actions in the inspector"
+  differs:
+    value: "Różni się od innego"
+    description: "Heading of a group of actions in the inspector"
+  look:
+    value: "Wygląd"
+    description: "Heading of a group of action tiles in the inspector"
+  access:
+    value: "Zachowanie i dostępność"
+    description: "Heading of a group of action tiles in the inspector"
+  favourites:
+    value: "Ulubione"
+    description: "Heading of a group of action tiles in the inspector"
+  size:
+    value: "Rozmiar i odstępy"
+    description: "Heading of a group of action tiles in the inspector"
+  align:
+    value: "Wyrównanie"
+    description: "Heading of a group of action tiles in the inspector"
+  other:
+    value: "Inne"
+    description: "Heading of a group of action tiles in the inspector"
+  project:
+    value: "Projekt"
+    description: "Heading of a group of action tiles in the inspector"
+consistency:
+  other:
+    value: "Coś innego"
+    description: "Short tile label under the Consistency heading"
+  padding:
+    value: "Padding"
+    description: "Short tile label under the Consistency heading"
+  margin:
+    value: "Margines"
+    description: "Short tile label under the Consistency heading"
+  gap:
+    value: "Odstęp"
+    description: "Short tile label under the Consistency heading"
+  size:
+    value: "Rozmiar"
+    description: "Short tile label under the Consistency heading"
+  radius:
+    value: "Zaokrąglenie"
+    description: "Short tile label under the Consistency heading"
+  type:
+    value: "Styl tekstu"
+    description: "Short tile label under the Consistency heading"
+  color:
+    value: "Kolor"
+    description: "Short tile label under the Consistency heading"
+answers:
+  value: "Wyniki agenta"
+  description: "Issues tab branch listing sent issues the agent has answered, until the person accepts them"

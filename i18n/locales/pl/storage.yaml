@@ -1,0 +1,24 @@
+saved:
+  value: "Zapisano lokalnie"
+  description: "Storage status after a successful save"
+idle:
+  value: "Szkice są zapisywane lokalnie"
+  description: "Storage status before the first save"
+memory:
+  value: "Tylko w pamięci; znikną po przeładowaniu"
+  description: "Storage status when nothing is durable"
+quota:
+  value: "Nie zapisano: brak miejsca"
+  description: "Storage status after a quota error"
+failed:
+  value: "Nie zapisano: błąd zapisu"
+  description: "Storage status after another storage error"
+corrupt:
+  value: "Nie udało się odczytać zapisanych szkiców. Zostały zachowane; odrzuć je, aby zapisywać nowe."
+  description: "Storage status when the stored record is invalid"
+discard:
+  value: "Odrzuć zapisane szkice"
+  description: "Key that deletes the unreadable stored drafts"
+forked:
+  value: "Inne okno zmieniło te same szkice. To okno zapisuje teraz osobno."
+  description: "Storage status after a write conflict"

@@ -1,0 +1,111 @@
+size:
+  value: "Rozmiar"
+  description: "Preset name"
+spacing:
+  value: "Odstępy"
+  description: "Preset name"
+align:
+  value: "Wyrównaj do innego"
+  description: "Preset name: align A to reference B"
+groupAlign:
+  value: "Wyrównaj grupę"
+  description: "Preset name: align group members to an anchor"
+matchHeight:
+  value: "Dopasuj wysokość"
+  description: "Preset name"
+matchWidth:
+  value: "Dopasuj szerokość"
+  description: "Preset name"
+equalGaps:
+  value: "Równe odstępy"
+  description: "Preset name"
+clipped:
+  value: "Tekst ucięty"
+  description: "Preset name"
+overlap:
+  value: "Nachodzi na inny"
+  description: "Preset name"
+readability:
+  value: "Trudny do odczytania"
+  description: "Preset name"
+inconsistent:
+  value: "Niespójny z innym"
+  description: "Preset name"
+feedback:
+  value: "Zachowanie"
+  description: "Preset name"
+layout:
+  value: "Układ"
+  description: "Preset name"
+note:
+  value: "Notatka"
+  description: "Preset name"
+choose:
+  value: "Wybierz, co widzisz"
+  description: "Heading of a preset choice popover"
+chooseEdge:
+  value: "Która krawędź lub środek"
+  description: "Heading of the alignment edge choice"
+chooseAxis:
+  value: "Wzdłuż której osi"
+  description: "Heading of the equal gaps axis choice"
+consistentPadding:
+  value: "Niespójny padding"
+  description: "Preset name"
+consistentMargin:
+  value: "Niespójny margines"
+  description: "Preset name"
+consistentGap:
+  value: "Niespójny odstęp między elementami"
+  description: "Preset name"
+consistentSize:
+  value: "Niespójny rozmiar"
+  description: "Preset name"
+consistentRadius:
+  value: "Niespójne zaokrąglenie"
+  description: "Preset name"
+consistentType:
+  value: "Niespójny styl tekstu"
+  description: "Preset name"
+consistentColor:
+  value: "Niespójny kolor"
+  description: "Preset name"
+offScale:
+  value: "Poza skalą odstępów"
+  description: "Preset name"
+chooseScale:
+  value: "Która skala"
+  description: "Heading of the scale choice"
+touchTarget:
+  value: "Za mały do kliknięcia"
+  description: "Preset name"
+overflow:
+  value: "Wychodzi poza swoje pole"
+  description: "Preset name"
+center:
+  value: "Nie jest wyśrodkowany"
+  description: "Preset name"
+textWrong:
+  value: "Zły tekst"
+  description: "Preset name"
+textWrap:
+  value: "Źle się zawija"
+  description: "Preset name"
+wrongColor:
+  value: "Zły kolor"
+  description: "Preset name"
+icon:
+  value: "Problem z ikoną"
+  description: "Preset name"
+stateMissing:
+  value: "Brak stanu"
+  description: "Preset name"
+keyboard:
+  value: "Dostęp z klawiatury"
+  description: "Preset name"
+a11yName:
+  value: "Nazwa dla czytnika ekranu"
+  description: "Preset name"
+responsive:
+  value: "Psuje się przy innym rozmiarze"
+  description: "Preset name"

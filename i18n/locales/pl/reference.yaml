@@ -1,0 +1,20 @@
+pickB:
+  value: "Wybierz B, wzorzec dla: {preset}"
+  description: "Hint bar instruction while choosing the reference"
+  placeholders:
+    preset: {type: string}
+pickAnchor:
+  value: "Wybierz element grupy, do którego wyrównać resztę"
+  description: "Hint bar instruction while choosing a group anchor"
+cancel:
+  value: "Anuluj"
+  description: "Hint bar key that cancels reference picking"
+same:
+  value: "B musi być innym elementem niż A."
+  description: "Warning when the reference equals the target"
+member:
+  value: "B musi być poza grupą."
+  description: "Warning when the reference is a group member"
+outsideGroup:
+  value: "Wybierz jeden z elementów grupy."
+  description: "Warning when the anchor is not a member"

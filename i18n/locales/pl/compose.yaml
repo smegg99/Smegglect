@@ -1,0 +1,37 @@
+add:
+  value: "Dodaj zgłoszenie"
+  description: "Composer primary key"
+cancel:
+  value: "Anuluj"
+  description: "Composer key that discards the issue"
+pick:
+  value: "Wybierz jedno"
+  description: "Label above the choice chips"
+note:
+  value: "Notatka"
+  description: "Label of the note field"
+noteOptional:
+  value: "Notatka (opcjonalnie)"
+  description: "Label of an optional note field"
+details:
+  value: "Zakres i co zachować"
+  description: "Disclosure label for scope and constraints"
+exists:
+  value: "Już zgłoszone jako zgłoszenie {number}."
+  description: "Composer notice for an identical issue"
+  placeholders:
+    number: {type: integer}
+open:
+  value: "Otwórz zgłoszenie {number}"
+  description: "Key that opens the existing issue"
+  placeholders:
+    number: {type: integer}
+measured:
+  value: "Zmierzone teraz"
+  description: "Heading above measured values"
+hint:
+  value: "Ctrl+Enter dodaje zgłoszenie"
+  description: "Keyboard hint under the composer"
+equal:
+  value: "Teraz nie zmierzono różnicy. Dodaj zgłoszenie tylko, jeśli wygląda inaczej w innym stanie."
+  description: "Composer line when compared values are all equal"

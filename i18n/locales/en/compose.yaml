@@ -1,0 +1,37 @@
+add:
+  value: "Add issue"
+  description: "Composer primary key"
+cancel:
+  value: "Cancel"
+  description: "Composer key that discards the issue"
+pick:
+  value: "Choose one"
+  description: "Label above the choice chips"
+note:
+  value: "Note"
+  description: "Label of the note field"
+noteOptional:
+  value: "Note (optional)"
+  description: "Label of an optional note field"
+details:
+  value: "Scope and what to keep"
+  description: "Disclosure label for scope and constraints"
+exists:
+  value: "Already reported as issue {number}."
+  description: "Composer notice for an identical issue"
+  placeholders:
+    number: {type: integer}
+open:
+  value: "Open issue {number}"
+  description: "Key that opens the existing issue"
+  placeholders:
+    number: {type: integer}
+measured:
+  value: "Measured now"
+  description: "Heading above measured values"
+hint:
+  value: "Ctrl+Enter adds the issue"
+  description: "Keyboard hint under the composer"
+equal:
+  value: "No difference measured right now. Add the issue only if it looks different in another state."
+  description: "Composer line when compared values are all equal"

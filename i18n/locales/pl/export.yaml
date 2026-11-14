@@ -1,0 +1,23 @@
+copied:
+  value: "Skopiowano prompt. Partia została wysłana."
+  description: "Toast after copying the prompt"
+exported:
+  value: "Zapisano {name}. Partia została wysłana."
+  description: "Toast after exporting; name is the file name"
+  placeholders:
+    name: {type: string}
+copyFailed:
+  value: "Kopiowanie nie zadziałało. Zaznacz tekst poniżej i skopiuj go."
+  description: "Shown when the clipboard is unavailable"
+exportFailed:
+  value: "Nie udało się zapisać pliku. Tekst partii jest poniżej."
+  description: "Shown when the download or native save failed"
+invalid:
+  value: "Partia nie przeszła walidacji i nie została wysłana."
+  description: "Error when the batch is invalid"
+storageFailed:
+  value: "Nie udało się zapisać partii; nie została wysłana."
+  description: "Error when storing the submitted batch failed"
+missing:
+  value: "Brakujące pliki obrazów są wymienione w Markdown i pominięte."
+  description: "Note when approved images could not be read"

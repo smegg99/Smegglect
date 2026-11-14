@@ -1,0 +1,30 @@
+title:
+  value: "Submitted"
+  description: "Drawer section heading for frozen batches"
+issues:
+  plural:
+    argument: count
+    forms:
+      one: "{count} issue"
+      other: "{count} issues"
+  description: "Submitted batch row: number of issues"
+  placeholders:
+    count: {type: integer}
+delete:
+  value: "Delete batch"
+  description: "Deletes a submitted batch from this browser"
+copy:
+  value: "Copy prompt"
+  description: "Copies a submitted batch again"
+export:
+  value: "Export"
+  description: "Exports a submitted batch again"
+frozen:
+  value: "Submitted evidence does not change. Notes are added as follow-ups."
+  description: "Explains why submitted issues are read-only"
+note:
+  value: "Follow-up note"
+  description: "Label of the follow-up note field"
+addNote:
+  value: "Add note"
+  description: "Key that appends a follow-up note"

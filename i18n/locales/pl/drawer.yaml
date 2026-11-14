@@ -1,0 +1,71 @@
+empty:
+  value: "Dodane zgłoszenia pojawią się tutaj, pogrupowane według stron. Zostają zaznaczone na stronie do wysłania raportu."
+  description: "Drawer text when there are no issues"
+toB:
+  value: "do {target}"
+  description: "Row subtitle after the target when a reference exists"
+  placeholders:
+    target: {type: string}
+scope:
+  value: "Zakres"
+  description: "Details section heading"
+scopeOccurrence:
+  value: "Tylko ten"
+  description: "Scope option: this occurrence only"
+scopeScreen:
+  value: "Ten ekran"
+  description: "Scope option"
+scopeComponent:
+  value: "Wspólny komponent"
+  description: "Scope option"
+keep:
+  value: "Zachowaj"
+  description: "Details section heading for preservation constraints"
+keepResponsive:
+  value: "Zachowanie responsywne"
+  description: "Constraint"
+keepTokens:
+  value: "Tokeny motywu"
+  description: "Constraint"
+noFixedSize:
+  value: "Bez sztywnych rozmiarów"
+  description: "Constraint"
+keepBehaviour:
+  value: "Obecne działanie"
+  description: "Constraint"
+keepOtherInstances:
+  value: "Inne wystąpienia bez zmian"
+  description: "Constraint"
+keepText:
+  value: "Treść tekstu"
+  description: "Constraint"
+note:
+  value: "Notatka"
+  description: "Details section heading"
+evidence:
+  value: "Zebrane dane"
+  description: "Details section heading"
+delete:
+  value: "Usuń"
+  description: "Details key that deletes the issue"
+statusUnavailable:
+  value: "Nie znaleziono elementu na tej stronie"
+  description: "Row state for a target that cannot be resolved"
+statusAmbiguous:
+  value: "Pasuje kilka elementów"
+  description: "Row state for an ambiguous target"
+statusElsewhere:
+  value: "Zebrane na innej stronie"
+  description: "Row state for an issue from another location"
+unsupported:
+  value: "Ta opcja nie jest tu zarejestrowana; zgłoszenie można tylko czytać."
+  description: "Details note for an unknown preset id or version"
+task:
+  value: "Eksportowane zadanie"
+  description: "Details section heading showing the generated task sentence"
+favourite:
+  value: "Dodaj opcję do ulubionych"
+  description: "Toggle that saves the preset and choice as a favourite"
+unfavourite:
+  value: "Usuń opcję z ulubionych"
+  description: "Toggle that removes a favourite"

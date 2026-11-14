@@ -1,0 +1,61 @@
+tab:
+  value: "History"
+  description: "Drawer tab"
+issuesTab:
+  value: "Issues"
+  description: "Drawer tab"
+empty:
+  value: "What you add, change, undo and export shows up here, newest first."
+  description: "History empty state"
+added:
+  value: "Added {number}: {title}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    title: {type: string}
+edited:
+  value: "Edited {number}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+removed:
+  value: "Deleted {number}: {title}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    title: {type: string}
+undone:
+  value: "Undid the last change"
+  description: "History line"
+submitted:
+  value: "Sent a report with {count} issues"
+  description: "History line"
+  placeholders:
+    count: {type: integer}
+copied:
+  value: "Copied the report as a prompt"
+  description: "History line"
+exported:
+  value: "Saved the report as a file"
+  description: "History line"
+shared:
+  value: "Made the report available to agents"
+  description: "History line"
+reviewed:
+  value: "Marked {number} as {state}"
+  description: "History line"
+  placeholders:
+    number: {type: integer}
+    state: {type: string}
+reports:
+  value: "Sent reports"
+  description: "History section heading"
+thisPage:
+  value: "This page"
+  description: "Page group label for the current page"
+goTo:
+  value: "Go to page"
+  description: "Key that opens the page an issue was captured on"
+redone:
+  value: "Redid the last undone change"
+  description: "History line"

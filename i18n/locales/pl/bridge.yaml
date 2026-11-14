@@ -1,0 +1,47 @@
+share:
+  value: "Udostępnij agentowi"
+  description: "Key that submits the batch to the local agent bridge"
+connected:
+  value: "Most agenta połączony: {url}"
+  description: "Drawer status when the local bridge answers"
+  placeholders:
+    url: {type: string}
+offline:
+  value: "Most agenta nieosiągalny"
+  description: "Drawer status when the configured bridge does not answer"
+shared:
+  value: "Dostępne dla agentów jako {id}. Claude Code odbierze to, gdy działa /smegglect."
+  description: "Message after the bridge accepted a batch"
+  placeholders:
+    id: {type: string}
+failed:
+  value: "Most nie przyjął partii. Pozostaje wysłana lokalnie."
+  description: "Message when posting to the bridge failed"
+available:
+  value: "Dostępne dla agentów"
+  description: "Submitted batch row label for a batch the bridge holds"
+copyRequest:
+  value: "Kopiuj prośbę dla agenta"
+  description: "Key that copies text to paste into an agent session"
+request:
+  value: "Użyj narzędzi MCP smegglect dla partii {id}: odczytaj ją przez get_batch, popraw każde zgłoszenie i zapisz wynik przez report_result."
+  description: "Copyable request text for an agent session"
+  placeholders:
+    id: {type: string}
+copied:
+  value: "Skopiowano prośbę"
+  description: "Toast after copying the agent request"
+refresh:
+  value: "Odśwież wyniki agenta"
+  description: "Key that fetches results from the bridge"
+toCheck:
+  plural:
+    argument: count
+    forms:
+      one: "Agent odpowiedział: {count} zgłoszenie do sprawdzenia"
+      few: "Agent odpowiedział: {count} zgłoszenia do sprawdzenia"
+      many: "Agent odpowiedział: {count} zgłoszeń do sprawdzenia"
+      other: "Agent odpowiedział: {count} zgłoszenia do sprawdzenia"
+  description: "Message when agent results arrive on the page; count is issues waiting for the person's review"
+  placeholders:
+    count: {type: integer}

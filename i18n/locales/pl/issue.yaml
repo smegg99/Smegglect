@@ -1,0 +1,176 @@
+size:
+  value: "Rozmiar {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+spacing:
+  value: "Odstępy wokół {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+align:
+  value: "Wyrównaj {a} do {b}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+    choice: {type: string}
+groupAlign:
+  value: "Wyrównaj grupę do elementu bazowego: {choice}"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+matchHeight:
+  value: "Ustaw {a} na wysokość {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+matchWidth:
+  value: "Ustaw {a} na szerokość {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+equalGaps:
+  value: "Wyrównaj odstępy w tej grupie ({choice})"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+clipped:
+  value: "Tekst w {a} jest ucięty"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+overlap:
+  value: "{a} nachodzi na {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+readability:
+  value: "{a} jest trudny do odczytania: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+inconsistent:
+  value: "{a} wygląda inaczej niż {b}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+feedback:
+  value: "{a}: {choice}"
+  description: "Issue description for a behaviour problem"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+layout:
+  value: "Problem z układem w tym obszarze: {choice}"
+  description: "Issue description"
+  placeholders:
+    choice: {type: string}
+note:
+  value: "Notatka do {a}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+compareB:
+  value: "{a} różni się od {b}"
+  description: "Consistency issue against a reference"
+  placeholders:
+    a: {type: string}
+    b: {type: string}
+compareGroup:
+  value: "Te elementy ({count}) różnią się od siebie"
+  description: "Consistency issue across a group"
+  placeholders:
+    count: {type: integer}
+offScale:
+  value: "{a} ma wartości spoza: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+region:
+  value: "ten obszar"
+  description: "Target name for a region"
+group:
+  value: "te elementy ({count})"
+  description: "Target name for a group"
+  placeholders:
+    count: {type: integer}
+property:
+  value: "Właściwość"
+  description: "Comparison table header"
+flagged:
+  value: "różni się"
+  description: "Accessible marker for a flagged comparison row"
+touchTarget:
+  value: "{a} jest za mały, żeby go wygodnie kliknąć"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+overflow:
+  value: "Zawartość {a} wychodzi poza pole: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+center:
+  value: "{a} nie jest wyśrodkowany: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+textWrong:
+  value: "Tekst {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+textWrap:
+  value: "Tekst w {a} źle się zawija: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+wrongColor:
+  value: "Zły kolor {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+icon:
+  value: "Ikona w {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+stateMissing:
+  value: "{a} nie ma stanu: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+keyboard:
+  value: "Dostęp z klawiatury do {a}: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+a11yName:
+  value: "Nazwa {a} dla czytnika ekranu: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
+responsive:
+  value: "{a} psuje się: {choice}"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
+    choice: {type: string}
