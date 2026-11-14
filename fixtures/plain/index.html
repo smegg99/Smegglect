@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Packed SDK in a plain page</title>
+</head>
+<body>
+  <h1>Plain page</h1>
+  <button id="go" type="button">Go</button>
+  <script type="module">
+    // Only files from the installed tarball; no bundler, no Vue, no source alias.
+    import { mount } from './node_modules/smegglect/dist/index.js'
+    window.sg = mount({ project: { id: 'packed' }, open: true })
+  </script>
+</body>
+</html>
