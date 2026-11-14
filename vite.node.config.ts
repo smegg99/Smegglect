@@ -3,7 +3,11 @@
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+
 export default defineConfig({
+  // The CLI reports this as the MCP server version; package.json follows VERSION.
+  define: { __SMEGGLECT_VERSION__: JSON.stringify(version) },
   plugins: [{
     // `smegglect-bridge init` installs this skill into a project; the package ships it next to the CLI.
     name: 'smegglect-skill',

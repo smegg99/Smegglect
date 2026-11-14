@@ -95,5 +95,29 @@ wails-release-check: wails-build
 demo: wails-build
     cd fixtures/wails && ./bin/desk-debug
 
+# Set the version everywhere it is stamped, e.g. just set-version 0.1.1.
+set-version ver:
+    node scripts/sync-version.mjs "{{ver}}"
+
+# Fail when package.json has drifted from VERSION.
+check-version:
+    node scripts/sync-version.mjs --check
+
 # Run every repository check.
-check: i18n-check lint typecheck test bridge-test e2e fixtures-test release-check wails-bindings-check wails-test wails-release-check
+check: check-version i18n-check lint typecheck test bridge-test e2e fixtures-test release-check wails-bindings-check wails-test wails-release-check
+
+# Run every check, then pack smegglect-VERSION.tgz and SHA256SUMS into dist/release/VERSION.
+release: check
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$(tr -d '\r\n' < VERSION)"
+    out="dist/release/${version}"
+    # Packed outside dist first: the package ships dist, and must not ship its own release folder.
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    bun pm pack --filename "$tmp/smegglect-${version}.tgz" --quiet > /dev/null
+    rm -rf "$out"
+    mkdir -p "$out"
+    mv "$tmp/smegglect-${version}.tgz" "$out/"
+    (cd "$out" && sha256sum "smegglect-${version}.tgz" > SHA256SUMS)
+    echo "$out"

@@ -10,7 +10,8 @@ import { brokerClient, Disconnected } from './client'
 import { init, projectId } from './init'
 import { startBroker } from './server'
 
-const VERSION = '0.1.0'
+/** Set from package.json at build time. */
+declare const __SMEGGLECT_VERSION__: string
 
 const USAGE = `usage:
   smegglect-bridge init [--root <project>]
@@ -88,7 +89,7 @@ async function main() {
   if (command === 'mcp') {
     // Loaded here so `serve` works without the optional MCP SDK and zod installed.
     const { runMcp } = await import('./mcp')
-    await runMcp(brokerClient(values.root), VERSION)
+    await runMcp(brokerClient(values.root), __SMEGGLECT_VERSION__)
     return
   }
   process.stderr.write(`${USAGE}\n`)

@@ -102,7 +102,6 @@ inverted buttons.
 - [ ] Playwright WebKit (cannot launch on the development host)
 - [ ] Windows and macOS WebViews (not tested)
 
-Full results: [docs/smegglect/support-matrix.md](docs/smegglect/support-matrix.md).
 
 ## Prerequisites
 
@@ -121,11 +120,13 @@ For working on this repository:
 
 ## Usage
 
-The package is not published. Build and pack it, then install the tarball:
+The package is not published to a registry. `just release` runs every check and
+writes `dist/release/<version>/smegglect-<version>.tgz` with its `SHA256SUMS`; install
+that tarball as a dev dependency:
 
 ```sh
-just build
-bun pm pack --filename smegglect.tgz
+just release
+bun add -D ./smegglect-0.1.0.tgz
 ```
 
 ### Vite
@@ -297,8 +298,7 @@ has Accept and Reopen (with a reason and a note for Claude).
 Tested with Claude Code 2.1.311 in a copy of the Vite fixture (`claude -p "/smegglect"`
 with the project `.mcp.json`): Claude fixed sent issues, checked them on the open page,
 asked through `blocked` when an issue was unclear, took a reopened issue with the
-person's answer, and picked up issues sent later while it was listening. Details:
-`docs/smegglect/reports/14-claude.md`.
+person's answer, and picked up issues sent later while it was listening.
 
 Browsers record human reviews and processes without an Origin record agent results.
 That separates the two channels; it is not strong identity, since any local process that
@@ -315,11 +315,14 @@ just fixtures-test    # Vite, Nuxt and plain-page consumers of the packed tarbal
 just release-check    # release builds contain no Smegglect, debug builds do
 just wails-build      # bin/desk, bin/desk-debug, bin/desk-dev in fixtures/wails
 just demo             # run the desktop demo in packaged debug mode
-just check            # everything above, plus lint, typecheck, locale and binding drift
+just check            # everything above, plus lint, typecheck, version, locale and binding drift
+just release          # just check, then the tarball and SHA256SUMS in dist/release/<version>
+just set-version 0.1.1  # VERSION and package.json
 ```
 
-Locale sources live in `i18n/locales/{en,pl}`; `just i18n` regenerates the overlay
-bundles. Planning and stage reports are in `docs/smegglect/`.
+`VERSION` holds the version; `just set-version` writes it and `package.json`, and the
+bridge CLI reports it to MCP clients. Locale sources live in `i18n/locales/{en,pl}`;
+`just i18n` regenerates the overlay bundles.
 
 ## License
 

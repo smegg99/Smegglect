@@ -120,6 +120,10 @@ describe('B03 B04 B05 MCP round trip', () => {
     return { text: res.content[0]?.text ?? '', isError: !!res.isError }
   }
 
+  it('reports the package version as the server version', () => {
+    expect(client.getServerVersion()?.version).toBe(JSON.parse(readFileSync('package.json', 'utf8')).version)
+  })
+
   it('lists the tools and only submitted batches', async () => {
     const tools = (await client.listTools()).tools.map(t => t.name).sort()
     expect(tools).toEqual(['check_issue', 'get_batch', 'get_issue_evidence', 'get_selection', 'list_batches', 'next_work', 'report_result'])
