@@ -1,0 +1,135 @@
+/* src/overlay/styles/tokens.css */
+/* Computed S99AB graphite values (see docs/smegglect/design-reference.md). Scoped to the overlay root. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.sg-mount { display: contents; }
+
+.sg {
+  --sg-bg: #141218;
+  --sg-chrome: #1f1d23;
+  --sg-chrome2: #27252b;
+  --sg-raised: #36343a;
+  --sg-sunk: #19171d;
+  --sg-well: #0f0d13;
+  --sg-line: #4a4553;
+  --sg-line-soft: #3a3641;
+  --sg-edge: #9d96a7;
+  --sg-ink: #efe9f2;
+  --sg-ink2: #d3cdd5;
+  --sg-ink3: #a49fa7;
+  --sg-select: #e85d51;
+  --sg-on-select: #141218;
+  --sg-ref: #6da8f7;
+  --sg-on-ref: #141218;
+  --sg-focus: #6da8f7;
+  --sg-warn: #d89a43;
+  --sg-ok: #59b878;
+  --sg-wash: color-mix(in srgb, var(--sg-select) 20%, transparent);
+  /* Filled states are a tint of the accent over the surface, never ink-on-paper inversions. */
+  --sg-tint: color-mix(in srgb, var(--sg-select) 26%, var(--sg-raised));
+  --sg-tint-hover: color-mix(in srgb, var(--sg-select) 36%, var(--sg-raised));
+  --sg-tint-line: color-mix(in srgb, var(--sg-select) 60%, var(--sg-line));
+  --sg-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.55), 0 2px 6px rgb(0 0 0 / 0.3);
+
+  --sg-radius: 4px;
+  --sg-radius-badge: 3px;
+  --sg-radius-panel: 6px;
+  --sg-radius-float: 8px;
+  --sg-key: 32px;
+  --sg-glyph: 16px;
+  --sg-gap: 8px;
+  --sg-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Cantarell', 'Helvetica Neue', Arial, sans-serif;
+  --sg-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Cascadia Code', 'DejaVu Sans Mono', menlo, consolas, monospace;
+  --sg-size: 14px;
+  --sg-label: 12px;
+  --sg-meta: 11px;
+  --sg-motion: 120ms;
+
+  color-scheme: dark;
+  font-family: var(--sg-font);
+  font-size: var(--sg-size);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--sg-ink);
+  text-align: start;
+  text-transform: none;
+  white-space: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sg[data-theme='light'] {
+  --sg-bg: #f5eff8;
+  --sg-chrome: #efe9f2;
+  --sg-chrome2: #e4dee6;
+  --sg-raised: #fffbff;
+  --sg-sunk: #d0cad3;
+  --sg-well: #ffffff;
+  --sg-line: #bdb5c7;
+  --sg-line-soft: #d8d1e0;
+  --sg-edge: #6e6878;
+  --sg-ink: #1d1b21;
+  --sg-ink2: #49454d;
+  --sg-ink3: #656269;
+  --sg-select: #d42f27;
+  --sg-on-select: #ffffff;
+  --sg-ref: #1962ac;
+  --sg-on-ref: #ffffff;
+  --sg-focus: #1962ac;
+  --sg-warn: #875600;
+  --sg-ok: #00703a;
+  --sg-shadow: 0 12px 32px -10px rgb(20 18 24 / 0.32), 0 2px 6px rgb(20 18 24 / 0.1);
+  color-scheme: light;
+}
+
+.sg[data-large] {
+  --sg-key: 36px;
+  --sg-glyph: 18px;
+  --sg-label: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sg { --sg-motion: 0ms; }
+}
+
+@media (forced-colors: active) {
+  .sg {
+    --sg-select: Highlight;
+    --sg-on-select: HighlightText;
+    --sg-ref: LinkText;
+    --sg-focus: Highlight;
+    --sg-line: CanvasText;
+    --sg-line-soft: GrayText;
+  }
+}
+
+.sg svg { display: block; fill: currentColor; }
+
+.sg button {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.sg :focus { outline: none; }
+
+.sg :focus-visible,
+.sg[data-keyed] :focus {
+  outline: 2px solid var(--sg-focus);
+  outline-offset: -2px;
+}
+
+.sg .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

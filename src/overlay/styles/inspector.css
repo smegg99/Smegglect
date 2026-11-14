@@ -1,0 +1,388 @@
+/* src/overlay/styles/inspector.css */
+/* The side inspector: one fixed panel for the selection, its actions, the issue list and the report. 8 px grid. */
+
+.inspector {
+  z-index: 18;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--sg-radius-panel);
+  background: var(--sg-bg);
+  transition: width var(--sg-motion) ease-out;
+}
+
+/* The panel takes focus only to hold it; its controls show the focus ring, not the whole panel. */
+.sg .inspector:focus-visible, .sg[data-keyed] .inspector:focus, .sg[data-keyed] .report-view:focus { outline: none; }
+
+/* The header is a tab strip on the chrome face, its floor a 1px line the active tab paints over. */
+.inspector > .bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 0 4px;
+  background: var(--sg-chrome);
+  box-shadow: inset 0 -1px 0 var(--sg-line);
+}
+
+/* ---- folder tabs, as S99AB's TabStrip draws them in Goptivum-Desktop ---- */
+
+.tabstrip {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.tabstrip button {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: 5px 5px 0 0;
+  background: transparent;
+  box-shadow: inset 0 -1px 0 var(--sg-line);
+  color: var(--sg-ink3);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tabstrip button > svg { width: 16px; height: 16px; flex: none; }
+.tabstrip .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabstrip .count { flex: none; }
+.inspector > .bar > .key { --sg-key: 28px; }
+.tabstrip button:hover { background: var(--sg-chrome2); color: var(--sg-ink2); }
+
+/* The active tab takes the panel's face and side lines, and has no floor: it opens into the panel. */
+.tabstrip button[aria-selected='true'],
+.tabstrip button[aria-selected='true']:hover {
+  background: var(--sg-bg);
+  box-shadow: 1px 0 0 var(--sg-line), -1px 0 0 var(--sg-line);
+  color: var(--sg-ink);
+}
+
+.tabstrip button[aria-selected='true'] > svg { color: var(--sg-select); }
+
+.inspector > .body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+}
+
+.inspector > .foot {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid var(--sg-line);
+}
+
+.inspector .page { display: flex; flex-direction: column; gap: 4px; }
+.inspector .section { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
+
+/* ---- element tab ---- */
+
+.inspector .target {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inspector .target .chip { max-width: none; padding: 0; }
+.inspector .target .name { font-size: 13px; }
+
+/* Empty states: what this place is for, in one line, and the one thing to do next. */
+.empty { display: flex; flex-direction: column; gap: 8px; padding: 16px 8px 8px; }
+.empty > svg { width: 24px; height: 24px; margin-bottom: 4px; color: var(--sg-ink3); }
+.empty h3 { margin: 0; color: var(--sg-ink); font-size: 13px; font-weight: 600; }
+.empty p { margin: 0; color: var(--sg-ink2); font-size: var(--sg-label); line-height: 1.45; }
+.empty .list { margin: 8px -8px 0; }
+
+.key kbd {
+  margin-inline-start: auto;
+  padding: 0 4px;
+  border: 1px solid var(--sg-line-soft);
+  border-radius: var(--sg-radius-badge);
+  color: var(--sg-ink3);
+  font-family: var(--sg-mono);
+  font-size: var(--sg-meta);
+  font-weight: 400;
+}
+
+
+.inspector .notice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: var(--sg-meta); }
+.inspector .notice .warn { color: var(--sg-warn); }
+
+.target-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.target-row .chip { flex: 1; min-width: 0; }
+
+.inspector .here { display: flex; flex-direction: column; gap: 4px; }
+
+.here-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 8px 0 4px;
+  border: 1px solid var(--sg-line-soft);
+  border-radius: var(--sg-radius);
+  background: transparent;
+  color: var(--sg-ink);
+  font-size: var(--sg-label);
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.here-line:hover { background: var(--sg-chrome2); }
+
+/* ---- actions: single-line rows under group headings, like a menu ---- */
+
+.list { display: flex; flex-direction: column; }
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--sg-radius);
+  background: transparent;
+  color: var(--sg-ink);
+  font-size: var(--sg-label);
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tile > svg { width: 16px; height: 16px; flex: none; color: var(--sg-ink2); }
+.tile .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile kbd { margin-inline-start: auto; padding: 0 4px; border: 1px solid var(--sg-line-soft); border-radius: var(--sg-radius-badge); color: var(--sg-ink3); font-family: var(--sg-mono); font-size: var(--sg-meta); }
+.tile:hover { background: var(--sg-chrome2); }
+.tile:hover > svg { color: var(--sg-ink); }
+
+/* ---- folds: a heading that opens a section ---- */
+
+.fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  list-style: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary > svg { width: 14px; height: 14px; transition: transform var(--sg-motion); }
+.fold[open] > summary > svg { transform: rotate(90deg); }
+.fold > summary:hover { color: var(--sg-ink); }
+.fold[open] > summary { margin-bottom: 4px; }
+
+/* ---- instruction line: the header while the page is being clicked ---- */
+
+.inspector .waiting {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  font-size: var(--sg-label);
+}
+
+.inspector .waiting { padding-inline-start: 4px; }
+.waiting-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.waiting .members { flex: none; color: var(--sg-ink); font-weight: 600; white-space: nowrap; }
+.inspector .waiting .warn { flex-basis: 100%; padding-bottom: 4px; color: var(--sg-warn); }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 8px;
+  border-radius: var(--sg-radius-badge);
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: -3px;
+}
+
+.tag.a { background: var(--sg-select); color: var(--sg-on-select); }
+.tag.b { border: 1px dashed var(--sg-ref); color: var(--sg-ref); }
+
+/* ---- issue form ---- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sg-line-soft);
+}
+
+.form-head { display: flex; align-items: center; gap: 8px; }
+.form-head > svg { width: 16px; height: 16px; flex: none; color: var(--sg-select); }
+.form-head h2 { flex: 1; margin: 0; font-size: 13px; font-weight: 600; }
+.form .says { margin: 0; color: var(--sg-ink); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.form .label { color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
+.form .notice { margin: 0; padding: 8px; border: 1px solid var(--sg-warn); border-radius: var(--sg-radius); font-size: var(--sg-label); }
+.form .meta-line { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
+.form .field { min-height: 64px; }
+.form-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.form-foot .hint { margin-inline-end: auto; color: var(--sg-ink3); font-size: var(--sg-meta); }
+
+/* ---- live measurements: tree rows, the value at the end ---- */
+
+.readout { user-select: text; }
+
+.swatch { flex: none; width: 12px; height: 12px; border: 1px solid var(--sg-line); border-radius: 2px; }
+
+/* ---- issue view ---- */
+
+.issue-head { display: flex; align-items: center; gap: 8px; }
+.issue-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; }
+.issue-view .says { margin: 0; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.issue-view .notice { margin: 0; font-size: var(--sg-label); }
+.issue-view .notice .warn, .issue-view .warn { color: var(--sg-warn); }
+.issue-view .dest, .issue-view .meta-line { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
+.issue-view .actions { flex-wrap: wrap; justify-content: flex-start; }
+
+/* The agent's latest result on a sent issue, with the person's decision under it. */
+.issue-view .result { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--sg-line); border-radius: var(--sg-radius); background: var(--sg-raised); }
+.issue-view .result .section { display: flex; align-items: center; margin: 0; }
+.issue-view .result .state { margin-inline-start: auto; }
+.issue-view .result .said { margin: 0; font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.seg.wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--sg-line); }
+.seg.wrap button { min-height: 28px; height: auto; padding: 4px 8px; border: 0; }
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-group .label, .issue-view .label { color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
+
+/* ---- report view: the inspector widens for it ---- */
+
+.report-view { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+.report-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--sg-line-soft);
+}
+
+.report-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.report-head .tabs { margin-inline-start: 8px; }
+.report-view .notice { margin: 8px 8px 0; font-size: var(--sg-label); }
+.report-view .body { flex: 1; min-height: 0; overflow: auto; padding: 8px; }
+.report-view .text { flex: 1; width: auto; max-height: none; margin: 8px; font-family: var(--sg-mono); font-size: var(--sg-meta); line-height: 1.5; resize: none; user-select: text; }
+.report-view .foot { display: flex; flex: none; flex-direction: column; gap: 8px; padding: 8px; border-top: 1px solid var(--sg-line); }
+.report-view .foot .dest { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
+.report-view .foot .actions { flex-wrap: wrap; justify-content: flex-end; }
+
+/* ---- tree: rows like Goptivum's Explorer tree, one guide line per level ---- */
+
+.tree { display: flex; flex-direction: column; }
+
+.tree-row {
+  --face: transparent;
+
+  position: relative;
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 4px;
+  padding-inline: calc(4px + var(--depth, 0) * 14px) 8px;
+  color: var(--sg-ink2);
+  font-size: 13px;
+  cursor: pointer;
+  isolation: isolate;
+  pointer-events: auto;
+}
+
+/* The face is lit from the chevron to the end, 2px inside top and bottom. */
+.tree-row::before {
+  position: absolute;
+  z-index: -1;
+  inset: 2px 0 2px calc(4px + var(--depth, 0) * 14px);
+  border-radius: var(--sg-radius);
+  background: var(--face);
+  content: '';
+}
+
+.tree-row:hover { --face: var(--sg-chrome2); color: var(--sg-ink); }
+.sg .tree-row:focus-visible, .sg[data-keyed] .tree-row:focus { outline: none; }
+.sg .tree-row:focus-visible::before, .sg[data-keyed] .tree-row:focus::before { outline: 2px solid var(--sg-focus); outline-offset: -2px; }
+.tree-row.branch { color: var(--sg-ink); font-weight: 600; }
+.tree-row.quiet { cursor: default; }
+.tree-row.quiet:hover { --face: transparent; color: var(--sg-ink2); }
+.tree-row.quiet:hover:has(> .tree-remove) { --face: var(--sg-chrome2); color: var(--sg-ink); }
+
+.tree-twist { display: grid; flex: none; width: 16px; height: 16px; place-items: center; color: var(--sg-ink3); }
+.tree-twist svg { width: 14px; height: 14px; transition: transform var(--sg-motion); }
+.tree-row.open > .tree-twist svg { transform: rotate(90deg); }
+.tree-twist.none { visibility: hidden; }
+
+.tree-row > svg { width: 16px; height: 16px; flex: none; color: var(--sg-ink3); }
+.tree-row:hover > svg { color: var(--sg-ink2); }
+.tree-row .num { min-width: 18px; height: 18px; }
+.tree-name { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A value keeps its natural width up to a cap; a long name gives way first. */
+.tree-meta {
+  display: inline-flex;
+  max-width: 45%;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  color: var(--sg-ink3);
+  font-size: var(--sg-meta);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tree-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.tree-row > .link { margin-inline-start: auto; font-weight: 400; }
+
+/* Always there and muted; full strength on the row under the pointer or the focus. */
+.tree-row > .tree-remove { --sg-key: 24px; flex: none; margin-inline-start: auto; color: var(--sg-ink3); }
+.tree-meta + .tree-remove { margin-inline-start: 0; }
+.tree-row:hover > .tree-remove, .tree-row:focus-within > .tree-remove { color: var(--sg-ink); }
+.tree-row.warn .tree-meta { color: var(--sg-warn); }
+
+/* A level's guide, down from the middle of its parent's chevron. */
+.tree-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(4px + var(--guide, 0) * 14px + 8px);
+  width: 1px;
+  background: var(--sg-line-soft);
+  pointer-events: none;
+}
+
+.tree-guide.end { bottom: 4px; }
+

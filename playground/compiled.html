@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Compiled runtime</title>
+</head>
+<body>
+  <p>Plain page with no framework. It loads the built <code>dist/index.js</code>.</p>
+  <button id="plain-btn" type="button">Plain button</button>
+  <script type="module">
+    import { mount } from 'smegglect-dist'
+    window.sg = mount({ project: { id: 'compiled' } })
+  </script>
+</body>
+</html>

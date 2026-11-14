@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hostile host</title>
+  <style>
+    /* Deliberately aggressive host CSS. */
+    html { font-size: 40px !important; }
+    * { box-sizing: content-box !important; font-family: 'Comic Sans MS', cursive !important; letter-spacing: 2px !important; }
+    *, *::before, *::after { transition: all 2s !important; }
+    button { all: unset; background: #f0f !important; color: #0f0 !important; font-size: 30px !important; padding: 20px !important; border: 6px solid #000 !important; }
+    div { position: relative; z-index: 1; }
+    svg { width: 100px !important; height: 100px !important; fill: orange !important; }
+    [role], [aria-label] { outline: 4px dotted red !important; }
+    body { margin: 0; padding: 40px; background: #222; color: #ddd; transform: translateZ(0); }
+    smegglect-root { display: none !important; opacity: 0 !important; }
+    section { display: flex; gap: 12px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Hostile host</h1>
+  <section id="area">
+    <button id="host-one" type="button">One</button>
+    <button id="host-two" type="button">Two</button>
+    <div id="panel" style="width: 300px; height: 120px; background: #444">Panel</div>
+  </section>
+  <script type="module" src="./fixtures/hostile.ts"></script>
+</body>
+</html>

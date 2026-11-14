@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dense host</title>
+  <style>
+    body { margin: 0; font: 12px/1.2 system-ui, sans-serif; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); }
+    .cell { padding: 3px 4px; border: 1px solid #ddd; white-space: nowrap; overflow: hidden; }
+    .cell button { font: inherit; }
+  </style>
+</head>
+<body>
+  <div id="grid" class="grid"></div>
+  <script type="module" src="./fixtures/dense.ts"></script>
+</body>
+</html>

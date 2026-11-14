@@ -1,0 +1,143 @@
+/* src/overlay/styles/keys.css */
+/* Keys: no ripple, a pressed mode is a filled face, a pressed view is a sunk framed face. */
+
+.key {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: var(--sg-key);
+  height: var(--sg-key);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--sg-radius);
+  background: transparent;
+  color: var(--sg-ink2);
+  font-size: var(--sg-label);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color var(--sg-motion), color var(--sg-motion), border-color var(--sg-motion);
+}
+
+.key > svg {
+  width: var(--sg-glyph);
+  height: var(--sg-glyph);
+  flex: none;
+}
+
+.key.wide { padding: 0 10px; }
+
+.key:hover,
+.key[aria-expanded='true'] {
+  background: var(--sg-chrome2);
+  color: var(--sg-ink);
+}
+
+.key:active { background: var(--sg-sunk); }
+
+/* Anything that is on looks the same: a soft accent tint and an accent icon, no outline. */
+.key[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--sg-tint);
+  color: var(--sg-ink);
+}
+
+.key[aria-pressed='true'] > svg { color: var(--sg-select); }
+.key[aria-pressed='true']:hover { background: var(--sg-tint-hover); }
+
+.key:disabled {
+  background: transparent;
+  color: var(--sg-ink3);
+  opacity: 0.45;
+  cursor: default;
+}
+
+.key.raised {
+  border-color: var(--sg-line);
+  background: var(--sg-raised);
+  color: var(--sg-ink);
+}
+
+.key.raised:hover { background: var(--sg-chrome2); }
+
+.key.primary {
+  border-color: var(--sg-tint-line);
+  background: var(--sg-tint);
+  color: var(--sg-ink);
+  font-weight: 600;
+}
+
+.key.primary:hover { background: var(--sg-tint-hover); }
+.key.primary:disabled { border-color: var(--sg-line-soft); background: transparent; }
+
+.key .badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--sg-radius-badge);
+  background: var(--sg-raised);
+  color: var(--sg-ink);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.key .caption {
+  font-size: var(--sg-meta);
+  font-weight: 500;
+}
+
+/* A tooltip is a small float surface in the overlay's own theme, not an inverted bubble. */
+.tip {
+  position: fixed;
+  z-index: 30;
+  max-width: 260px;
+  padding: 5px 8px;
+  border: 1px solid var(--sg-line);
+  border-radius: var(--sg-radius);
+  background: var(--sg-raised);
+  color: var(--sg-ink);
+  box-shadow: var(--sg-shadow);
+  font-size: var(--sg-label);
+  font-weight: 500;
+  line-height: 1.3;
+  pointer-events: none;
+  white-space: normal;
+}
+
+.tip kbd {
+  margin-inline-start: 8px;
+  white-space: nowrap;
+  padding: 0 4px;
+  border: 1px solid var(--sg-line-soft);
+  border-radius: var(--sg-radius-badge);
+  color: var(--sg-ink3);
+  font-family: var(--sg-mono);
+  font-size: var(--sg-meta);
+}
+
+.rule {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: calc(var(--sg-key) - 12px);
+  margin: 0 3px;
+  background: var(--sg-line-soft);
+}
+
+.vertical .rule {
+  width: calc(var(--sg-key) - 12px);
+  height: 1px;
+  margin: 3px 0;
+}
