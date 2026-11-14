@@ -2,19 +2,19 @@
 // Store-only ZIP writer. Entry names come from validated ids, never from user text.
 
 const TABLE = (() => {
-  const t = new Uint32Array(256)
-  for (let n = 0; n < 256; n++) {
-    let c = n
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-    t[n] = c >>> 0
+  const table = new Uint32Array(256)
+  for (let byte = 0; byte < 256; byte++) {
+    let crc = byte
+    for (let bit = 0; bit < 8; bit++) crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1
+    table[byte] = crc >>> 0
   }
-  return t
+  return table
 })()
 
 export function crc32(data: Uint8Array): number {
-  let c = 0xffffffff
-  for (const byte of data) c = (TABLE[(c ^ byte) & 0xff] as number) ^ (c >>> 8)
-  return (c ^ 0xffffffff) >>> 0
+  let crc = 0xffffffff
+  for (const byte of data) crc = (TABLE[(crc ^ byte) & 0xff] as number) ^ (crc >>> 8)
+  return (crc ^ 0xffffffff) >>> 0
 }
 
 const SAFE_NAME = /^[A-Za-z0-9_.-]+(\/[A-Za-z0-9_.-]+)*$/
@@ -34,7 +34,9 @@ export function zip(entries: readonly ZipEntry[]): Uint8Array {
   const centrals: Uint8Array[] = []
   let offset = 0
   for (const entry of entries) {
-    if (!SAFE_NAME.test(entry.name) || entry.name.includes('..')) throw new Error(`smegglect: unsafe archive name ${entry.name}`)
+    if (!SAFE_NAME.test(entry.name) || entry.name.includes('..')) throw new Error(
+      `smegglect: unsafe archive name ${entry.name}`,
+    )
     const name = enc.encode(entry.name)
     const crc = crc32(entry.data)
     const size = entry.data.length
@@ -69,7 +71,7 @@ export function zip(entries: readonly ZipEntry[]): Uint8Array {
     centrals.push(central)
     offset += local.length + size
   }
-  const centralSize = centrals.reduce((n, c) => n + c.length, 0)
+  const centralSize = centrals.reduce((total, central) => total + central.length, 0)
   const end = new Uint8Array(22)
   const ev = new DataView(end.buffer)
   ev.setUint32(0, 0x06054b50, true)
@@ -78,11 +80,11 @@ export function zip(entries: readonly ZipEntry[]): Uint8Array {
   ev.setUint32(12, centralSize, true)
   ev.setUint32(16, offset, true)
   const parts = [...locals, ...centrals, end]
-  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0))
+  const out = new Uint8Array(parts.reduce((total, part) => total + part.length, 0))
   let at = 0
-  for (const p of parts) {
-    out.set(p, at)
-    at += p.length
+  for (const part of parts) {
+    out.set(part, at)
+    at += part.length
   }
   return out
 }

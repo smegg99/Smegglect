@@ -85,6 +85,25 @@ export interface TargetEvidence {
   memberProperties?: Record<string, string>[]
   parent?: { element: ElementDescriptor, bounds: Rect }
   source: SourceRef
+  /** Region targets: the elements the region holds, when it holds any. */
+  contents?: RegionContents
+}
+
+/** Which elements a region lists: those fully inside it (dragged left to right) or those it touches. */
+export type ContentsMode = 'inside' | 'touching'
+
+/** One element a region holds, described as an element target would be. */
+export interface ContentsElement {
+  element: ElementDescriptor
+  bounds: Rect
+  source: SourceRef
+}
+
+/** The elements a region holds, in document order: the first `LIMITS.members` and how many there were. */
+export interface RegionContents {
+  mode: ContentsMode
+  elements: ContentsElement[]
+  total: number
 }
 
 export type AxisRelation =
@@ -188,7 +207,19 @@ export interface HistoryEvent {
   id: string
   project: string
   at: string
-  kind: 'added' | 'edited' | 'removed' | 'undone' | 'redone' | 'submitted' | 'copied' | 'exported' | 'shared' | 'reviewed' | 'result'
+  kind:
+    | 'added'
+    | 'edited'
+    | 'removed'
+    | 'undone'
+    | 'redone'
+    | 'submitted'
+    | 'copied'
+    | 'exported'
+    | 'shared'
+    | 'taken'
+    | 'checked'
+    | 'answered'
   issueId?: string
   batchId?: string
   seq?: number
@@ -197,28 +228,43 @@ export interface HistoryEvent {
   /** Chip text of the target, bounded and untrusted. */
   target?: string
   location?: string
-  /** edited: changed field names; reviewed and result: the state. */
+  /** edited: changed field names. */
   detail?: string
   count?: number
+  /** answered: the state the agent gave; never its text. */
+  state?: AgentState
+  /** taken, checked, answered: which agent, as a word. */
+  agent?: 'claude' | 'other'
 }
 
-/** Append-only record after submission; the submitted batch itself never changes. */
+/** What an agent may claim about an issue it was given. */
+export const AGENT_STATES = ['in-progress', 'partial', 'blocked', 'needs-review'] as const
+
+export type AgentState = typeof AGENT_STATES[number]
+
+/** How a check the agent ran went, as it says. */
+export const CHECK_OUTCOMES = ['passed', 'failed', 'not-run'] as const
+
+export type CheckOutcome = typeof CHECK_OUTCOMES[number]
+
+/**
+ * Append-only record after submission; the submitted batch itself never changes. A person's note, or the
+ * agent's result for one issue.
+ */
 export interface FollowUp {
   id: string
   batchId: string
   issueId: string
-  kind: 'note' | 'result' | 'review'
+  kind: 'note' | 'result'
   actor: 'human' | 'agent'
   createdAt: string
   text: string
-  /** review: the human decision; result: the agent's claimed state. */
-  state?: 'needs-review' | 'blocked' | 'accepted' | 'reopened' | 'partial' | 'in-progress'
+  /** result: the agent's claimed state. */
+  state?: AgentState
   /** result: project-relative files the agent changed, as reported. */
   files?: string[]
   /** result: checks the agent reports having run; untrusted text. */
-  checks?: { command: string, outcome: 'passed' | 'failed' | 'not-run' }[]
-  /** review: quick reopen reason. */
-  reason?: 'still-happens' | 'wrong-target' | 'one-viewport' | 'new-problem'
+  checks?: { command: string, outcome: CheckOutcome }[]
 }
 
 export interface Batch {

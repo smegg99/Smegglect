@@ -2,10 +2,13 @@
 // Pure model: no DOM, Vue, Node or network access. Importing it has no side effects.
 
 export * from './model'
+export * from './attachments'
+export * from './limits'
 export * from './validate'
 export * from './presets'
 export * from './modes'
 export * from './geometry'
+export * from './contents'
 export * from './drafts'
 export * from './redact'
 export { createId } from './ids'

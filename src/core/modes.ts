@@ -1,11 +1,19 @@
 // src/core/modes.ts
 // Input mode and selection as one value, so impossible combinations cannot be represented.
 
-import type { Rect } from './model'
+import type { ContentsMode, Rect } from './model'
+import { LIMITS } from './limits'
 
 export interface Point {
   x: number
   y: number
+}
+
+/** The elements a region holds, found when it was drawn: the first of them and how many there were. */
+export interface Held<H> {
+  mode: ContentsMode
+  handles: H[]
+  total: number
 }
 
 /** H is the engine's opaque live-element handle; it never reaches persisted records. */
@@ -13,7 +21,8 @@ export type Selection<H> =
   | { kind: 'none' }
   | { kind: 'dom', handle: H }
   | { kind: 'group', handles: H[], anchor?: number }
-  | { kind: 'region', rect: Rect }
+  /** `page`: where it was drawn (see pageKey in src/dom/pins.ts); it is drawn only there. */
+  | { kind: 'region', rect: Rect, page?: string, contents?: Held<H> }
 
 /** Where to return after a reference or anchor choice finishes or is cancelled. */
 export type Resume = 'pass' | 'pick'
@@ -37,7 +46,7 @@ export type InspectEvent<H> =
   | { type: 'select-group', handles: H[] }
   | { type: 'drop', index: number }
   | { type: 'drag-start', point: Point }
-  | { type: 'drag-end', rect: Rect }
+  | { type: 'drag-end', rect: Rect, page?: string, contents?: Held<H> }
   | { type: 'need-reference', preset: string, params: Record<string, string> }
   | { type: 'need-anchor', preset: string, params: Record<string, string> }
   | { type: 'chosen' }
@@ -46,6 +55,15 @@ export type InspectEvent<H> =
 
 export function initial<H>(): InspectState<H> {
   return { mode: { kind: 'pass' }, selection: { kind: 'none' } }
+}
+
+function regionOf<H>(rect: Rect, page?: string, contents?: Held<H>): Selection<H> {
+  return {
+    kind: 'region',
+    rect,
+    ...(page === undefined ? {} : { page }),
+    ...(contents === undefined ? {} : { contents }),
+  }
 }
 
 function resumeOf(mode: Mode): Resume {
@@ -57,8 +75,11 @@ function extendSelection<H>(sel: Selection<H>, handle: H): Selection<H> {
     return sel.handle === handle ? { kind: 'none' } : { kind: 'group', handles: [sel.handle, handle] }
   }
   if (sel.kind === 'group') {
-    const rest = sel.handles.filter(h => h !== handle)
-    if (rest.length === sel.handles.length) return { kind: 'group', handles: [...sel.handles, handle] }
+    const rest = sel.handles.filter(member => member !== handle)
+    if (rest.length === sel.handles.length) {
+      // A report lists at most this many members; one more is not taken in.
+      return sel.handles.length < LIMITS.members ? { kind: 'group', handles: [...sel.handles, handle] } : sel
+    }
     if (rest.length === 1) return { kind: 'dom', handle: rest[0] as H }
     return { kind: 'group', handles: rest }
   }
@@ -82,7 +103,10 @@ export function reduce<H>(state: InspectState<H>, event: InspectEvent<H>): Inspe
         : { mode: { kind: 'pass' }, selection: { kind: 'dom', handle: event.handle } }
     case 'select-group':
       if (mode.kind !== 'pick' || event.handles.length < 2) return state
-      return { mode: { kind: 'pass' }, selection: { kind: 'group', handles: [...event.handles] } }
+      return {
+        mode: { kind: 'pass' },
+        selection: { kind: 'group', handles: event.handles.slice(0, LIMITS.members) },
+      }
     // Takes one member out of a group, as picking it again while extending does.
     case 'drop': {
       if (selection.kind !== 'group' || mode.kind === 'reference' || mode.kind === 'anchor') return state
@@ -94,15 +118,21 @@ export function reduce<H>(state: InspectState<H>, event: InspectEvent<H>): Inspe
       return { mode: { kind: 'region', start: event.point }, selection }
     case 'drag-end':
       if (mode.kind !== 'region' || !mode.start) return state
-      return { mode: { kind: 'pass' }, selection: { kind: 'region', rect: event.rect } }
+      return { mode: { kind: 'pass' }, selection: regionOf(event.rect, event.page, event.contents) }
     case 'need-reference':
       if (selection.kind === 'none' || selection.kind === 'region') return state
       if (mode.kind === 'reference' || mode.kind === 'anchor') return state
-      return { mode: { kind: 'reference', preset: event.preset, params: event.params, resume: resumeOf(mode) }, selection }
+      return {
+        mode: { kind: 'reference', preset: event.preset, params: event.params, resume: resumeOf(mode) },
+        selection,
+      }
     case 'need-anchor':
       if (selection.kind !== 'group') return state
       if (mode.kind === 'reference' || mode.kind === 'anchor') return state
-      return { mode: { kind: 'anchor', preset: event.preset, params: event.params, resume: resumeOf(mode) }, selection }
+      return {
+        mode: { kind: 'anchor', preset: event.preset, params: event.params, resume: resumeOf(mode) },
+        selection,
+      }
     case 'chosen':
       if (mode.kind !== 'reference' && mode.kind !== 'anchor') return state
       return { mode: { kind: mode.resume }, selection }

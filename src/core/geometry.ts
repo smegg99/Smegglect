@@ -6,19 +6,19 @@ import type { AxisRelation, Rect, Relation } from './model'
 /** Edges closer than this are touching rather than a sub-pixel gap or overlap. */
 export const TOUCH_EPSILON = 0.5
 
-export const right = (r: Rect) => r.x + r.width
-export const bottom = (r: Rect) => r.y + r.height
-export const centerX = (r: Rect) => r.x + r.width / 2
-export const centerY = (r: Rect) => r.y + r.height / 2
+export const right = (rect: Rect) => rect.x + rect.width
+export const bottom = (rect: Rect) => rect.y + rect.height
+export const centerX = (rect: Rect) => rect.x + rect.width / 2
+export const centerY = (rect: Rect) => rect.y + rect.height / 2
 
 export function union(rects: readonly Rect[]): Rect {
   if (!rects.length) return { x: 0, y: 0, width: 0, height: 0 }
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity
-  for (const r of rects) {
-    x1 = Math.min(x1, r.x)
-    y1 = Math.min(y1, r.y)
-    x2 = Math.max(x2, right(r))
-    y2 = Math.max(y2, bottom(r))
+  for (const rect of rects) {
+    x1 = Math.min(x1, rect.x)
+    y1 = Math.min(y1, rect.y)
+    x2 = Math.max(x2, right(rect))
+    y2 = Math.max(y2, bottom(rect))
   }
   return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 }
 }
@@ -97,7 +97,9 @@ export function verticalGuide(a: Rect, b: Rect): Segment | null {
 
 /** Successive gaps between members sorted along one axis. */
 export function gaps(rects: readonly Rect[], along: 'horizontal' | 'vertical'): number[] {
-  const sorted = [...rects].sort((p, q) => along === 'horizontal' ? p.x - q.x : p.y - q.y)
+  const sorted = [...rects].sort((first, second) => along === 'horizontal'
+    ? first.x - second.x
+    : first.y - second.y)
   const out: number[] = []
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1] as Rect
@@ -107,8 +109,8 @@ export function gaps(rects: readonly Rect[], along: 'horizontal' | 'vertical'): 
   return out
 }
 
-export function shift(r: Rect, dx: number, dy: number): Rect {
-  return { x: r.x + dx, y: r.y + dy, width: r.width, height: r.height }
+export function shift(rect: Rect, dx: number, dy: number): Rect {
+  return { x: rect.x + dx, y: rect.y + dy, width: rect.width, height: rect.height }
 }
 
 export function normalise(x1: number, y1: number, x2: number, y2: number): Rect {
@@ -117,6 +119,6 @@ export function normalise(x1: number, y1: number, x2: number, y2: number): Rect 
 
 /** Display label: at most one decimal, no trailing zero. */
 export function px(value: number): string {
-  const r = Math.round(value * 10) / 10
-  return Object.is(r, -0) ? '0' : String(r)
+  const rounded = Math.round(value * 10) / 10
+  return Object.is(rounded, -0) ? '0' : String(rounded)
 }

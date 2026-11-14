@@ -33,4 +33,24 @@ describe('redaction', () => {
   it('scrubs every string in a structure', () => {
     expect(scrub({ a: ['token=abcdef123456'], n: 3 })).toEqual({ a: ['token=[redacted]'], n: 3 })
   })
+
+  it("masks a secret in a region's listed element", () => {
+    const element = { tag: 'span', classes: [], path: [], shadowDepth: 0, label: 'Authorization: Bearer abc.def.ghi123456' }
+    const contents = { mode: 'inside', elements: [{ element, bounds: { x: 0, y: 0, width: 1, height: 1 } }], total: 1 }
+    const scrubbed = scrub({ evidence: { a: { contents } } })
+    expect(scrubbed.evidence.a.contents.elements[0]?.element.label).toBe('Authorization: Bearer [redacted]')
+  })
+
+  it('keeps ids, which name records and files, however long and random', () => {
+    const hex = 'a1b2c3d4'.repeat(8)
+    const mixed = `res_${'Ab3'.repeat(13)}x`
+    const record = {
+      id: hex, batchId: hex, issueId: mixed, project: hex, attachments: [hex], note: `token ${hex}`,
+      project_: { id: hex, name: hex }, files: [{ id: mixed, name: mixed }],
+    }
+    expect(scrub(record)).toEqual({
+      ...record, note: 'token [redacted]', project_: { id: hex, name: '[redacted]' },
+      files: [{ id: mixed, name: '[redacted]' }],
+    })
+  })
 })

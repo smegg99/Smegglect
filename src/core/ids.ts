@@ -7,6 +7,6 @@ export function createId(prefix: string): string {
   const bytes = new Uint8Array(12)
   globalThis.crypto.getRandomValues(bytes)
   let out = ''
-  for (const b of bytes) out += ALPHABET[b % ALPHABET.length]
+  for (const byte of bytes) out += ALPHABET[byte % ALPHABET.length]
   return `${prefix}_${out}`
 }

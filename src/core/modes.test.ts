@@ -70,6 +70,30 @@ describe('modes', () => {
     expect(s.mode).toEqual({ kind: 'pass' })
   })
 
+  it('a region keeps the elements found with it', () => {
+    let s: S = reduce(initial<string>(), { type: 'toggle-region' })
+    s = reduce(s, { type: 'drag-start', point: { x: 1, y: 2 } })
+    const contents = { mode: 'touching' as const, handles: ['a', 'b'], total: 2 }
+    s = reduce(s, { type: 'drag-end', rect: { x: 1, y: 2, width: 30, height: 40 }, page: 'p', contents })
+    expect(s.selection).toEqual({ kind: 'region', rect: { x: 1, y: 2, width: 30, height: 40 }, page: 'p', contents })
+  })
+
+  it('takes no more group members than a report can list', () => {
+    let s: S = { mode: { kind: 'pick' }, selection: { kind: 'group', handles: Array.from({ length: 64 }, (_, i) => `e${i}`) } }
+    s = reduce(s, { type: 'select', handle: 'one-more', extend: true })
+    expect(s.selection.kind === 'group' && s.selection.handles.length).toBe(64)
+    const many = Array.from({ length: 80 }, (_, i) => `m${i}`)
+    s = reduce({ mode: { kind: 'pick' }, selection: { kind: 'none' } }, { type: 'select-group', handles: many })
+    expect(s.selection.kind === 'group' && s.selection.handles.length).toBe(64)
+  })
+
+  it('a region keeps the page and screen it was drawn on', () => {
+    let s: S = reduce(initial<string>(), { type: 'toggle-region' })
+    s = reduce(s, { type: 'drag-start', point: { x: 1, y: 2 } })
+    s = reduce(s, { type: 'drag-end', rect: { x: 1, y: 2, width: 30, height: 40 }, page: 'http://a/ tune' })
+    expect(s.selection).toEqual({ kind: 'region', rect: { x: 1, y: 2, width: 30, height: 40 }, page: 'http://a/ tune' })
+  })
+
   it('owns the pointer only outside pass-through', () => {
     expect(ownsPointer({ kind: 'pass' })).toBe(false)
     expect(ownsPointer({ kind: 'pick' })).toBe(true)
