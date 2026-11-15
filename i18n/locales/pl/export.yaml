@@ -7,10 +7,10 @@ exported:
   placeholders:
     name: {type: string}
 copyFailed:
-  value: "Kopiowanie nie zadziałało. Zaznacz tekst poniżej i skopiuj go."
+  value: "Kopiowanie nie zadziałało. Zgłoszenia są w Wysłanych raportach; zapisz stamtąd .zip."
   description: "Shown when the clipboard is unavailable"
 exportFailed:
-  value: "Nie udało się zapisać pliku. Tekst partii jest poniżej."
+  value: "Nie udało się zapisać pliku. Zgłoszenia są w Wysłanych raportach; skopiuj stamtąd prompt."
   description: "Shown when the download or native save failed"
 invalid:
   value: "Partia nie przeszła walidacji i nie została wysłana."

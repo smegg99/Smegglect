@@ -1,35 +1,9 @@
-open:
-  value: "Review report ({count})"
-  description: "Drawer footer primary key"
-  placeholders:
-    count: {type: integer}
-title:
-  value: "Report"
-  description: "Report panel heading"
-summary:
-  value: "Summary"
-  description: "Report tab"
-markdown:
-  value: "Markdown"
-  description: "Report tab"
 copy:
   value: "Copy prompt"
   description: "Report action"
 download:
   value: "Download .zip"
   description: "Report action"
-share:
-  value: "Make available to agent"
-  description: "Report action"
-freezes:
-  value: "Sending the report freezes these issues. New issues go into the next report."
-  description: "Report footer explanation"
-note:
-  value: "Note"
-  description: "Report issue label"
-keep:
-  value: "Keep"
-  description: "Report issue label"
-scope:
-  value: "Scope"
-  description: "Report issue label"
+send:
+  value: "Send to Claude"
+  description: "Main key in the Issues tab: sends the issues to the agent through the local bridge"

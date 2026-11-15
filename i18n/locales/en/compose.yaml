@@ -1,21 +1,6 @@
 add:
   value: "Add issue"
   description: "Composer primary key"
-cancel:
-  value: "Cancel"
-  description: "Composer key that discards the issue"
-pick:
-  value: "Choose one"
-  description: "Label above the choice chips"
-note:
-  value: "Note"
-  description: "Label of the note field"
-noteOptional:
-  value: "Note (optional)"
-  description: "Label of an optional note field"
-details:
-  value: "Scope and what to keep"
-  description: "Disclosure label for scope and constraints"
 exists:
   value: "Already reported as issue {number}."
   description: "Composer notice for an identical issue"
@@ -26,12 +11,27 @@ open:
   description: "Key that opens the existing issue"
   placeholders:
     number: {type: integer}
-measured:
-  value: "Measured now"
-  description: "Heading above measured values"
-hint:
-  value: "Ctrl+Enter adds the issue"
-  description: "Keyboard hint under the composer"
-equal:
-  value: "No difference measured right now. Add the issue only if it looks different in another state."
-  description: "Composer line when compared values are all equal"
+title:
+  value: "New issue"
+  description: "Accessible name of the area where an issue is written"
+whatsWrong:
+  value: "What's wrong?"
+  description: "Placeholder and name of the note field where an issue is written"
+type:
+  value: "Type"
+  description: "Accessible name of the row of issue types"
+everywhere:
+  value: "Everywhere this component is used"
+  description: "Checkbox: the fix belongs in the shared component, not only this element"
+images:
+  plural:
+    argument: count
+    forms:
+      one: "{count} pasted image will be attached"
+      other: "{count} pasted images will be attached"
+  description: "Under the note: images pasted while writing, attached when the issue is added"
+  placeholders:
+    count: {type: integer}
+imagesClear:
+  value: "Remove"
+  description: "Drops the pasted images before the issue is added"

@@ -17,7 +17,11 @@ import { choiceLabel, presetLabel } from '../labels'
 import { useRuntime } from '../runtime'
 import Tree, { type TreeNode } from './Tree.vue'
 
-const props = defineProps<{ kind: TargetKind }>()
+const props = defineProps<{
+  kind: TargetKind,
+  selected: { preset: string, params: Record<string, string> },
+}>()
+const emit = defineEmits<{ choose: [preset: string, params: Record<string, string>] }>()
 const { engine, settings, t } = useRuntime()
 const registry = engine.registry
 
@@ -48,16 +52,21 @@ const tiles = new Map<string, Tile>()
 
 const nodes = computed<TreeNode[]>(() => {
   tiles.clear()
-  return actionGroups(registry, props.kind, settings.favourites, label).map(g => ({
-    id: `group:${g.id}`,
-    label: t(`inspector.group.${g.id}`),
-    open: !FOLDED.has(g.id),
-    children: g.tiles.map((tile): TreeNode => {
-      const id = `${g.id}:${tile.preset}:${JSON.stringify(tile.params)}`
+  return actionGroups(registry, props.kind, settings.favourites, label).map(group => ({
+    id: `group:${group.id}`,
+    label: t(`inspector.group.${group.id}`),
+    open: !FOLDED.has(group.id),
+    children: group.tiles.map((tile): TreeNode => {
+      const id = `${group.id}:${tile.preset}:${JSON.stringify(tile.params)}`
       tiles.set(id, tile)
-      const attrs: Record<string, string> = g.id === 'favourites' ? { 'data-favourite': tile.preset } : { 'data-preset': tile.preset }
+      const attrs: Record<string, string> = group.id === 'favourites'
+        ? { 'data-favourite': tile.preset }
+        : { 'data-preset': tile.preset }
+      const on = tile.preset === props.selected.preset
+        && JSON.stringify(tile.params) === JSON.stringify(props.selected.params)
       return {
         id,
+        ...(on ? { selected: true } : {}),
         label: tile.label,
         icon: tile.icon,
         ...(tile.needsB ? { tip: t('inspector.needsBTip'), sr: t('inspector.needsB') } : {}),
@@ -67,9 +76,9 @@ const nodes = computed<TreeNode[]>(() => {
   }))
 })
 
-/** Starts a preset; the issue form (or the B and anchor steps first) takes it from here. */
+/** Chooses the type for the issue being written below the tree. */
 function run(node: TreeNode) {
   const tile = tiles.get(node.id)
-  if (tile) engine.begin(tile.preset, tile.params)
+  if (tile) emit('choose', tile.preset, tile.params)
 }
 </script>

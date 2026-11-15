@@ -1,21 +1,6 @@
 add:
   value: "Dodaj zgłoszenie"
   description: "Composer primary key"
-cancel:
-  value: "Anuluj"
-  description: "Composer key that discards the issue"
-pick:
-  value: "Wybierz jedno"
-  description: "Label above the choice chips"
-note:
-  value: "Notatka"
-  description: "Label of the note field"
-noteOptional:
-  value: "Notatka (opcjonalnie)"
-  description: "Label of an optional note field"
-details:
-  value: "Zakres i co zachować"
-  description: "Disclosure label for scope and constraints"
 exists:
   value: "Już zgłoszone jako zgłoszenie {number}."
   description: "Composer notice for an identical issue"
@@ -26,12 +11,29 @@ open:
   description: "Key that opens the existing issue"
   placeholders:
     number: {type: integer}
-measured:
-  value: "Zmierzone teraz"
-  description: "Heading above measured values"
-hint:
-  value: "Ctrl+Enter dodaje zgłoszenie"
-  description: "Keyboard hint under the composer"
-equal:
-  value: "Teraz nie zmierzono różnicy. Dodaj zgłoszenie tylko, jeśli wygląda inaczej w innym stanie."
-  description: "Composer line when compared values are all equal"
+title:
+  value: "Nowe zgłoszenie"
+  description: "Accessible name of the area where an issue is written"
+whatsWrong:
+  value: "Co jest nie tak?"
+  description: "Placeholder and name of the note field where an issue is written"
+type:
+  value: "Rodzaj"
+  description: "Accessible name of the row of issue types"
+everywhere:
+  value: "Wszędzie, gdzie jest ten komponent"
+  description: "Checkbox: the fix belongs in the shared component, not only this element"
+images:
+  plural:
+    argument: count
+    forms:
+      one: "{count} wklejony obraz zostanie dołączony"
+      few: "{count} wklejone obrazy zostaną dołączone"
+      many: "{count} wklejonych obrazów zostanie dołączonych"
+      other: "{count} wklejonego obrazu zostanie dołączone"
+  description: "Under the note: images pasted while writing, attached when the issue is added"
+  placeholders:
+    count: {type: integer}
+imagesClear:
+  value: "Usuń"
+  description: "Drops the pasted images before the issue is added"

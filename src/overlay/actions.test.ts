@@ -16,13 +16,13 @@ const ids = (kind: 'dom' | 'group' | 'region', quick = none) => actionGroups(reg
 describe('actionGroups', () => {
   it('lists element presets in fixed groups and order, project presets last', () => {
     expect(ids('dom')).toEqual([
-      ['size', ['size', 'spacing', 'touch-target', 'off-scale']],
-      ['fit', ['clipped', 'overflow', 'overlap', 'text-wrap']],
-      ['align', ['align', 'center', 'match-height', 'match-width']],
-      ['look', ['readability', 'text-wrong', 'wrong-color', 'icon']],
-      ['access', ['feedback', 'state-missing', 'keyboard', 'a11y-name']],
+      ['size', ['size', 'spacing', 'edge-room', 'touch-target', 'off-scale']],
+      ['fit', ['clipped', 'overflow', 'scrollbar-covers', 'overlap', 'text-wrap']],
+      ['align', ['align', 'center', 'placement', 'match-height', 'match-width']],
+      ['look', ['readability', 'text-wrong', 'wrong-color', 'icon', 'shape', 'control', 'design-system', 'like-app']],
+      ['access', ['feedback', 'state-missing', 'wrong-state', 'visibility', 'jumps', 'motion', 'keyboard', 'a11y-name']],
       ['differs', ['consistent-padding', 'consistent-margin', 'consistent-gap', 'consistent-size', 'consistent-radius', 'consistent-type', 'consistent-color', 'inconsistent']],
-      ['other', ['responsive', 'note']],
+      ['other', ['responsive', 'simplify', 'remove', 'note']],
       ['project', ['project.tap-target']],
     ])
   })
@@ -37,9 +37,12 @@ describe('actionGroups', () => {
   it('gives a group its alignment presets and compares members without asking for B', () => {
     const groups = actionGroups(reg, 'group', none, label)
     expect(groups.find(g => g.id === 'align')!.tiles.map(t => [t.preset, t.needsB])).toEqual([
-      ['group-align', false], ['equal-gaps', false], ['align', true], ['match-height', true], ['match-width', true],
+      ['group-align', false], ['equal-gaps', false], ['align', true], ['center', false], ['placement', false],
+      ['match-height', true], ['match-width', true],
     ])
-    expect(groups.find(g => g.id === 'differs')!.tiles.every(t => !t.needsB)).toBe(true)
+    // The consistency checks compare the members; "looks inconsistent with B" still asks for B.
+    const differs = groups.find(g => g.id === 'differs')!.tiles
+    expect(differs.filter(t => t.needsB).map(t => t.preset)).toEqual(['inconsistent'])
   })
 
   it('marks every "differs from another" check on one element as asking for B', () => {
@@ -48,7 +51,11 @@ describe('actionGroups', () => {
   })
 
   it('offers a region only what applies to a region', () => {
-    expect(ids('region').flatMap(([, t]) => t)).toEqual(['size', 'spacing', 'clipped', 'overflow', 'readability', 'text-wrong', 'feedback', 'keyboard', 'responsive', 'layout', 'note'])
+    expect(ids('region').flatMap(([, t]) => t)).toEqual([
+      'size', 'spacing', 'clipped', 'overflow', 'scrollbar-covers', 'readability', 'text-wrong', 'design-system',
+      'like-app', 'feedback', 'visibility', 'jumps', 'motion', 'keyboard', 'responsive', 'layout', 'simplify',
+      'remove', 'note',
+    ])
   })
 
   it('puts saved favourites first, with their choice, when they apply', () => {

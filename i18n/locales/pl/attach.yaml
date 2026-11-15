@@ -27,3 +27,6 @@ alt:
 noRedaction:
   value: "Obrazy nie są anonimizowane. Sprawdź ich zawartość przed zatwierdzeniem."
   description: "Warning shown next to attachments"
+pasteHint:
+  value: "Wklej obraz (Ctrl+V), aby go dołączyć."
+  description: "In a draft issue: an image on the clipboard can be pasted to attach it"

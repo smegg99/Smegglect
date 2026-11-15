@@ -1,1 +1,1 @@
-{"report":{"copy":"Copy prompt","download":"Download .zip","freezes":"Sending the report freezes these issues. New issues go into the next report.","keep":"Keep","markdown":"Markdown","note":"Note","open":"Review report ({count})","scope":"Scope","share":"Make available to agent","summary":"Summary","title":"Report"}}
+{"report":{"copy":"Copy prompt","download":"Download .zip","send":"Send to Claude"}}

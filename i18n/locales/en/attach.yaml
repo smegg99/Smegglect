@@ -27,3 +27,6 @@ alt:
 noRedaction:
   value: "Images are not redacted. Check what they show before approving."
   description: "Warning shown next to attachments"
+pasteHint:
+  value: "Paste an image with Ctrl+V to attach it."
+  description: "In a draft issue: an image on the clipboard can be pasted to attach it"

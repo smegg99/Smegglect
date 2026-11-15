@@ -26,20 +26,17 @@ drawInstead:
   value: "Zaznacz obszar zamiast tego"
   description: "Link next to a notice that the element cannot be inspected inside"
 picking:
-  value: "Kliknij element, żeby go zaznaczyć."
+  value: "Kliknij element, żeby go zaznaczyć. Z Shift lub Ctrl zaznaczysz kilka."
   description: "Inspector header while pick mode is on"
 grouping:
   value: "Klikaj elementy, by dodać lub usunąć."
   description: "Inspector header while picks extend a group"
 drawing:
-  value: "Przeciągnij po stronie, żeby zaznaczyć obszar."
+  value: "Przeciągnij, by zaznaczyć obszar: w prawo obejmie to, co w środku, w lewo to, czego dotyka."
   description: "Inspector header while region mode is on"
 measurements:
   value: "Pomiary"
   description: "Heading of the live measurements of the selection"
-size:
-  value: "Rozmiar"
-  description: "Label of the rendered width and height in the measurements block"
 back:
   value: "Wstecz"
   description: "Key that returns from an issue or the report to the previous tab"
@@ -89,12 +86,6 @@ readout:
   background:
     value: "Tło"
     description: "Row name in the measurements tree"
-onLeft:
-  value: "Po lewej"
-  description: "More menu: put the inspector on the left"
-onRight:
-  value: "Po prawej"
-  description: "More menu: put the inspector on the right"
 done:
   value: "Gotowe"
   description: "Ends adding elements to a group"
@@ -154,6 +145,34 @@ consistency:
   color:
     value: "Kolor"
     description: "Short tile label under the Consistency heading"
-answers:
-  value: "Wyniki agenta"
-  description: "Issues tab branch listing sent issues the agent has answered, until the person accepts them"
+several:
+  value: "Zaznacz kilka"
+  description: "Element tab action when nothing is selected: start picking and keep every pick in the selection"
+regionInside:
+  value: "Wewnątrz"
+  description: "Label on a region being dragged to the right: it will list the elements fully inside it"
+regionTouching:
+  value: "Dotyka"
+  description: "Label on a region being dragged to the left: it will list every element it touches"
+elementsInside:
+  plural:
+    argument: count
+    forms:
+      one: "{count} element wewnątrz"
+      few: "{count} elementy wewnątrz"
+      many: "{count} elementów wewnątrz"
+      other: "{count} elementu wewnątrz"
+  description: "After a region's size in the Element tab: how many elements lie fully inside it"
+  placeholders:
+    count: {type: integer}
+elementsTouching:
+  plural:
+    argument: count
+    forms:
+      one: "{count} element dotyka"
+      few: "{count} elementy dotykają"
+      many: "{count} elementów dotyka"
+      other: "{count} elementu dotyka"
+  description: "After a region's size in the Element tab: how many elements it touches"
+  placeholders:
+    count: {type: integer}

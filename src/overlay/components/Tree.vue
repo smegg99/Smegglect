@@ -13,11 +13,18 @@
       :key="row.node.id"
       v-bind="row.node.attrs ?? {}"
       class="tree-row"
-      :class="{ branch: row.branch, open: row.open, quiet: row.node.quiet, warn: row.node.warn }"
+      :class="{
+        branch: row.branch,
+        open: row.open,
+        quiet: row.node.quiet,
+        warn: row.node.warn,
+        on: row.node.selected
+      }"
       role="treeitem"
       :aria-level="row.depth + 1"
       :aria-expanded="row.branch ? row.open : undefined"
       :aria-keyshortcuts="row.node.remove ? 'Delete' : undefined"
+      :aria-selected="row.node.selected ? 'true' : undefined"
       :tabindex="row.node.id === tabbable ? 0 : -1"
       :data-node="row.node.id"
       :style="{ '--depth': row.depth }"
@@ -53,14 +60,21 @@
         class="swatch"
         :style="{ background: row.node.swatch }"
       /><span class="tree-value">{{ row.node.meta }}</span></span>
-      <button
-        v-if="row.node.link"
-        type="button"
-        class="link"
-        @click.stop="emit('link', row.node)"
-      >
-        {{ row.node.link }}
-      </button>
+      <span
+        v-if="row.node.state"
+        class="tree-state"
+        :class="{ warn: row.node.state.warn }"
+      ><Icon :name="row.node.state.icon" />{{ row.node.state.text }}</span>
+      <Key
+        v-for="action in row.node.actions ?? []"
+        :key="action.id"
+        class="tree-act"
+        :icon="action.icon"
+        :label="action.label"
+        :data-act="action.id"
+        :tabindex="row.node.id === tabbable ? 0 : -1"
+        @click.stop="emit('act', row.node, action.id)"
+      />
       <Key
         v-if="row.node.remove"
         class="tree-remove"
@@ -96,14 +110,18 @@ export interface TreeNode {
   meta?: string
   /** A colour sample before the value. */
   swatch?: string
+  /** Where something stands, e.g. a sent issue with the agent: an icon and words at the row's end. */
+  state?: { icon: string, text: string, warn?: boolean }
   /** Shown on hover and focus; `sr` repeats it for screen readers. */
   tip?: string
   sr?: string
-  /** A small link at the end of the row, e.g. "Go to page". */
-  link?: string
   /** Label of an X key at the row's end, also reached with Delete; pressing it emits `remove`. */
   remove?: string
+  /** Small keys at the row's end, e.g. a report's copy and save; pressing one emits `act` with its id. */
+  actions?: { id: string, icon: string, label: string }[]
   warn?: boolean
+  /** The row picked in a tree used as a choice, e.g. the issue type. */
+  selected?: boolean
   /** Read-only: hover and press do nothing. */
   quiet?: boolean
   /** Extra attributes for the row element. */
@@ -123,7 +141,12 @@ interface Row {
 }
 
 const props = defineProps<{ nodes: TreeNode[], label: string, name: string }>()
-const emit = defineEmits<{ activate: [node: TreeNode], link: [node: TreeNode], remove: [node: TreeNode], hover: [node: TreeNode | null] }>()
+const emit = defineEmits<{
+  activate: [node: TreeNode],
+  remove: [node: TreeNode],
+  act: [node: TreeNode, action: string],
+  hover: [node: TreeNode | null],
+}>()
 const { ui } = useRuntime()
 const root = ref<HTMLElement | null>(null)
 
@@ -135,10 +158,11 @@ const rows = computed<Row[]>(() => {
   const out: Row[] = []
   const walk = (list: TreeNode[], depth: number, parent: string | null) => {
     list.forEach((node, i) => {
-      const branch = !!node.children?.length
+      const children = node.children ?? []
+      const branch = children.length > 0
       const open = branch && isOpen(node)
       out.push({ node, depth, branch, open, last: i === list.length - 1, parent })
-      if (open) walk(node.children!, depth + 1, node.id)
+      if (open) walk(children, depth + 1, node.id)
     })
   }
   walk(props.nodes, 0, null)
@@ -147,7 +171,9 @@ const rows = computed<Row[]>(() => {
 
 const focusId = ref<string | null>(null)
 // One row is reachable by Tab: the last focused one, else the first.
-const tabbable = computed(() => rows.value.find(r => r.node.id === focusId.value)?.node.id ?? rows.value[0]?.node.id ?? null)
+const tabbable = computed(() => rows.value.find(row => row.node.id === focusId.value)?.node.id
+  ?? rows.value[0]?.node.id
+  ?? null)
 
 function toggle(row: Row, open = !row.open) {
   ui.folds[key(row.node.id)] = open
@@ -169,7 +195,12 @@ async function remove(row: Row) {
 }
 
 function enter(row: Row, event: PointerEvent) {
-  if (row.node.tip) showTip(ui, event.currentTarget as Element, row.node.tip, ui.panel?.edge === 'left' ? 'right' : 'left')
+  if (row.node.tip) showTip(
+    ui,
+    event.currentTarget as Element,
+    row.node.tip,
+    ui.panel?.edge === 'left' ? 'right' : 'left',
+  )
   if (!row.branch) emit('hover', row.node)
 }
 
@@ -188,7 +219,7 @@ function focusRow(id: string | undefined) {
 function onKey(event: KeyboardEvent) {
   const id = (event.target as HTMLElement).dataset?.node
   const list = rows.value
-  const i = list.findIndex(r => r.node.id === id)
+  const i = list.findIndex(entry => entry.node.id === id)
   const row = list[i]
   if (!row) return
   let handled = true

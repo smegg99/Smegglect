@@ -1,1 +1,1 @@
-{"report":{"copy":"Kopiuj prompt","download":"Pobierz .zip","freezes":"Wysłanie raportu zamraża te zgłoszenia. Nowe trafią do następnego raportu.","keep":"Zachowaj","markdown":"Markdown","note":"Notatka","open":"Przejrzyj raport ({count})","scope":"Zakres","share":"Udostępnij agentowi","summary":"Podsumowanie","title":"Raport"}}
+{"report":{"copy":"Kopiuj prompt","download":"Pobierz .zip","send":"Wyślij do Claude"}}

@@ -7,10 +7,10 @@ exported:
   placeholders:
     name: {type: string}
 copyFailed:
-  value: "Copy did not work. Select the text below and copy it."
+  value: "Copy did not work. The issues are under Sent reports; save the .zip from there."
   description: "Shown when the clipboard is unavailable"
 exportFailed:
-  value: "The file could not be saved. The batch text is below."
+  value: "The file could not be saved. The issues are under Sent reports; copy the prompt from there."
   description: "Shown when the download or native save failed"
 invalid:
   value: "The batch did not pass validation and was not submitted."

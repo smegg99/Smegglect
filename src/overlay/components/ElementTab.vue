@@ -1,9 +1,11 @@
 <!-- src/overlay/components/ElementTab.vue -->
 <template>
   <div
+    id="sg-tabpanel"
     ref="body"
     class="body element"
     role="tabpanel"
+    aria-labelledby="sg-tab-element"
   >
     <EmptyState
       v-if="!info"
@@ -24,6 +26,13 @@
         @click="engine.toggleRegion()"
       >
         <Icon name="region" /><span class="label">{{ t('dock.region') }}</span><kbd>Alt+Shift+R</kbd>
+      </button>
+      <button
+        type="button"
+        class="tile"
+        @click="toggleGroup"
+      >
+        <Icon name="group" /><span class="label">{{ t('inspector.several') }}</span><kbd>Shift</kbd>
       </button>
     </EmptyState>
     <template v-else>
@@ -47,7 +56,6 @@
             v-if="info.kind !== 'region'"
             icon="group"
             :label="t('strip.group')"
-            shape="mode"
             :pressed="state.extend"
             tip-side="below"
             @click="toggleGroup"
@@ -90,39 +98,29 @@
           {{ t('inspector.here') }}
         </h3>
         <button
-          v-for="i in here"
-          :key="i.id"
+          v-for="issue in here"
+          :key="issue.id"
           type="button"
           class="here-line"
-          @click="openIssue(ui, i.id)"
+          @click="openIssue(ui, issue.id)"
         >
-          <span class="num">{{ i.seq }}</span>{{ issueTitle(i, engine.registry, t) }}
+          <span class="num">{{ issue.seq }}</span>{{ issueTitle(issue, engine.registry, t) }}
         </button>
       </section>
-      <IssueForm
-        v-if="state.composing"
-        :key="state.composing.preset"
-        :c="state.composing"
-      />
-      <!-- Hidden, not unmounted, while the form is open, so opened folds stay open. -->
-      <Actions
-        v-show="!state.composing"
-        :kind="info.kind"
-      />
       <Readout />
+      <Compose :kind="info.kind" />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { px } from '../../core/geometry'
 import { issueTitle } from '../labels'
 import { openIssue } from '../navigate'
 import { useRuntime } from '../runtime'
-import Actions from './Actions.vue'
+import Compose from './Compose.vue'
 import EmptyState from './EmptyState.vue'
-import IssueForm from './IssueForm.vue'
 import Key from './Key.vue'
 import Tree, { type TreeNode } from './Tree.vue'
 import Readout from './Readout.vue'
@@ -134,21 +132,28 @@ const body = ref<HTMLElement | null>(null)
 const info = computed(() => state.value.selected)
 
 const chip = computed(() => {
-  const i = info.value
-  if (!i) return ''
-  if (i.kind === 'region') return t('strip.region')
-  if (i.kind === 'group') return t('strip.elements', { count: i.descriptors.length })
-  return i.chips[0] ?? ''
+  const selected = info.value
+  if (!selected) return ''
+  if (selected.kind === 'region') return t('strip.region')
+  if (selected.kind === 'group') return t('strip.elements', { count: selected.descriptors.length })
+  return selected.chips[0] ?? ''
 })
 
 const dims = computed(() => {
   const a = geo.value.a
-  return a ? `${px(a.width)} x ${px(a.height)}` : ''
+  if (!a) return ''
+  const size = `${px(a.width)} x ${px(a.height)}`
+  const contents = info.value?.contents
+  if (!contents) return size
+  const key = contents.mode === 'inside' ? 'inspector.elementsInside' : 'inspector.elementsTouching'
+  return `${size}, ${t(key, { count: contents.count })}`
 })
 
 const boundaryText = computed(() => {
-  const b = info.value?.boundary
-  return b === 'canvas' ? t('strip.canvas') : b === 'iframe' ? t('strip.iframe') : t('strip.closedRoot')
+  const boundary = info.value?.boundary
+  if (boundary === 'canvas') return t('strip.canvas')
+  if (boundary === 'iframe') return t('strip.iframe')
+  return t('strip.closedRoot')
 })
 
 /** Issues already reported on this selection, so the same thing is not reported twice. */
@@ -157,17 +162,27 @@ const here = computed(() => {
   return engine.issuesOnSelection()
 })
 
-/** A group's members as tree rows, each with its rendered size and an X; hovering one marks it on the page. */
+/**
+ * A group's members as tree rows, each with its rendered size and an X; hovering one marks it on the
+ * page.
+ */
 const memberNodes = computed<TreeNode[]>(() => {
-  const i = info.value
-  if (i?.kind !== 'group') return []
+  const selected = info.value
+  if (selected?.kind !== 'group') return []
   const remove = t('inspector.removeMember')
   return [{
     id: 'members',
     label: t('inspector.members'),
-    children: i.chips.map((chip, n) => {
-      const r = geo.value.members[n]
-      return { id: `member:${n}`, label: chip, icon: 'pick', quiet: true, remove, ...(r ? { meta: `${px(r.width)} x ${px(r.height)}` } : {}) }
+    children: selected.chips.map((chip, i) => {
+      const rect = geo.value.members[i]
+      return {
+        id: `member:${i}`,
+        label: chip,
+        icon: 'pick',
+        quiet: true,
+        remove,
+        ...(rect ? { meta: `${px(rect.width)} x ${px(rect.height)}` } : {}),
+      }
     }),
   }]
 })
@@ -181,7 +196,7 @@ async function dropMember(node: TreeNode) {
   engine.drop(memberIndex(node))
   if (!last) return
   await nextTick()
-  body.value?.querySelector<HTMLElement>('[data-tree="actions"] [tabindex="0"]')?.focus()
+  body.value?.querySelector<HTMLElement>('.compose textarea')?.focus()
 }
 
 /** Building a group means picking, so switching it on also turns picking on. */
@@ -191,13 +206,5 @@ function toggleGroup() {
   if (on && state.value.inspect.mode.kind !== 'pick') engine.togglePick()
 }
 
-// After the form closes, keyboard focus returns to the tile that opened it.
-watch(() => state.value.composing?.preset ?? null, async (now, before) => {
-  if (now || !before) return
-  await nextTick()
-  const root = body.value?.getRootNode() as ShadowRoot | undefined
-  if (root?.activeElement?.closest('.inspector')) return
-  body.value?.querySelector<HTMLElement>(`[data-tree="actions"] [data-preset="${before}"]`)?.focus()
-})
 
 </script>

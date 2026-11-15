@@ -41,21 +41,53 @@ exported:
 shared:
   value: "Made the report available to agents"
   description: "History line"
-reviewed:
-  value: "Marked {number} as {state}"
-  description: "History line"
-  placeholders:
-    number: {type: integer}
-    state: {type: string}
 reports:
   value: "Sent reports"
   description: "History section heading"
 thisPage:
   value: "This page"
   description: "Page group label for the current page"
-goTo:
-  value: "Go to page"
-  description: "Key that opens the page an issue was captured on"
 redone:
   value: "Redid the last undone change"
   description: "History line"
+agentClaude:
+  value: "Claude"
+  description: "History: the agent named in its steps, when it is Claude Code"
+agentOther:
+  value: "The agent"
+  description: "History: the agent named in its steps, when it is any other agent"
+taken:
+  value: "{agent} took the report"
+  description: "History line: the agent took a sent report from its work list"
+  placeholders:
+    agent: {type: string}
+checked:
+  value: "{agent} checked issue {seq}"
+  description: "History line: the agent asked this page to check a sent issue"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+started:
+  value: "{agent} started on issue {seq}"
+  description: "History line: the agent marked a sent issue in progress"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+fixed:
+  value: "{agent} marked issue {seq} fixed"
+  description: "History line: the agent marked a sent issue fixed"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+partial:
+  value: "{agent} marked issue {seq} partly fixed"
+  description: "History line: the agent marked a sent issue partly fixed"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+blocked:
+  value: "{agent} marked issue {seq} blocked"
+  description: "History line: the agent cannot go on with a sent issue"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}

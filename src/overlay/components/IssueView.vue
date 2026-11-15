@@ -1,8 +1,12 @@
 <!-- src/overlay/components/IssueView.vue -->
 <template>
+  <!-- Part of the tab it was opened from. -->
   <div
+    id="sg-tabpanel"
     class="body issue-view"
     role="tabpanel"
+    :aria-labelledby="`sg-tab-${ui.back}`"
+    @paste="onPaste"
   >
     <header class="issue-head">
       <Key
@@ -48,7 +52,7 @@
         ref="picker"
         class="picker"
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        :accept="ATTACHMENT_TYPES.join(',')"
         :aria-label="t('attach.add')"
         @change="attach"
       >
@@ -56,91 +60,11 @@
     <p class="says">
       {{ sentence }}
     </p>
-    <section
-      v-if="sent && result"
-      class="result"
-    >
-      <h3 class="section">
-        {{ t('review.agentSays') }}<span
-          class="state"
-          :data-state="sent.state"
-        >{{ stateText(rt, sent.state) }}</span>
-      </h3>
-      <p class="said">
-        {{ result.text }}
-      </p>
-      <p
-        v-if="result.files?.length"
-        class="dest"
-      >
-        {{ t('review.files') }}: {{ result.files.join(', ') }}
-      </p>
-      <p
-        v-if="result.checks?.length"
-        class="dest"
-      >
-        {{ t('review.checks') }}: {{ result.checks.map(c => `${c.command} (${outcome(c.outcome)})`).join('; ') }}
-      </p>
-      <div
-        v-if="sent.state !== 'accepted'"
-        class="actions review"
-      >
-        <button
-          type="button"
-          class="key wide primary"
-          @click="decide('accepted')"
-        >
-          <Icon name="check" />{{ t('review.accept') }}
-        </button>
-        <button
-          type="button"
-          class="key wide raised"
-          :aria-expanded="reopening"
-          @click="reopening = !reopening"
-        >
-          {{ t('review.reopen') }}
-        </button>
-      </div>
-      <template v-if="reopening">
-        <div
-          class="seg wrap"
-          role="group"
-          :aria-label="t('review.reopen')"
-        >
-          <button
-            v-for="r in REOPEN_REASONS"
-            :key="r"
-            type="button"
-            :aria-pressed="reason === r"
-            @click="reason = reason === r ? null : r"
-          >
-            {{ reasonText(rt, r) }}
-          </button>
-        </div>
-        <textarea
-          v-model="said"
-          class="field"
-          :maxlength="LIMITS.note"
-          :aria-label="t('review.whatWrong')"
-          :placeholder="t('review.whatWrong')"
-        />
-        <div class="actions review">
-          <button
-            type="button"
-            class="key wide primary"
-            :disabled="!reason && !said.trim()"
-            @click="sendBack"
-          >
-            {{ t('review.sendBack') }}
-          </button>
-        </div>
-      </template>
-    </section>
     <p
       v-if="status && status !== 'live'"
       class="notice"
     >
-      <span class="warn">{{ statusText }}</span>
+      <span class="warn">{{ statusLine }}</span>
     </p>
     <p
       v-if="issue.status === 'draft' && !canEdit"
@@ -168,48 +92,22 @@
         @change="note"
       />
     </div>
-    <details class="fold keep">
-      <summary class="section">
-        <Icon name="chevronRight" />{{ t('compose.details') }}
-      </summary>
-      <div class="label">
-        {{ t('drawer.scope') }}
-      </div>
-      <div
-        class="seg"
-        role="group"
-        :aria-label="t('drawer.scope')"
-      >
-        <button
-          v-for="s in scopes"
-          :key="s.value"
-          type="button"
-          :aria-pressed="issue.intent.scope === s.value"
-          :disabled="!canEdit"
-          @click="engine.editIssue(issue.id, { scope: s.value })"
-        >
-          {{ t(s.label) }}
-        </button>
-      </div>
-      <div class="label">
-        {{ t('drawer.keep') }}
-      </div>
-      <div class="checks">
-        <label
-          v-for="c in CONSTRAINTS"
-          :key="c"
-          class="check"
-        >
-          <input
-            type="checkbox"
-            :checked="issue.intent.constraints.includes(c)"
-            :disabled="!canEdit"
-            @change="toggle(c)"
-          >
-          {{ t(`drawer.${camel(c)}`) }}
-        </label>
-      </div>
-    </details>
+    <label class="check">
+      <input
+        type="checkbox"
+        :checked="issue.intent.scope === 'component'"
+        :disabled="!canEdit"
+        @change="engine.editIssue(issue.id, {
+          scope: ($event.target as HTMLInputElement).checked ? 'component' : 'occurrence'
+        })"
+      >{{ t('compose.everywhere') }}
+    </label>
+    <p
+      v-if="canEdit && !files.length"
+      class="dest paste-hint"
+    >
+      {{ t('attach.pasteHint') }}
+    </p>
     <div
       v-if="files.length || attachError"
       class="files"
@@ -226,7 +124,9 @@
         >
         <span class="meta">
           <span>{{ a.name }}</span>
-          <span :class="{ warn: a.review === 'pending' }">{{ a.review === 'approved' ? t('attach.approved') : t('attach.pending') }}</span>
+          <span :class="{ warn: a.review === 'pending' }">{{
+            a.review === 'approved' ? t('attach.approved') : t('attach.pending')
+          }}</span>
         </span>
         <Key
           v-if="a.review === 'pending'"
@@ -269,97 +169,55 @@
       <pre class="evidence">{{ evidence }}</pre>
     </details>
     <p class="meta-line">
-      {{ t('card.captured', { when }) }} - {{ pageLabel(issue.evidence.capture.location, issue.evidence.capture.screen) }}
+      {{ t('card.captured', { when }) }} - {{
+        pageLabel(issue.evidence.capture.location, issue.evidence.capture.screen)
+      }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { ATTACHMENT_TYPES } from '../../core/attachments'
 import { compare } from '../../core/compare'
-import { px } from '../../core/geometry'
-import { CONSTRAINTS, type ConstraintId, type FollowUp, type Issue, type Rect, type Scope } from '../../core/model'
+import type { Issue } from '../../core/model'
 import { editable } from '../../core/presets'
-import { REOPEN_REASONS } from '../../core/review'
 import { intentSentence } from '../../core/task'
-import { LIMITS } from '../../core/validate'
-import { describe, issueTitle, pageLabel, subjectOf } from '../labels'
+import { LIMITS } from '../../core/limits'
+import type { AttachResult } from '../../dom/session'
+import { evidenceText } from '../evidence-text'
+import { pastedImages, pastedName } from '../paste'
+import { describe, issueTitle, pageLabel, shortTime, statusText, subjectOf } from '../labels'
 import { closeIssue } from '../navigate'
-import { reasonText, reviewIssue, sentIssues, stateText } from '../review'
 import { useRuntime } from '../runtime'
+import type { PresetUse } from '../settings'
 import Comparison from './Comparison.vue'
 import Icon from './Icon.vue'
 import Key from './Key.vue'
 
 const props = defineProps<{ issue: Issue }>()
-const rt = useRuntime()
-const { engine, geo, sess, settings, ui, t } = rt
+const { engine, geo, sess, settings, ui, t } = useRuntime()
 const picker = ref<HTMLInputElement | null>(null)
 const noteField = ref<HTMLTextAreaElement | null>(null)
 const attachError = ref('')
 
-/** A sent issue: its review state and the agent's latest result. */
-const sent = computed(() => sentIssues(sess.value).find(s => s.issue.id === props.issue.id) ?? null)
-const result = computed(() => {
-  const s = sent.value
-  return s ? [...(sess.value.followUps[s.batchId] ?? [])].reverse().find(f => f.issueId === props.issue.id && f.kind === 'result') ?? null : null
-})
-const reopening = ref(false)
-const reason = ref<FollowUp['reason'] | null>(null)
-const said = ref('')
-const outcome = (o: string) => o === 'passed' ? t('review.passed') : o === 'failed' ? t('review.failedCheck') : t('review.notRun')
-
-async function decide(state: 'accepted') {
-  reopening.value = false
-  await reviewIssue(rt, sent.value!.batchId, props.issue.id, state)
-}
-
-/** Reopens with the reason and what the person wrote, both for the agent to read. */
-async function sendBack() {
-  await reviewIssue(rt, sent.value!.batchId, props.issue.id, 'reopened', { ...(reason.value ? { reason: reason.value } : {}), text: said.value.trim() })
-  reopening.value = false
-  reason.value = null
-  said.value = ''
-}
-
-const camel = (s: string) => s.replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase())
 const def = computed(() => engine.registry.byId.get(props.issue.intent.preset.id))
-const canEdit = computed(() => props.issue.status === 'draft' && editable(engine.registry, props.issue.intent.preset))
+const canEdit = computed(() => props.issue.status === 'draft'
+  && editable(engine.registry, props.issue.intent.preset))
 const title = computed(() => issueTitle(props.issue, engine.registry, t))
 const sentence = computed(() => describe(subjectOf(props.issue, t), engine.registry, t))
 const task = computed(() => intentSentence(props.issue, engine.registry))
-const files = computed(() => sess.value.attachments.filter(a => a.issueId === props.issue.id))
-const status = computed(() => geo.value.pins.find(p => p.id === props.issue.id)?.status)
+const files = computed(() => {
+  return sess.value.attachments.filter(attachment => attachment.issueId === props.issue.id)
+})
+const status = computed(() => geo.value.pins.find(pin => pin.id === props.issue.id)?.status)
 const table = computed(() => {
-  const c = compare(def.value, props.issue.intent.params, props.issue.evidence.a, props.issue.evidence.b)
-  return c && c.rows.length ? c : null
+  const { evidence, intent } = props.issue
+  const comparison = compare(def.value, intent.params, evidence.a, evidence.b)
+  return comparison && comparison.rows.length ? comparison : null
 })
-const when = computed(() => {
-  try {
-    return new Intl.DateTimeFormat(settings.locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(props.issue.createdAt))
-  }
-  catch {
-    return props.issue.createdAt
-  }
-})
-
-const statusText = computed(() => {
-  if (status.value === 'unavailable') return t('drawer.statusUnavailable')
-  if (status.value === 'ambiguous') return t('drawer.statusAmbiguous')
-  if (status.value === 'elsewhere') return t('drawer.statusElsewhere')
-  return ''
-})
-
-const scopes: { value: Scope, label: string }[] = [
-  { value: 'occurrence', label: 'drawer.scopeOccurrence' },
-  { value: 'screen', label: 'drawer.scopeScreen' },
-  { value: 'component', label: 'drawer.scopeComponent' },
-]
-
-function toggle(c: ConstraintId) {
-  const cur = props.issue.intent.constraints
-  engine.editIssue(props.issue.id, { constraints: cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c] })
-}
+const when = computed(() => shortTime(props.issue.createdAt, settings.locale))
+const statusLine = computed(() => statusText(status.value, t))
 
 function note(event: Event) {
   engine.editIssue(props.issue.id, { note: (event.target as HTMLTextAreaElement).value })
@@ -370,18 +228,44 @@ function attach(event: Event) {
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  const res = engine.session.attach(props.issue.id, file, file.name)
-  attachError.value = res === 'type' ? t('attach.type') : res === 'size' ? t('attach.size') : ''
+  attachFile(file, file.name)
 }
 
-const use = computed(() => ({ preset: props.issue.intent.preset.id, params: props.issue.intent.params }))
-const same = (a: { preset: string, params: Record<string, string> }) => a.preset === use.value.preset && JSON.stringify(a.params) === JSON.stringify(use.value.params)
-const isFavourite = computed(() => settings.favourites.some(same))
+function attachFile(file: File, name: string) {
+  attachError.value = attachErrorText(engine.session.attach(props.issue.id, file, name))
+}
+
+/** Ctrl+V with an image on the clipboard attaches it to a draft issue; text pastes as usual. */
+function onPaste(event: ClipboardEvent) {
+  const images = pastedImages(event)
+  if (!images.length || !canEdit.value) return
+  event.preventDefault()
+  for (const image of images) attachFile(image, pastedName(image))
+}
+
+/** Why an image was refused, in words; nothing when it was attached. */
+function attachErrorText(result: AttachResult): string {
+  if (result === 'type') return t('attach.type')
+  if (result === 'size') return t('attach.size')
+  return ''
+}
+
+const use = computed<PresetUse>(() => {
+  const { preset, params } = props.issue.intent
+  return { preset: preset.id, params }
+})
+/** The same preset and choice; choices are plain strings in one key order, so equal ones print alike. */
+const sameUse = (other: PresetUse) => other.preset === use.value.preset
+  && JSON.stringify(other.params) === JSON.stringify(use.value.params)
+const isFavourite = computed(() => settings.favourites.some(sameUse))
 
 function toggleFavourite() {
-  settings.favourites = isFavourite.value
-    ? settings.favourites.filter(f => !same(f))
-    : [...settings.favourites, { preset: use.value.preset, params: { ...use.value.params } }].slice(-8)
+  if (isFavourite.value) {
+    settings.favourites = settings.favourites.filter(favourite => !sameUse(favourite))
+    return
+  }
+  const added = { preset: use.value.preset, params: { ...use.value.params } }
+  settings.favourites = [...settings.favourites, added].slice(-8)
 }
 
 function remove() {
@@ -389,27 +273,8 @@ function remove() {
   engine.removeIssue(props.issue.id)
 }
 
-const rect = (r: Rect) => `${px(r.x)}, ${px(r.y)}  ${px(r.width)} x ${px(r.height)}`
-
 /** Evidence is shown as plain text; captured strings are data. */
-const evidence = computed(() => {
-  const ev = props.issue.evidence
-  const lines = [`A  ${rect(ev.a.bounds)}${ev.a.transformed ? `  (${t('strip.rendered')})` : ''}`]
-  if (ev.b) lines.push(`B  ${rect(ev.b.bounds)}${ev.b.transformed ? `  (${t('strip.rendered')})` : ''}`)
-  const rel = ev.relation
-  if (rel) {
-    const d = rel.delta
-    lines.push(`B - A  dw ${px(d.width)}  dh ${px(d.height)}  dx ${px(d.left)}  dy ${px(d.top)}`)
-    const ax = (k: 'horizontal' | 'vertical') => {
-      const r = rel[k]
-      return r.kind === 'touch' ? 'touch' : `${r.kind} ${px(r.distance)}`
-    }
-    lines.push(`h ${ax('horizontal')}  v ${ax('vertical')}${rel.diagonal ? '  diagonal' : ''}`)
-  }
-  lines.push(`source ${ev.a.source.quality}${ev.a.source.file ? `  ${ev.a.source.file}${ev.a.source.line ? `:${ev.a.source.line}` : ''}` : ''}${ev.a.source.component ? `  <${ev.a.source.component}>` : ''}`)
-  lines.push(`viewport ${ev.capture.viewport.width} x ${ev.capture.viewport.height}  dpr ${ev.capture.devicePixelRatio}  ${ev.capture.colorScheme}`)
-  return lines.join('\n')
-})
+const evidence = computed(() => evidenceText(props.issue.evidence, t('strip.rendered')))
 
 // Escape goes back before it closes anything else.
 onBeforeUnmount(engine.pushLayer(() => closeIssue(ui), 'view'))
@@ -417,6 +282,7 @@ onBeforeUnmount(engine.pushLayer(() => closeIssue(ui), 'view'))
 // Escape can remove the view before the field reports a change; keep what was typed.
 onBeforeUnmount(() => {
   const value = noteField.value?.value
-  if (canEdit.value && value !== undefined && value !== props.issue.intent.note) engine.editIssue(props.issue.id, { note: value })
+  if (canEdit.value && value !== undefined
+    && value !== props.issue.intent.note) engine.editIssue(props.issue.id, { note: value })
 })
 </script>

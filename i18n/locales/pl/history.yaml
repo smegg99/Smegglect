@@ -41,21 +41,53 @@ exported:
 shared:
   value: "Udostępniono raport agentom"
   description: "History line"
-reviewed:
-  value: "Oznaczono {number} jako: {state}"
-  description: "History line"
-  placeholders:
-    number: {type: integer}
-    state: {type: string}
 reports:
   value: "Wysłane raporty"
   description: "History section heading"
 thisPage:
   value: "Ta strona"
   description: "Page group label for the current page"
-goTo:
-  value: "Przejdź do strony"
-  description: "Key that opens the page an issue was captured on"
 redone:
   value: "Ponowiono cofniętą zmianę"
   description: "History line"
+agentClaude:
+  value: "Claude"
+  description: "History: the agent named in its steps, when it is Claude Code"
+agentOther:
+  value: "Agent"
+  description: "History: the agent named in its steps, when it is any other agent"
+taken:
+  value: "{agent} wziął raport"
+  description: "History line: the agent took a sent report from its work list"
+  placeholders:
+    agent: {type: string}
+checked:
+  value: "{agent} sprawdził zgłoszenie {seq}"
+  description: "History line: the agent asked this page to check a sent issue"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+started:
+  value: "{agent} zaczął zgłoszenie {seq}"
+  description: "History line: the agent marked a sent issue in progress"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+fixed:
+  value: "{agent} oznaczył zgłoszenie {seq} jako poprawione"
+  description: "History line: the agent marked a sent issue fixed"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+partial:
+  value: "{agent} oznaczył zgłoszenie {seq} jako częściowo poprawione"
+  description: "History line: the agent marked a sent issue partly fixed"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
+blocked:
+  value: "{agent} oznaczył zgłoszenie {seq} jako zablokowane"
+  description: "History line: the agent cannot go on with a sent issue"
+  placeholders:
+    agent: {type: string}
+    seq: {type: integer}
