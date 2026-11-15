@@ -3,7 +3,7 @@ toolbar:
   description: "Accessible name of the dock toolbar"
 open:
   value: "Otwórz Smegglect"
-  description: "Launcher key accessible name and tooltip"
+  description: "The button's name while the toolbar is collapsed"
 drafts:
   plural:
     argument: count
@@ -12,7 +12,7 @@ drafts:
       few: "{count} szkice zgłoszeń"
       many: "{count} szkiców zgłoszeń"
       other: "{count} szkicu zgłoszeń"
-  description: "Launcher description with the number of draft issues"
+  description: "Added to the collapsed button's name: the number of draft issues"
   placeholders:
     count: {type: integer}
 pick:
@@ -40,8 +40,8 @@ more:
   value: "Więcej"
   description: "Dock key that opens the settings menu"
 collapse:
-  value: "Zwiń do przycisku"
-  description: "Menu item that collapses the dock"
+  value: "Zwiń"
+  description: "The button's name while the toolbar is open, and the menu item that collapses it"
 placement:
   value: "Położenie paska"
   description: "Menu section heading for dock placement"
@@ -57,27 +57,6 @@ placeLeft:
 placeRight:
   value: "Po prawej"
   description: "Dock placement option"
-display:
-  value: "Wygląd"
-  description: "Menu section heading for display options"
-labels:
-  value: "Pokaż etykiety"
-  description: "Menu toggle for persistent key captions"
-large:
-  value: "Większe przyciski"
-  description: "Menu toggle for 36px keys"
-theme:
-  value: "Motyw"
-  description: "Menu section heading for overlay theme"
-themeAuto:
-  value: "Jak strona"
-  description: "Overlay theme option that follows the host page"
-themeLight:
-  value: "Jasny"
-  description: "Overlay theme option"
-themeDark:
-  value: "Ciemny"
-  description: "Overlay theme option"
 annotations:
   value: "Pokaż zgłoszenia na stronie"
   description: "Dock key toggling on-page annotations"

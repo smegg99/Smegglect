@@ -1,5 +1,5 @@
 // tests/e2e/lifecycle.spec.ts
-// C02, C03, C04, Q01, F01.
+// Mounting, destroying and remounting, an idle collapsed overlay, and a plain host without Vue.
 import { expect, test } from '@playwright/test'
 import { instrument, owned, root, settle, ui } from './helpers'
 
@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await instrument(page)
 })
 
-test('C02 importing the entry neither mounts, styles nor connects', async ({ page }) => {
+test('importing the entry neither mounts, styles nor connects', async ({ page }) => {
   const requests: string[] = []
   page.on('request', r => requests.push(r.url()))
   // plain.ts imports the whole entry statically; ?manual skips mount().
@@ -24,7 +24,7 @@ test('C02 importing the entry neither mounts, styles nor connects', async ({ pag
   expect(requests.filter(u => !u.startsWith(`${new URL(page.url()).origin}/`))).toEqual([])
 })
 
-test('C03 mount twice, destroy twice, remount', async ({ page }) => {
+test('mount twice, destroy twice, remount', async ({ page }) => {
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
   const result = await page.evaluate(() => {
@@ -47,7 +47,7 @@ test('C03 mount twice, destroy twice, remount', async ({ page }) => {
   expect(result).toEqual({ same: true, count1: 1, count2: 0, count3: 1, count4: 2 })
 })
 
-test('C04 destroy after use releases every owned resource', async ({ page }) => {
+test('destroy after use releases every owned resource', async ({ page }) => {
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
   const baseline = await owned(page)
@@ -69,7 +69,7 @@ test('C04 destroy after use releases every owned resource', async ({ page }) => 
   expect(await page.locator(root).count()).toBe(0)
 })
 
-test('Q01 collapsed runtime runs no frame loop and no observers', async ({ page }) => {
+test('collapsed runtime runs no frame loop and no observers', async ({ page }) => {
   await page.goto('/plain.html')
   await settle(page)
   const idle = await owned(page)
@@ -79,17 +79,17 @@ test('Q01 collapsed runtime runs no frame loop and no observers', async ({ page 
   expect((await owned(page)).frames).toBe(0)
 })
 
-test('F01 a plain host mounts the compiled runtime without Vue', async ({ page }) => {
+test('a plain host mounts the compiled runtime without Vue', async ({ page }) => {
   await page.goto('/compiled.html')
   await page.waitForFunction(() => (window as unknown as { sg?: unknown }).sg)
-  await expect(ui(page, '.launcher .key')).toBeVisible()
-  await ui(page, '.launcher .key').click()
-  await expect(ui(page, '.dock')).toBeVisible()
+  await expect(ui(page, '.dock .toggle')).toBeVisible()
+  await ui(page, '.dock .toggle').click()
+  await expect(ui(page, '.dock [aria-label="Pick element"]')).toBeVisible()
   const vue = await page.evaluate(() => 'Vue' in window || !!document.querySelector('[data-v-app]'))
   expect(vue).toBe(false)
 })
 
-test('C04 fifty mount, use and destroy cycles leave nothing behind', async ({ page }) => {
+test('fifty mount, use and destroy cycles leave nothing behind', async ({ page }) => {
   await page.goto('/plain.html?manual&memory')
   await page.waitForFunction(() => !!window.smegglect)
   const baseline = await owned(page)

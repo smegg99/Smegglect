@@ -1,9 +1,9 @@
 // tests/e2e/visual.spec.ts
-// Visual checkpoint captures. Runs only with SMEGGLECT_SHOTS=1; writes to docs/smegglect/evidence/ (ignored by Git).
+// Visual checkpoint captures. Runs only with SMEGGLECT_SHOTS=1; writes to test-results/visual/ (ignored by Git).
 import { expect, test, type Page } from '@playwright/test'
-import { preset, settle, tile, ui } from './helpers'
+import { pick, preset, settle, tile, ui } from './helpers'
 
-const OUT = 'docs/smegglect/evidence'
+const OUT = 'test-results/visual'
 const VIEWPORTS = [
   { name: '1440', width: 1440, height: 900 },
   { name: '1024', width: 1024, height: 768 },
@@ -17,12 +17,6 @@ async function shot(page: Page, name: string) {
   await settle(page)
   await page.waitForTimeout(150)
   await page.screenshot({ path: `${OUT}/${test.info().project.name}-${name}.png` })
-}
-
-async function pick(page: Page, selector: string) {
-  const mode = await ui(page, '[aria-label="Pick element"]').getAttribute('aria-pressed')
-  if (mode !== 'true') await ui(page, '[aria-label="Pick element"]').click()
-  await page.locator(selector).first().click()
 }
 
 async function addMatchHeight(page: Page, a: string, b: string) {
@@ -39,7 +33,7 @@ for (const vp of VIEWPORTS) {
     // 1. collapsed and expanded on light and dark hosts
     await page.goto('/plain.html')
     await shot(page, `${vp.name}-light-collapsed`)
-    await ui(page, '.launcher .key').click()
+    await ui(page, '.dock .toggle').click()
     await shot(page, `${vp.name}-light-dock`)
     await page.goto('/workbench.html?open')
     await shot(page, `${vp.name}-dark-dock`)
@@ -64,7 +58,7 @@ for (const vp of VIEWPORTS) {
     await pick(page, '#clip')
     await preset(page, 'clipped')
     await pick(page, '#cancel')
-    await preset(page, 'size', { choice: 'Too narrow' })
+    await preset(page, 'size')
     await page.keyboard.press('Escape')
     await page.keyboard.press('Escape')
     await page.mouse.move(vp.width - 40, vp.height / 2)

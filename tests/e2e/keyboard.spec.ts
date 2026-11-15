@@ -1,7 +1,7 @@
 // tests/e2e/keyboard.spec.ts
-// U04 keyboard-only use and U05 Escape ownership.
+// Keyboard-only use, and what Escape belongs to.
 import { expect, test, type Page } from '@playwright/test'
-import { tile, ui } from './helpers'
+import { action, ui } from './helpers'
 
 const focused = (page: Page) => page.evaluate(() => {
   const root = document.querySelector('smegglect-root')!.shadowRoot!
@@ -9,7 +9,7 @@ const focused = (page: Page) => page.evaluate(() => {
   return el ? (el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.localName) : `host:${document.activeElement?.id ?? ''}`
 })
 
-test('U04 the dock is reachable by keyboard with arrow navigation and return focus', async ({ page }) => {
+test('the dock is reachable by keyboard with arrow navigation and return focus', async ({ page }) => {
   await page.goto('/plain.html?memory')
   // Shortcuts are ignored inside text fields, so start from a button.
   await page.locator('#cancel').focus()
@@ -20,11 +20,15 @@ test('U04 the dock is reachable by keyboard with arrow navigation and return foc
   await page.keyboard.press('End')
   expect(await focused(page)).toBe('More')
   await page.keyboard.press('Enter')
-  await expect.poll(() => focused(page)).toBe('Collapse to launcher')
+  await expect.poll(() => focused(page)).toBe('Collapse')
+  await page.keyboard.press('ArrowDown')
+  expect(await focused(page)).toBe('Pop out to a window')
   await page.keyboard.press('ArrowDown')
   expect(await focused(page)).toBe('Bottom')
   await page.keyboard.press('Escape')
   await expect.poll(() => focused(page)).toBe('More')
+  await page.keyboard.press('ArrowLeft')
+  expect(await focused(page)).toBe('Settings')
   await page.keyboard.press('ArrowLeft')
   expect(await focused(page)).toBe('Issues')
   await page.keyboard.press('Enter')
@@ -38,7 +42,7 @@ test('U04 the dock is reachable by keyboard with arrow navigation and return foc
   expect(ring).toBe('solid')
 })
 
-test('U05 Escape cancels only what Smegglect owns', async ({ page }) => {
+test('Escape cancels only what Smegglect owns', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   const hostEscapes = () => page.evaluate(() => (window as unknown as { escapes?: number }).escapes ?? 0)
   await page.evaluate(() => document.addEventListener('keydown', e => {
@@ -46,12 +50,7 @@ test('U05 Escape cancels only what Smegglect owns', async ({ page }) => {
   }))
   await ui(page, '.dock [aria-label="Pick element"]').click()
   await page.locator('#box-a').click()
-  await tile(page, 'size').click()
-  await expect(ui(page, '.inspector .form')).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(ui(page, '.inspector .form')).toHaveCount(0)
-  await expect.poll(() => focused(page)).toBe('Size')
-  await tile(page, 'match-width').click()
+  await (await action(page, 'match-width')).click()
   await expect(ui(page, '.inspector .waiting')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(ui(page, '.inspector .waiting')).toHaveCount(0)
@@ -71,7 +70,7 @@ test('U05 Escape cancels only what Smegglect owns', async ({ page }) => {
   await expect(page.locator('#dialog')).not.toBeVisible()
 })
 
-test('U05 typing in host fields and IME composition never trigger shortcuts', async ({ page }) => {
+test('typing in host fields and IME composition never trigger shortcuts', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await page.locator('#customer').focus()
   await page.keyboard.press('Alt+Shift+P')

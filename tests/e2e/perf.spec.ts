@@ -1,6 +1,6 @@
 // tests/e2e/perf.spec.ts
-// Q02: overhead on a dense page. Runs with SMEGGLECT_PERF=1; prints and stores numbers, asserts only budgets.
-import { writeFileSync } from 'node:fs'
+// Overhead on a dense page. Runs with SMEGGLECT_PERF=1; prints and stores numbers, asserts only budgets.
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 
 test.skip(!process.env.SMEGGLECT_PERF, 'set SMEGGLECT_PERF=1 to measure')
@@ -35,7 +35,7 @@ async function sweep(page: Page): Promise<Sample> {
   })
 }
 
-test('Q02 baseline, mounted-inactive and active inspection on 6000+ nodes', async ({ page, browserName }) => {
+test('baseline, mounted-inactive and active inspection on 6000+ nodes', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'longtask and memory APIs are Chromium-only')
   await page.goto('/dense.html')
   await page.waitForFunction(() => !!(window as unknown as { smegglect?: unknown }).smegglect)
@@ -55,8 +55,9 @@ test('Q02 baseline, mounted-inactive and active inspection on 6000+ nodes', asyn
   const active = await sweep(page)
   const result = { nodes, viewport: page.viewportSize(), baseline, inactive, active, browser: browserName }
   console.log(JSON.stringify(result, null, 1))
-  writeFileSync('docs/smegglect/evidence/perf.json', JSON.stringify(result, null, 2))
-  // Budgets set from the measured numbers (see docs/smegglect/reports/09-hardening.md).
+  mkdirSync('test-results', { recursive: true })
+  writeFileSync('test-results/perf.json', JSON.stringify(result, null, 2))
+  // Budgets set from the measured numbers.
   expect(inactive.longTasks).toBe(0)
   expect(active.longTasks).toBe(0)
   expect(active.p95).toBeLessThan(40)

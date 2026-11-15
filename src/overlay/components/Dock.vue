@@ -1,107 +1,62 @@
 <!-- src/overlay/components/Dock.vue -->
+<!-- On the page: the button, dragged along any edge, with the toolbar unfolding from it. In the pop-out: a
+     ribbon under the panel's tabs, led by Put back. -->
 <template>
   <div
     ref="bar"
-    class="float dock"
-    :class="{ vertical }"
+    class="dock"
+    :class="[
+      inWindow ? 'ribbon' : ['float', spot.placement],
+      { vertical: lay.vertical, reversed: lay.reversed, wrapped, captions, dragging: !!dragSpot }
+    ]"
     role="toolbar"
     :aria-label="t('dock.toolbar')"
-    :aria-orientation="vertical ? 'vertical' : 'horizontal'"
-    :style="style"
+    :aria-orientation="lay.vertical ? 'vertical' : 'horizontal'"
+    :style="lay.style"
     @keydown="onKey"
     @focusin="onFocus"
   >
     <Key
-      icon="mark"
-      :label="t('dock.collapse')"
+      v-if="!inWindow"
+      class="toggle"
+      :icon="state.expanded ? 'pawOpen' : 'pawClosed'"
+      :label="state.expanded ? t('dock.collapse') : openLabel"
       kbd="Alt+Shift+S"
       :tip-side="side"
-      @click="engine.setExpanded(false)"
+      @pointerdown="grab"
+      @click="toggle"
     />
-    <span class="rule" />
-    <Key
-      icon="pick"
-      :label="t('dock.pick')"
-      kbd="Alt+Shift+P"
-      shape="mode"
-      :pressed="mode === 'pick'"
-      :caption="captions ? t('dock.pickShort') : undefined"
-      :tip-side="side"
-      @click="engine.togglePick()"
-    />
-    <Key
-      icon="region"
-      :label="t('dock.region')"
-      kbd="Alt+Shift+R"
-      shape="mode"
-      :pressed="mode === 'region'"
-      :caption="captions ? t('dock.regionShort') : undefined"
-      :tip-side="side"
-      @click="engine.toggleRegion()"
-    />
-    <span class="rule" />
-    <Key
-      icon="measure"
-      :label="t('dock.measure')"
-      kbd="Alt+Shift+M"
-      shape="view"
-      :pressed="state.measuring"
-      :caption="captions ? t('dock.measureShort') : undefined"
-      :tip-side="side"
-      @click="engine.setMeasuring(!state.measuring)"
-    />
-    <Key
-      icon="annotations"
-      :label="t('dock.annotations')"
-      shape="view"
-      :pressed="state.annotations"
-      :caption="captions ? t('dock.annotationsShort') : undefined"
-      :tip-side="side"
-      @click="engine.setAnnotations(!state.annotations)"
-    />
-    <span class="rule" />
-    <Key
-      icon="undo"
-      :label="t('dock.undo')"
-      kbd="Alt+Shift+Z"
-      :disabled="!state.drafts.undo.length"
-      :caption="captions ? t('dock.undoShort') : undefined"
-      :tip-side="side"
-      @click="engine.undo()"
-    />
-    <Key
-      icon="redo"
-      :label="t('dock.redo')"
-      kbd="Alt+Shift+Y"
-      :disabled="!state.drafts.redo.length"
-      :caption="captions ? t('dock.redoShort') : undefined"
-      :tip-side="side"
-      @click="engine.redo()"
-    />
-    <span class="rule" />
-    <Key
-      icon="issues"
-      :label="count ? `${t('dock.issues')}, ${t('dock.drafts', { count })}` : t('dock.issues')"
-      :badge="count"
-      :expanded="ui.inspector && ui.view !== 'element'"
-      :caption="captions ? t('dock.issues') : undefined"
-      :tip-side="side"
-      @click="toggleIssues"
-    />
-    <Key
-      ref="moreKey"
-      icon="more"
-      :label="t('dock.more')"
-      :expanded="menu"
-      popup="menu"
-      :caption="captions ? t('dock.more') : undefined"
-      :tip-side="side"
-      @click="menu = !menu"
-    />
+    <template v-if="tools">
+      <template
+        v-for="(group, index) in groups"
+        :key="group[0]?.id ?? index"
+      >
+        <span
+          v-if="ruleBefore(index, group)"
+          class="rule"
+        />
+        <Key
+          v-for="tool in group"
+          :key="tool.id"
+          :ref="tool.id === 'more' ? setMore : undefined"
+          :data-tool="tool.id"
+          :icon="tool.icon"
+          :label="tool.label"
+          :kbd="tool.kbd"
+          :pressed="tool.pressed"
+          :expanded="tool.expanded"
+          :popup="tool.popup"
+          :disabled="tool.disabled"
+          :badge="tool.badge"
+          :caption="captions ? tool.caption : undefined"
+          :tip-side="side"
+          @click="tool.act()"
+        />
+      </template>
+    </template>
   </div>
-  <!-- Outside the dock: its centring transform would become the fixed-position containing block. -->
   <MoreMenu
-    v-if="menu"
+    v-if="menu && tools"
     :anchor="menuAnchor"
     :opener="moreEl"
     :side="side"
@@ -111,34 +66,90 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRuntime } from '../runtime'
+import { unfold, type Spot, type Unfold } from '../button'
+import { useButtonDrag } from '../button-drag'
+import { dockTools, openLabel as openText, type Tool, type ToolInput } from '../dock-tools'
+import { useRuntime, useSurface } from '../runtime'
 import Key from './Key.vue'
 import MoreMenu from './MoreMenu.vue'
 
-const { engine, state, settings, ui, t } = useRuntime()
+const { engine, state, settings, ui, t, popout, putBack } = useRuntime()
+const surface = useSurface()
+/** The toolbar inside the pop-out window rather than the button on the page. */
+const inWindow = computed(() => surface.window)
 const bar = ref<HTMLElement | null>(null)
 const moreKey = ref<InstanceType<typeof Key> | null>(null)
+const setMore = (key: unknown) => (moreKey.value = key as InstanceType<typeof Key> | null)
 const menu = ref(false)
-const focusAt = ref(1)
+const focusAt = ref(0)
 
-const mode = computed(() => state.value.inspect.mode.kind)
-const count = computed(() => state.value.drafts.issues.length)
-const vertical = computed(() => settings.placement === 'left' || settings.placement === 'right')
-/** Captions need room; on narrow viewports the dock falls back to icons with tooltips. */
-/** Captions need room; on narrow viewports the dock falls back to icons with tooltips. Nothing else changes it. */
-const captions = computed(() => settings.labels && (vertical.value ? ui.viewport.height >= 640 : ui.viewport.width >= 640))
-const side = computed(() => ({ bottom: 'above', top: 'below', left: 'right', right: 'left' } as const)[settings.placement])
+
+const { dragSpot, grab, swallowed } = useButtonDrag(settings, ui, () => {
+  menu.value = false
+  ui.tip = null
+})
+const remembered = computed<Spot>(() => ({ placement: settings.placement, offset: settings.offset }))
+const spot = computed<Spot>(() => dragSpot.value ?? remembered.value)
+/**
+ * Captions need room; without it the keys fall back to icons with tooltips. A toolbar on a side edge has
+ * none: captions differ in width, and the button would be narrower than its column. Set before the toolbar
+ * opens, so the folded button already has the row's size.
+ */
+const captions = computed(() => {
+  if (!settings.labels) return false
+  if (inWindow.value) return surface.viewport.width >= 380
+  // On a side edge captions differ in width; kept there only when the person asks for one size everywhere.
+  const along = spot.value.placement === 'top' || spot.value.placement === 'bottom'
+  return (along || settings.steadySize) && ui.viewport.width >= 640
+})
+/**
+ * The row (a key, 8 px taller with captions) plus 3 px padding and a 1 px frame on each side, as
+ * surfaces.css draws it.
+ */
+const size = computed(() => (settings.large ? 36 : 32) + (captions.value ? 8 : 0) + 8)
+const lay = computed<Unfold>(() => {
+  if (inWindow.value) return { style: {}, vertical: false, reversed: false }
+  return unfold(spot.value, ui.viewport, size.value)
+})
+/** On the page the tools show while expanded, unless they are in the pop-out; a drag carries them along. */
+const tools = computed(() => inWindow.value || (state.value.expanded && !popout.value))
+
+const toolInput = computed<ToolInput>(() => ({
+  engine,
+  state: state.value,
+  ui,
+  t,
+  inWindow: inWindow.value,
+  menuOpen: menu.value,
+  putBack,
+  toggleIssues,
+  toggleSettings,
+  toggleMenu: () => (menu.value = !menu.value),
+}))
+const groups = computed<Tool[][]>(() => dockTools(toolInput.value, lay.value.reversed))
+const openLabel = computed(() => openText(toolInput.value))
+
+/** In the ribbon More stands apart at the far end, without a rule; on the page each group has one. */
+function ruleBefore(index: number, group: Tool[]): boolean {
+  if (!inWindow.value) return true
+  return index > 0 && group[0]?.id !== 'more'
+}
+
+const TIP_SIDES = { bottom: 'above', top: 'below', left: 'right', right: 'left' } as const
+const side = computed(() => inWindow.value ? 'below' : TIP_SIDES[spot.value.placement])
 const moreEl = computed(() => moreKey.value?.el ?? null)
 const menuAnchor = computed(() => (menu.value && moreEl.value ? moreEl.value.getBoundingClientRect() : null))
 
-/** Fixed to its edge; the inspector fits around it, so opening panels never moves it. */
-const style = computed(() => {
-  const p = settings.placement
-  if (p === 'top') return { top: '12px', left: '50%', transform: 'translateX(-50%)' }
-  if (p === 'left') return { left: '12px', top: '50%', transform: 'translateY(-50%)' }
-  if (p === 'right') return { right: '12px', top: '50%', transform: 'translateY(-50%)' }
-  return { bottom: '12px', left: '50%', transform: 'translateX(-50%)' }
-})
+/** Settings is a view of its own; the same key closes it again, back to the issues in the pop-out. */
+function toggleSettings() {
+  if (ui.inspector && ui.view === 'settings') {
+    if (inWindow.value) ui.view = 'issues'
+    else ui.inspector = false
+    return
+  }
+  ui.view = 'settings'
+  ui.inspector = true
+}
 
 function toggleIssues() {
   if (ui.inspector && ui.view === 'issues') {
@@ -149,12 +160,21 @@ function toggleIssues() {
   ui.inspector = true
 }
 
+/**
+ * Focus stays on the button, which stays put: the same press closes again. Alt+Shift+S moves focus to
+ * Pick.
+ */
+function toggle() {
+  if (swallowed()) return
+  engine.setExpanded(!state.value.expanded)
+}
+
 function keys(): HTMLElement[] {
   return [...(bar.value?.querySelectorAll<HTMLElement>(':scope > .key:not(:disabled)') ?? [])]
 }
 
 function roving() {
-  keys().forEach((k, i) => k.setAttribute('tabindex', i === focusAt.value ? '0' : '-1'))
+  keys().forEach((key, i) => key.setAttribute('tabindex', i === focusAt.value ? '0' : '-1'))
 }
 
 function onFocus(event: FocusEvent) {
@@ -165,18 +185,29 @@ function onFocus(event: FocusEvent) {
   }
 }
 
+/** The arrows that step forward and back as the keys are drawn: tools before the button run backwards. */
+function arrows(): { forward: string, back: string } {
+  const { vertical, reversed } = lay.value
+  const [ahead, behind] = vertical ? ['ArrowDown', 'ArrowUp'] : ['ArrowRight', 'ArrowLeft']
+  return reversed ? { forward: behind, back: ahead } : { forward: ahead, back: behind }
+}
+
+/** Where a key press moves focus among `length` keys from `i`; null for a key that does not move it. */
+function stepTo(key: string, i: number, length: number): number | null {
+  const { forward, back } = arrows()
+  if (key === forward) return (i + 1) % length
+  if (key === back) return (i - 1 + length) % length
+  if (key === 'Home') return 0
+  if (key === 'End') return length - 1
+  return null
+}
+
 function onKey(event: KeyboardEvent) {
   const list = keys()
   const i = list.indexOf(event.target as HTMLElement)
   if (i < 0) return
-  const fwd = vertical.value ? 'ArrowDown' : 'ArrowRight'
-  const back = vertical.value ? 'ArrowUp' : 'ArrowLeft'
-  let next: number
-  if (event.key === fwd) next = (i + 1) % list.length
-  else if (event.key === back) next = (i - 1 + list.length) % list.length
-  else if (event.key === 'Home') next = 0
-  else if (event.key === 'End') next = list.length - 1
-  else return
+  const next = stepTo(event.key, i, list.length)
+  if (next === null) return
   event.preventDefault()
   focusAt.value = next
   roving()
@@ -184,30 +215,86 @@ function onKey(event: KeyboardEvent) {
 }
 
 function measure() {
-  ui.dock = bar.value ? bar.value.getBoundingClientRect() : null
+  const box = bar.value ? bar.value.getBoundingClientRect() : null
+  if (inWindow.value) ui.bar = box
+  // The edge it is drawn on, the dragged one mid-drag, so the panel moves out of its way as it goes.
+  else ui.dock = box ? { box, placement: spot.value.placement, reversed: lay.value.reversed } : null
 }
 
+/** Opening from the keyboard lands on Pick, wherever the layout draws it. */
+function focusTools() {
+  if (!ui.focusDock || !tools.value) return
+  ui.focusDock = false
+  const list = keys()
+  focusAt.value = Math.max(0, list.findIndex(key => key.dataset.tool === 'pick'))
+  roving()
+  list[focusAt.value]?.focus()
+}
+
+/**
+ * A wrapped toolbar drops its rules, which would start a row; it stays so until its room or contents
+ * change.
+ */
+const wrapped = ref(false)
+function checkWrap() {
+  const element = bar.value
+  if (!element || !tools.value) return
+  const vertical = lay.value.vertical
+  const keyCross = Math.max(0, ...keys().map(key => (vertical ? key.offsetWidth : key.offsetHeight)))
+  // The client box holds 3 px of padding on each side.
+  wrapped.value = (vertical ? element.clientWidth : element.clientHeight) - 6 > keyCross + 1
+}
+
+// Only an open toolbar changes size by itself (captions, wrapping); the lone button costs nothing while
+// collapsed.
 let observer: ResizeObserver | null = null
+function observe(shown: boolean) {
+  observer?.disconnect()
+  observer = null
+  const Observer = bar.value?.ownerDocument.defaultView?.ResizeObserver
+  if (!shown || !Observer || !bar.value) return
+  observer = new Observer(measure)
+  observer.observe(bar.value)
+}
 onMounted(async () => {
   await nextTick()
+  checkWrap()
   roving()
   measure()
-  if (ui.focusDock) {
-    ui.focusDock = false
-    keys()[focusAt.value]?.focus()
-  }
-  const RO = bar.value?.ownerDocument.defaultView?.ResizeObserver
-  if (RO && bar.value) {
-    observer = new RO(measure)
-    observer.observe(bar.value)
-  }
+  focusTools()
+  observe(tools.value)
 })
-watch(() => [settings.placement, settings.large, settings.labels, ui.viewport], () => nextTick(() => {
-  measure()
-  roving()
-}))
+// Its room changes with every step of a drag, so whether it wraps and where it is are read again each time.
+watch(
+  () => [
+    spot.value, tools.value, settings.large, settings.labels, settings.locale, groups.value.flat().length,
+    ui.viewport, surface.viewport.width, surface.viewport.height,
+  ],
+  () => {
+    wrapped.value = false
+    void nextTick(() => {
+      checkWrap()
+      measure()
+    })
+  },
+)
+// The keys' order and roving focus change only when the tools do or the toolbar turns or flips.
+watch(
+  () => [tools.value, groups.value.flat().length, lay.value.vertical, lay.value.reversed],
+  () => nextTick(() => {
+    roving()
+    focusTools()
+  }),
+)
+watch(() => ui.focusDock, () => nextTick(focusTools))
+watch(dragSpot, dragged => (ui.dragging = !!dragged))
+watch(tools, (shown) => {
+  if (!shown) menu.value = false
+  void nextTick(() => observe(shown))
+})
 onBeforeUnmount(() => {
   observer?.disconnect()
-  ui.dock = null
+  if (inWindow.value) ui.bar = null
+  else ui.dock = null
 })
 </script>

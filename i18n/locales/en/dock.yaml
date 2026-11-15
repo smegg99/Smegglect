@@ -3,14 +3,14 @@ toolbar:
   description: "Accessible name of the dock toolbar"
 open:
   value: "Open Smegglect"
-  description: "Launcher key accessible name and tooltip"
+  description: "The button's name while the toolbar is collapsed"
 drafts:
   plural:
     argument: count
     forms:
       one: "{count} draft issue"
       other: "{count} draft issues"
-  description: "Launcher description with the number of draft issues"
+  description: "Added to the collapsed button's name: the number of draft issues"
   placeholders:
     count: {type: integer}
 pick:
@@ -38,8 +38,8 @@ more:
   value: "More"
   description: "Dock key that opens the settings menu"
 collapse:
-  value: "Collapse to launcher"
-  description: "Menu item that collapses the dock"
+  value: "Collapse"
+  description: "The button's name while the toolbar is open, and the menu item that collapses it"
 placement:
   value: "Dock position"
   description: "Menu section heading for dock placement"
@@ -55,27 +55,6 @@ placeLeft:
 placeRight:
   value: "Right"
   description: "Dock placement option"
-display:
-  value: "Display"
-  description: "Menu section heading for display options"
-labels:
-  value: "Show labels"
-  description: "Menu toggle for persistent key captions"
-large:
-  value: "Larger controls"
-  description: "Menu toggle for 36px keys"
-theme:
-  value: "Theme"
-  description: "Menu section heading for overlay theme"
-themeAuto:
-  value: "Match the page"
-  description: "Overlay theme option that follows the host page"
-themeLight:
-  value: "Light"
-  description: "Overlay theme option"
-themeDark:
-  value: "Dark"
-  description: "Overlay theme option"
 annotations:
   value: "Show issues on the page"
   description: "Dock key toggling on-page annotations"

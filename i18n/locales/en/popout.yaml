@@ -1,0 +1,15 @@
+open:
+  value: "Pop out to a window"
+  description: "Key and menu item that moves the toolbar and the panel into their own window"
+back:
+  value: "Put back on the page"
+  description: "Key and menu item in the pop-out window that moves the toolbar and the panel back onto the page"
+backShort:
+  value: "Put back"
+  description: "Caption under the Put back key in the pop-out toolbar"
+title:
+  value: "Smegglect"
+  description: "Title of the pop-out window"
+blocked:
+  value: "The browser did not open the window, so Smegglect stays on the page"
+  description: "Message when the pop-out window was refused, e.g. by a popup blocker"

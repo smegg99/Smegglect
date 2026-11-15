@@ -1,9 +1,9 @@
 // tests/e2e/isolation.spec.ts
-// U01-U03, U06: hostile host CSS, no layout shift, themes and small viewports, reduced motion.
+// Hostile host CSS, no layout shift, themes and small viewports, reduced motion.
 import { expect, test } from '@playwright/test'
 import { preset, settle, ui } from './helpers'
 
-test('U01 U02 a hostile host keeps its computed styles and the toolkit stays usable', async ({ page }) => {
+test('a hostile host keeps its computed styles and the toolkit stays usable', async ({ page }) => {
   await page.goto('/hostile.html')
   await page.waitForFunction(() => typeof (window as unknown as { snapshot?: unknown }).snapshot === 'function')
   const before = await page.evaluate(() => (window as unknown as { snapshot: () => string }).snapshot())
@@ -21,7 +21,7 @@ test('U01 U02 a hostile host keeps its computed styles and the toolkit stays usa
   await key.click()
   await page.locator('#host-one').click()
   await expect(ui(page, '.inspector')).toBeVisible()
-  await preset(page, 'size', { choice: 'Too large' })
+  await preset(page, 'size')
   await ui(page, '.dock [aria-label^="Issues"]').click()
   await expect(ui(page, '.inspector [role=tab][aria-selected=true]')).toContainText('Issues')
   await ui(page, '.dock [aria-label="Measurements"]').click()
@@ -32,7 +32,7 @@ test('U01 U02 a hostile host keeps its computed styles and the toolkit stays usa
   expect(hostAttrs).toEqual([])
 })
 
-test('U03 overlay theme follows the host page; panels clamp to a small viewport', async ({ page }) => {
+test('overlay theme follows the host page; panels clamp to a small viewport', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   expect(await ui(page, '.sg').getAttribute('data-theme')).toBe('light')
   await page.goto('/workbench.html?open')
@@ -54,7 +54,7 @@ test('U03 overlay theme follows the host page; panels clamp to a small viewport'
   expect(menu.x + menu.width).toBeLessThanOrEqual(352)
 })
 
-test('U06 reduced motion removes transitions; larger controls stay reachable', async ({ browser }) => {
+test('reduced motion removes transitions; larger controls stay reachable', async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 800, height: 600 } })
   const page = await context.newPage()
   await page.goto('/plain.html?open&memory')

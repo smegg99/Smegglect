@@ -1,0 +1,15 @@
+open:
+  value: "Przenieś do osobnego okna"
+  description: "Key and menu item that moves the toolbar and the panel into their own window"
+back:
+  value: "Wróć na stronę"
+  description: "Key and menu item in the pop-out window that moves the toolbar and the panel back onto the page"
+backShort:
+  value: "Na stronę"
+  description: "Caption under the Put back key in the pop-out toolbar"
+title:
+  value: "Smegglect"
+  description: "Title of the pop-out window"
+blocked:
+  value: "Przeglądarka nie otworzyła okna, więc Smegglect zostaje na stronie"
+  description: "Message when the pop-out window was refused, e.g. by a popup blocker"
