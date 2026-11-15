@@ -1,0 +1,119 @@
+title:
+  value: "Settings"
+  description: "Header of the settings view and the toolbar key that opens it"
+appearance:
+  value: "Appearance"
+  description: "Settings section: language, theme and accent"
+language:
+  value: "Language"
+  description: "Settings row: the overlay language"
+auto:
+  value: "Auto"
+  description: "A choice that follows the browser (language) or the page (theme)"
+theme:
+  value: "Theme"
+  description: "Settings row: light or dark overlay"
+themeAuto:
+  value: "Like the page"
+  description: "Tooltip of the theme icon that follows the page's own light or dark"
+light:
+  value: "Light"
+  description: "Theme choice"
+dark:
+  value: "Dark"
+  description: "Theme choice"
+accent:
+  value: "Accent colour"
+  description: "Settings row: the colour of selections and active controls"
+accentTheme:
+  value: "The theme's colour"
+  description: "Accent swatch that keeps the theme colour"
+toolbar:
+  value: "Toolbar"
+  description: "Settings section: the toolbar on the page"
+labels:
+  value: "Labels under the keys"
+  description: "Settings switch"
+large:
+  value: "Larger keys"
+  description: "Settings switch"
+steadySize:
+  value: "Same size on the side edges"
+  description: "Settings switch: the toolbar keeps its captions and size on the left and right edges"
+page:
+  value: "On the page"
+  description: "Settings section: what the overlay draws on the page"
+dodge:
+  value: "Plates move out of the way"
+  description: "Settings switch: issue plates slide away from the pointer, like magnets"
+dodgeNote:
+  value: "A plate near the pointer slides up or down so the element under it can be seen"
+  description: "Note under the plates switch"
+motion:
+  value: "Animations"
+  description: "Settings switch: transitions for moving, scaling and opening the toolbar and panel"
+shortcuts:
+  value: "Alt+Shift shortcuts"
+  description: "Settings switch"
+agent:
+  value: "Agent"
+  description: "Settings section: the coding agent"
+agentStatus:
+  value: "Show the agent's progress"
+  description: "Settings switch: status words in the Issues tab"
+watchOnly:
+  value: "Only watch this page"
+  description: "Settings switch: the page never answers checks"
+watchOnlyNote:
+  value: "For a second browser on the same app; it never answers the agent."
+  description: "Hint under the watch-only switch"
+data:
+  value: "Data"
+  description: "Settings section: drafts and history storage"
+dataBrowser:
+  value: "Drafts and history are saved in this browser."
+  description: "Where drafts are kept"
+dataMemory:
+  value: "Drafts and history are only in memory and go with the page."
+  description: "Where drafts are kept"
+clear:
+  value: "Clear drafts and history"
+  description: "Button"
+clearAsk:
+  value: "Sent reports stay."
+  description: "Shown before clearing"
+clearYes:
+  value: "Clear"
+  description: "Confirms clearing"
+clearNo:
+  value: "Cancel"
+  description: "Cancels clearing"
+cleared:
+  value: "Drafts and history cleared"
+  description: "Toast after clearing"
+about:
+  value: "About"
+  description: "Settings section"
+version:
+  value: "Version"
+  description: "About row"
+bridge:
+  value: "Agent link"
+  description: "About row: the local bridge"
+bridgeNone:
+  value: "None"
+  description: "No bridge configured"
+bridgeThrough:
+  value: "Through {name}"
+  description: "The bridge is reached through a desktop app"
+  placeholders:
+    name: {type: string}
+root:
+  value: "Project folder"
+  description: "About row: the folder the bridge serves"
+rootUnknown:
+  value: "Known once the link answers"
+  description: "Before the bridge answers"
+fixed:
+  value: "Set by the app"
+  description: "A setting a mount option fixes"

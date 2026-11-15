@@ -1,0 +1,119 @@
+title:
+  value: "Ustawienia"
+  description: "Header of the settings view and the toolbar key that opens it"
+appearance:
+  value: "Wygląd"
+  description: "Settings section: language, theme and accent"
+language:
+  value: "Język"
+  description: "Settings row: the overlay language"
+auto:
+  value: "Auto"
+  description: "A choice that follows the browser (language) or the page (theme)"
+theme:
+  value: "Motyw"
+  description: "Settings row: light or dark overlay"
+themeAuto:
+  value: "Jak strona"
+  description: "Tooltip of the theme icon that follows the page's own light or dark"
+light:
+  value: "Jasny"
+  description: "Theme choice"
+dark:
+  value: "Ciemny"
+  description: "Theme choice"
+accent:
+  value: "Kolor akcentu"
+  description: "Settings row: the colour of selections and active controls"
+accentTheme:
+  value: "Kolor motywu"
+  description: "Accent swatch that keeps the theme colour"
+toolbar:
+  value: "Pasek narzędzi"
+  description: "Settings section: the toolbar on the page"
+labels:
+  value: "Podpisy pod przyciskami"
+  description: "Settings switch"
+large:
+  value: "Większe przyciski"
+  description: "Settings switch"
+steadySize:
+  value: "Ten sam rozmiar przy bocznych krawędziach"
+  description: "Settings switch: the toolbar keeps its captions and size on the left and right edges"
+page:
+  value: "Na stronie"
+  description: "Settings section: what the overlay draws on the page"
+dodge:
+  value: "Plakietki usuwają się z drogi"
+  description: "Settings switch: issue plates slide away from the pointer, like magnets"
+dodgeNote:
+  value: "Plakietka blisko wskaźnika przesuwa się w górę lub w dół, odsłaniając element pod nią"
+  description: "Note under the plates switch"
+motion:
+  value: "Animacje"
+  description: "Settings switch: transitions for moving, scaling and opening the toolbar and panel"
+shortcuts:
+  value: "Skróty Alt+Shift"
+  description: "Settings switch"
+agent:
+  value: "Agent"
+  description: "Settings section: the coding agent"
+agentStatus:
+  value: "Pokazuj postęp agenta"
+  description: "Settings switch: status words in the Issues tab"
+watchOnly:
+  value: "Tylko podgląd tej strony"
+  description: "Settings switch: the page never answers checks"
+watchOnlyNote:
+  value: "Dla drugiej przeglądarki z tą samą aplikacją; nie odpowiada agentowi."
+  description: "Hint under the watch-only switch"
+data:
+  value: "Dane"
+  description: "Settings section: drafts and history storage"
+dataBrowser:
+  value: "Szkice i historia są zapisane w tej przeglądarce."
+  description: "Where drafts are kept"
+dataMemory:
+  value: "Szkice i historia są tylko w pamięci i znikną razem ze stroną."
+  description: "Where drafts are kept"
+clear:
+  value: "Wyczyść szkice i historię"
+  description: "Button"
+clearAsk:
+  value: "Wysłane raporty zostaną."
+  description: "Shown before clearing"
+clearYes:
+  value: "Wyczyść"
+  description: "Confirms clearing"
+clearNo:
+  value: "Anuluj"
+  description: "Cancels clearing"
+cleared:
+  value: "Szkice i historia wyczyszczone"
+  description: "Toast after clearing"
+about:
+  value: "Informacje"
+  description: "Settings section"
+version:
+  value: "Wersja"
+  description: "About row"
+bridge:
+  value: "Połączenie z agentem"
+  description: "About row: the local bridge"
+bridgeNone:
+  value: "Brak"
+  description: "No bridge configured"
+bridgeThrough:
+  value: "Przez {name}"
+  description: "The bridge is reached through a desktop app"
+  placeholders:
+    name: {type: string}
+root:
+  value: "Folder projektu"
+  description: "About row: the folder the bridge serves"
+rootUnknown:
+  value: "Pojawi się po połączeniu"
+  description: "Before the bridge answers"
+fixed:
+  value: "Ustawione przez aplikację"
+  description: "A setting a mount option fixes"
