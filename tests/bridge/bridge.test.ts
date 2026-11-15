@@ -1,5 +1,5 @@
 // tests/bridge/bridge.test.ts
-// B01-B05 against a real broker and a real MCP stdio client. Needs `just build` first (spawns dist/bridge-cli.js).
+// The bridge against a real broker and a real MCP stdio client. Needs `just build` first (spawns dist/bridge-cli.js).
 import { mkdtempSync, readFileSync, statSync, symlinkSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -52,7 +52,7 @@ afterAll(async () => {
   await broker?.close()
 })
 
-describe('B01 access control', () => {
+describe('access control', () => {
   it('requires the exact token, loopback host and an allowed origin', async () => {
     expect((await raw('/v1/health')).status).toBe(401)
     expect((await raw('/v1/health', { headers: { authorization: 'Bearer wrong' } })).status).toBe(401)
@@ -80,7 +80,7 @@ describe('B01 access control', () => {
   })
 })
 
-describe('B02 bounded input and containment', () => {
+describe('bounded input and containment', () => {
   it('rejects traversal ids, wrong content types and oversized bodies', async () => {
     expect((await raw('/v1/batches/..%2F..%2Fetc', { headers: auth() })).status).toBe(404)
     expect((await post('/v1/batches', { ...batch(), id: '../escape' })).status).toBe(422)
@@ -97,7 +97,7 @@ describe('B02 bounded input and containment', () => {
   })
 })
 
-describe('B03 B04 B05 MCP round trip', () => {
+describe('MCP round trip', () => {
   let client: Client
   let stderr = ''
 
@@ -126,7 +126,7 @@ describe('B03 B04 B05 MCP round trip', () => {
 
   it('lists the tools and only submitted batches', async () => {
     const tools = (await client.listTools()).tools.map(t => t.name).sort()
-    expect(tools).toEqual(['check_issue', 'get_batch', 'get_issue_evidence', 'get_selection', 'list_batches', 'next_work', 'report_result'])
+    expect(tools).toEqual(['check_issue', 'get_attachment', 'get_batch', 'get_issue_evidence', 'get_selection', 'list_batches', 'next_work', 'report_result'])
     const list = JSON.parse((await call('list_batches')).text)
     expect(list.map((b: { id: string }) => b.id)).toEqual(['bat_test1'])
     expect(list[0].issues.map((i: { state: string }) => i.state)).toEqual(['submitted', 'submitted'])
@@ -145,7 +145,7 @@ describe('B03 B04 B05 MCP round trip', () => {
   it('records results idempotently; an agent cannot accept', async () => {
     const r = await call('report_result', { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'needs-review', summary: 'Matched heights through the shared token', files: ['src/App.vue'], checks: [{ command: 'bun run typecheck', outcome: 'passed' }], result_id: 'r1' })
     expect(r.text).toMatch(/^recorded res_r1 as needs-review/)
-    expect((await call('report_result', { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'needs-review', summary: 'Matched heights through the shared token', files: ['src/App.vue'], checks: [{ command: 'bun run typecheck', outcome: 'passed' }], result_id: 'r1' })).text).toMatch(/already recorded|recorded/)
+    expect((await call('report_result', { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'needs-review', summary: 'Matched heights through the shared token', files: ['src/App.vue'], checks: [{ command: 'bun run typecheck', outcome: 'passed' }], result_id: 'r1' })).text).toBe('already recorded res_r1')
     const accept = await client.callTool({ name: 'report_result', arguments: { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'accepted', summary: 'done' } }) as { isError?: boolean }
     expect(accept.isError).toBe(true)
     // A process without an Origin cannot post a human review either.
@@ -156,11 +156,11 @@ describe('B03 B04 B05 MCP round trip', () => {
     expect(original).toEqual(JSON.parse(JSON.stringify(batch())))
   })
 
-  it('keeps human acceptance against a stale agent result', async () => {
-    expect((await post('/v1/batches/bat_test1/followups', { id: 'rev_ok', batchId: 'bat_test1', issueId: 'iss_one', kind: 'review', actor: 'human', state: 'accepted', text: '', createdAt: '2026-11-14T02:00:00Z' }, { origin: ORIGIN })).status).toBe(201)
-    await call('report_result', { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'needs-review', summary: 'late duplicate', result_id: 'late' })
+  it('takes no review from a page; the latest agent result is the state', async () => {
+    expect((await post('/v1/batches/bat_test1/followups', { id: 'rev_ok', batchId: 'bat_test1', issueId: 'iss_one', kind: 'review', actor: 'human', state: 'accepted', text: '', createdAt: '2026-11-14T02:00:00Z' }, { origin: ORIGIN })).status).toBe(403)
+    await call('report_result', { batch_id: 'bat_test1', issue_id: 'iss_one', state: 'blocked', result_id: 'late' })
     const list = JSON.parse((await call('list_batches')).text)
-    expect(list[0].issues[0].state).toBe('accepted')
+    expect(list[0].issues[0].state).toBe('blocked')
   })
 
   it('keeps diagnostics off stdout and reports a stopped broker honestly', async () => {

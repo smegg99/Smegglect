@@ -1,18 +1,17 @@
 // src/bridge/store.ts
-// The one writer of a project's .smegglect/ directory: atomic files, ids as the only path parts.
+// The one writer of a project's .smegglect/ directory: each file written once and whole, ids as path parts.
 
-import { randomBytes } from 'node:crypto'
-import { lstat, mkdir, readdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
-import { join, sep } from 'node:path'
-import type { Batch, FollowUp, Issue } from '../core/model'
+import { lstat, mkdir, readdir, readFile, realpath } from 'node:fs/promises'
+import { join } from 'node:path'
+import { ATTACHMENT_MAX_BYTES, attachmentExtension } from '../core/attachments'
+import type { Attachment, Batch, FollowUp, Issue } from '../core/model'
 import type { PresetRegistry } from '../core/presets'
-import { allowedState, issueState, type IssueState } from '../core/review'
+import { issueState, parseFollowUp, type IssueState } from '../core/review'
 import { scrub } from '../core/redact'
 import { canonicalJson } from '../core/task'
-import { checkBatch, isId, LIMITS } from '../core/validate'
-
-export const ATTACHMENT_LIMIT = 5 * 1024 * 1024
-const EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }
+import { isId } from '../core/limits'
+import { checkBatch } from '../core/validate'
+import { readRecord, storePath, sweepTemporary, writeOnce } from './store-files'
 
 export type Put = 'stored' | 'duplicate' | 'conflict' | 'invalid' | 'missing'
 
@@ -23,132 +22,217 @@ export interface BatchSummary {
   issues: { id: string, seq: number, preset: string, state: IssueState }[]
 }
 
-export class StoreError extends Error {}
+/** A follow-up as an agent reads it, under its issue: without the ids it is filed under. */
+export type IssueFollowUp = Omit<FollowUp, 'batchId' | 'issueId'>
 
-export async function openStore(projectRoot: string, registry: PresetRegistry) {
-  const base = join(await realpath(projectRoot), '.smegglect')
-  await mkdir(join(base, 'batches'), { recursive: true, mode: 0o700 })
-  const root = await realpath(base)
+/** An approved image the page uploaded, as the agent reads it: where the file is, never its name. */
+export interface StoredImage {
+  id: string
+  mime: string
+  size: number
+  /** `.smegglect/batches/<batch>/attachments/<id>.<ext>`, relative to the bridge root. */
+  path: string
+}
 
-  /** Path from validated ids only, verified to stay under the store and free of symlinks. */
-  async function path(...parts: string[]): Promise<string> {
-    for (const p of parts) if (!isId(p) && !/^[A-Za-z0-9_-]{1,64}\.(json|png|jpg|webp)$/.test(p)) throw new StoreError(`invalid path part ${JSON.stringify(p)}`)
-    const full = join(root, 'batches', ...parts)
-    if (!full.startsWith(root + sep)) throw new StoreError('path escapes the store')
-    let cur = root
-    for (const p of ['batches', ...parts.slice(0, -1)]) {
-      cur = join(cur, p)
-      const st = await lstat(cur).catch(() => null)
-      if (st?.isSymbolicLink()) throw new StoreError('symlink in store path')
-    }
-    return full
+/** One issue with its follow-ups, where it stands, and only the context of the batch it came in. */
+export interface IssueRecord {
+  issue: Issue
+  followUps: IssueFollowUp[]
+  state: IssueState
+  images: StoredImage[]
+  batch: { id: string, project: Batch['project'], provider?: Batch['provider'], submittedAt?: string }
+}
+
+export interface StoredFile {
+  mime: string
+  bytes: Buffer
+}
+
+export interface Store {
+  /** `<project>/.smegglect`, symlinks resolved. */
+  root: string
+  putBatch: (input: unknown) => Promise<Put>
+  getBatch: (id: string) => Promise<Batch | null>
+  followUps: (batchId: string) => Promise<FollowUp[]>
+  listBatches: () => Promise<BatchSummary[]>
+  issue: (batchId: string, issueId: string) => Promise<IssueRecord | null>
+  /** Appends; the same id with the same content, at any time, is a no-op, with other content a conflict. */
+  addFollowUp: (input: FollowUp) => Promise<Put>
+  putAttachment: (batchId: string, attachmentId: string, mime: string, bytes: Uint8Array) => Promise<Put>
+  /** An approved image's bytes; a pending one is never stored. */
+  attachment: (batchId: string, attachmentId: string) => Promise<StoredFile | null>
+  /** Each issue's approved images that the page uploaded, by issue id. */
+  images: (batchId: string) => Promise<Map<string, StoredImage[]>>
+}
+
+/** Writes a record once: the same content again is a duplicate, other content under its id a conflict. */
+async function putOnce(file: string, json: string, same: (stored: unknown) => boolean): Promise<Put> {
+  if (await writeOnce(file, json)) return 'stored'
+  return same(await readRecord(file)) ? 'duplicate' : 'conflict'
+}
+
+/** A batch the store holds, read again as any batch from outside is: one that does not check is absent. */
+async function getBatch(root: string, id: string): Promise<Batch | null> {
+  if (!isId(id)) return null
+  const checked = checkBatch(await readRecord(await storePath(root, id, 'batch.json')))
+  return checked.ok && checked.value.id === id ? checked.value : null
+}
+
+/** The batch's follow-ups, oldest first; a record that does not parse, or is filed elsewhere, is skipped. */
+async function followUps(root: string, batchId: string): Promise<FollowUp[]> {
+  if (!isId(batchId)) return []
+  const dir = await storePath(root, batchId, 'followups')
+  const names = await readdir(dir).catch(() => [] as string[])
+  const out: FollowUp[] = []
+  for (const name of names.filter(name => name.endsWith('.json'))) {
+    const followUp = parseFollowUp(await readRecord(await storePath(root, batchId, 'followups', name)))
+    if (followUp?.batchId === batchId && name === `${followUp.id}.json`) out.push(followUp)
   }
+  return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
+}
 
-  async function atomic(file: string, data: string | Uint8Array) {
-    const tmp = `${file}.${randomBytes(6).toString('hex')}.tmp`
-    await writeFile(tmp, data, { mode: 0o600, flag: 'wx' })
-    await rename(tmp, file)
-  }
+/** Checked as it will be stored: masking a secret may lengthen a text past its bound. */
+async function putBatch(root: string, registry: PresetRegistry, input: unknown): Promise<Put> {
+  const checked = checkBatch(scrub(input), registry)
+  if (!checked.ok || checked.value.status !== 'submitted') return 'invalid'
+  const batch = checked.value
+  await mkdir(await storePath(root, batch.id, 'followups'), { recursive: true, mode: 0o700 })
+  const json = canonicalJson(batch)
+  const file = await storePath(root, batch.id, 'batch.json')
+  return putOnce(file, json, stored => canonicalJson(stored) === json)
+}
 
-  async function read<T>(file: string): Promise<T | null> {
-    const st = await lstat(file).catch(() => null)
-    if (!st || st.isSymbolicLink() || !st.isFile()) return null
-    return JSON.parse(await readFile(file, 'utf8')) as T
-  }
-
-  async function getBatch(id: string): Promise<Batch | null> {
-    if (!isId(id)) return null
-    return read<Batch>(await path(id, 'batch.json'))
-  }
-
-  async function followUps(id: string): Promise<FollowUp[]> {
-    if (!isId(id)) return []
-    const dir = await path(id, 'followups')
-    const names = await readdir(dir).catch(() => [] as string[])
-    const out: FollowUp[] = []
-    for (const n of names.filter(n => n.endsWith('.json'))) {
-      const f = await read<FollowUp>(await path(id, 'followups', n))
-      if (f) out.push(f)
-    }
-    return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
-  }
-
+function summaryOf(batch: Batch, records: readonly FollowUp[]): BatchSummary {
   return {
-    root,
-    async putBatch(input: unknown): Promise<Put> {
-      const checked = checkBatch(input, registry)
-      if (!checked.ok || checked.value.status !== 'submitted') return 'invalid'
-      const batch = scrub(checked.value)
-      const file = await path(batch.id, 'batch.json')
-      const cur = await read<Batch>(file)
-      if (cur) return canonicalJson(cur) === canonicalJson(batch) ? 'duplicate' : 'conflict'
-      await mkdir(await path(batch.id), { recursive: true, mode: 0o700 })
-      await mkdir(await path(batch.id, 'followups'), { recursive: true, mode: 0o700 })
-      await atomic(file, canonicalJson(batch))
-      return 'stored'
-    },
-    getBatch,
-    followUps,
-    async listBatches(): Promise<BatchSummary[]> {
-      const ids = (await readdir(join(root, 'batches')).catch(() => [] as string[])).filter(isId)
-      const out: BatchSummary[] = []
-      for (const id of ids) {
-        // A symlinked or unreadable entry is skipped, never followed and never fatal for the listing.
-        const b = await getBatch(id).catch(() => null)
-        if (!b) continue
-        const f = await followUps(id)
-        out.push({
-          id: b.id,
-          project: b.project.id,
-          ...(b.submittedAt ? { submittedAt: b.submittedAt } : {}),
-          issues: b.issues.map(i => ({ id: i.id, seq: i.seq, preset: i.intent.preset.id, state: issueState(f, i.id) })),
-        })
-      }
-      return out.sort((a, b) => (b.submittedAt ?? '').localeCompare(a.submittedAt ?? ''))
-    },
-    async issue(batchId: string, issueId: string): Promise<{ batch: Batch, issue: Issue, followUps: FollowUp[], state: IssueState } | null> {
-      const b = await getBatch(batchId)
-      const issue = b?.issues.find(i => i.id === issueId)
-      if (!b || !issue) return null
-      const f = (await followUps(batchId)).filter(x => x.issueId === issueId)
-      return { batch: b, issue, followUps: f, state: issueState(f, issueId) }
-    },
-    /** Appends; the same id with the same content is a no-op, with other content a conflict. */
-    async addFollowUp(input: FollowUp): Promise<Put> {
-      if (!isId(input.id) || !isId(input.batchId) || !isId(input.issueId)) return 'invalid'
-      if (typeof input.text !== 'string' || input.text.length > LIMITS.note || !allowedState(input)) return 'invalid'
-      if (input.files && (!Array.isArray(input.files) || input.files.length > 50 || input.files.some(p => typeof p !== 'string' || p.startsWith('/') || p.includes('..') || p.length > 256))) return 'invalid'
-      if (input.checks && (!Array.isArray(input.checks) || input.checks.length > 20)) return 'invalid'
-      const b = await getBatch(input.batchId)
-      if (!b || !b.issues.some(i => i.id === input.issueId)) return 'missing'
-      const f = scrub(input)
-      const file = await path(f.batchId, 'followups', `${f.id}.json`)
-      const cur = await read<FollowUp>(file)
-      if (cur) return canonicalJson(cur) === canonicalJson(f) ? 'duplicate' : 'conflict'
-      await atomic(file, canonicalJson(f))
-      return 'stored'
-    },
-    async putAttachment(batchId: string, attId: string, mime: string, bytes: Uint8Array): Promise<Put> {
-      const b = await getBatch(batchId)
-      const a = b?.attachments.find(x => x.id === attId)
-      if (!b || !a) return 'missing'
-      if (a.review !== 'approved' || a.mime !== mime || !EXT[mime] || bytes.length > ATTACHMENT_LIMIT || bytes.length !== a.size) return 'invalid'
-      await mkdir(await path(batchId, 'attachments'), { recursive: true, mode: 0o700 })
-      const file = await path(batchId, 'attachments', `${attId}.${EXT[mime]}`)
-      if (await lstat(file).catch(() => null)) return 'duplicate'
-      await atomic(file, bytes)
-      return 'stored'
-    },
-    async attachment(batchId: string, attId: string): Promise<{ mime: string, bytes: Buffer } | null> {
-      const b = await getBatch(batchId)
-      const a = b?.attachments.find(x => x.id === attId)
-      if (!b || !a || !EXT[a.mime]) return null
-      const file = await path(batchId, 'attachments', `${attId}.${EXT[a.mime]}`)
-      const st = await lstat(file).catch(() => null)
-      if (!st || !st.isFile()) return null
-      return { mime: a.mime, bytes: await readFile(file) }
-    },
+    id: batch.id,
+    project: batch.project.id,
+    submittedAt: batch.submittedAt,
+    issues: batch.issues.map(issue => ({
+      id: issue.id,
+      seq: issue.seq,
+      preset: issue.intent.preset.id,
+      state: issueState(records, issue.id),
+    })),
   }
 }
 
-export type Store = Awaited<ReturnType<typeof openStore>>
+/** Newest first. */
+async function listBatches(root: string): Promise<BatchSummary[]> {
+  const ids = (await readdir(join(root, 'batches')).catch(() => [] as string[])).filter(isId)
+  const out: BatchSummary[] = []
+  for (const id of ids) {
+    // A symlinked or unreadable entry is skipped, never followed and never fatal for the listing.
+    const batch = await getBatch(root, id).catch(() => null)
+    if (batch) out.push(summaryOf(batch, await followUps(root, id)))
+  }
+  return out.sort((a, b) => (b.submittedAt ?? '').localeCompare(a.submittedAt ?? ''))
+}
+
+async function issueRecord(root: string, batchId: string, issueId: string): Promise<IssueRecord | null> {
+  const batch = await getBatch(root, batchId)
+  const issue = batch?.issues.find(candidate => candidate.id === issueId)
+  if (!batch || !issue) return null
+  const records = (await followUps(root, batchId)).filter(record => record.issueId === issueId)
+  const { id, project, provider, submittedAt } = batch
+  const context = { id, project, provider, submittedAt }
+  const filed = records.map(({ batchId: _batch, issueId: _issue, ...rest }) => rest)
+  const images = (await storedImages(root, batch)).get(issueId) ?? []
+  return { issue, followUps: filed, state: issueState(records, issueId), images, batch: context }
+}
+
+/** What a follow-up says, without when: a retry is stamped anew, and the first record stays. */
+function content(record: unknown): string | null {
+  const followUp = parseFollowUp(record)
+  return followUp && canonicalJson({ ...followUp, createdAt: undefined })
+}
+
+async function addFollowUp(root: string, input: FollowUp): Promise<Put> {
+  const followUp = parseFollowUp(scrub(input))
+  if (!followUp) return 'invalid'
+  const batch = await getBatch(root, followUp.batchId)
+  if (!batch?.issues.some(issue => issue.id === followUp.issueId)) return 'missing'
+  const file = await storePath(root, followUp.batchId, 'followups', `${followUp.id}.json`)
+  const said = content(followUp)
+  return putOnce(file, canonicalJson(followUp), stored => content(stored) === said)
+}
+
+async function putAttachment(
+  root: string,
+  batchId: string,
+  attachmentId: string,
+  mime: string,
+  bytes: Uint8Array,
+): Promise<Put> {
+  const batch = await getBatch(root, batchId)
+  const attachment = batch?.attachments.find(candidate => candidate.id === attachmentId)
+  if (!batch || !attachment) return 'missing'
+  const extension = attachmentExtension(mime)
+  const fits = attachment.review === 'approved'
+    && attachment.mime === mime
+    && bytes.length <= ATTACHMENT_MAX_BYTES
+    && bytes.length === attachment.size
+  if (!fits || extension === undefined) return 'invalid'
+  await mkdir(await storePath(root, batchId, 'attachments'), { recursive: true, mode: 0o700 })
+  const file = await storePath(root, batchId, 'attachments', `${attachmentId}.${extension}`)
+  // The page sends an image's bytes once; the same id again is that image again.
+  return await writeOnce(file, bytes) ? 'stored' : 'duplicate'
+}
+
+/** The file of an approved attachment the page uploaded, or null. */
+async function attachmentFile(root: string, batchId: string, attachment: Attachment): Promise<string | null> {
+  const extension = attachmentExtension(attachment.mime)
+  if (attachment.review !== 'approved' || extension === undefined) return null
+  const name = `${attachment.id}.${extension}`
+  const file = await storePath(root, batchId, 'attachments', name)
+  const stat = await lstat(file).catch(() => null)
+  return stat?.isFile() ? name : null
+}
+
+async function storedAttachment(
+  root: string,
+  batchId: string,
+  attachmentId: string,
+): Promise<StoredFile | null> {
+  const batch = await getBatch(root, batchId)
+  const attachment = batch?.attachments.find(candidate => candidate.id === attachmentId)
+  const name = attachment ? await attachmentFile(root, batchId, attachment) : null
+  if (!attachment || !name) return null
+  return { mime: attachment.mime, bytes: await readFile(await storePath(root, batchId, 'attachments', name)) }
+}
+
+async function storedImages(root: string, batch: Batch): Promise<Map<string, StoredImage[]>> {
+  const byIssue = new Map<string, StoredImage[]>()
+  for (const attachment of batch.attachments) {
+    const name = await attachmentFile(root, batch.id, attachment)
+    if (!name) continue
+    const { id, mime, size } = attachment
+    const path = ['.smegglect', 'batches', batch.id, 'attachments', name].join('/')
+    byIssue.set(attachment.issueId, [...byIssue.get(attachment.issueId) ?? [], { id, mime, size, path }])
+  }
+  return byIssue
+}
+
+/** Opening the store sweeps what a broker that stopped mid-write left. */
+export async function openStore(projectRoot: string, registry: PresetRegistry): Promise<Store> {
+  const base = join(await realpath(projectRoot), '.smegglect')
+  await mkdir(join(base, 'batches'), { recursive: true, mode: 0o700 })
+  const root = await realpath(base)
+  await sweepTemporary(root)
+  return {
+    root,
+    putBatch: input => putBatch(root, registry, input),
+    getBatch: id => getBatch(root, id),
+    followUps: batchId => followUps(root, batchId),
+    listBatches: () => listBatches(root),
+    issue: (batchId, issueId) => issueRecord(root, batchId, issueId),
+    addFollowUp: input => addFollowUp(root, input),
+    putAttachment: (batchId, attachmentId, mime, bytes) => {
+      return putAttachment(root, batchId, attachmentId, mime, bytes)
+    },
+    attachment: (batchId, attachmentId) => storedAttachment(root, batchId, attachmentId),
+    images: async (batchId) => {
+      const batch = await getBatch(root, batchId)
+      return batch ? storedImages(root, batch) : new Map()
+    },
+  }
+}

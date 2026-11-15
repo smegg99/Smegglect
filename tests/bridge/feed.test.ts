@@ -13,7 +13,7 @@ import { issue } from '../../src/core/validate.test'
 
 const ORIGIN = 'http://127.0.0.1:5199'
 
-interface Work { batchId: string, issueId: string, state: string, said?: string[] }
+interface Work { batch_id: string, issue_id: string, task: string, target: string }
 /** Response bodies as the tests read them. */
 type Body = { open: Work[], seq: number, events: { kind: string, id: string, request: unknown }[] } & Record<string, unknown>
 const brokers: Broker[] = []
@@ -38,9 +38,16 @@ function batch(id = 'bat_feed1'): Batch {
   }
 }
 
+/** A page names itself on the page channel and when it answers a check. */
+function asPage(path: string, page: string): string {
+  if (!/^\/v1\/(page\/next|checks\/)/.test(path)) return path
+  return `${path}${path.includes('?') ? '&' : '?'}page=${page}`
+}
+
 /** A page call carries the admitted Origin; an agent call carries none. */
-function call(b: Broker, method: string, path: string, opts: { page?: boolean, body?: unknown } = {}) {
-  return fetch(`${b.url}${path}`, {
+function call(b: Broker, method: string, path: string, opts: { page?: boolean, body?: unknown, id?: string } = {}) {
+  const target = opts.page ? asPage(path, opts.id ?? 'win_test') : path
+  return fetch(`${b.url}${target}`, {
     method,
     headers: {
       authorization: `Bearer ${b.token}`,
@@ -55,17 +62,16 @@ const result = (issueId: string, id: string) => ({ id, batchId: 'bat_feed1', iss
 const reopen = (issueId: string) => ({ id: 'rev_re', batchId: 'bat_feed1', issueId, kind: 'review', actor: 'human', state: 'reopened', reason: 'still-happens', text: 'Still 2px off on the right', createdAt: '2026-11-14T03:00:00Z' })
 
 describe('open work', () => {
-  it('lists sent issues until the agent reports, then a reopened one with what the person said', async () => {
+  it('lists sent issues until the agent reports; a page cannot record a follow-up', async () => {
     const { b } = await broker()
     expect((await call(b, 'POST', '/v1/batches', { page: true, body: batch() })).status).toBe(201)
     let work = (await call(b, 'GET', '/v1/work')).body.open
-    expect(work.map(w => [w.issueId, w.state])).toEqual([['iss_one', 'submitted'], ['iss_two', 'submitted']])
+    expect(work.map(w => w.issue_id)).toEqual(['iss_one', 'iss_two'])
     await call(b, 'POST', '/v1/batches/bat_feed1/followups', { body: result('iss_one', 'res_1') })
     work = (await call(b, 'GET', '/v1/work')).body.open
-    expect(work.map(w => w.issueId)).toEqual(['iss_two'])
-    await call(b, 'POST', '/v1/batches/bat_feed1/followups', { page: true, body: reopen('iss_one') })
-    work = (await call(b, 'GET', '/v1/work')).body.open
-    expect(work[0]).toMatchObject({ batchId: 'bat_feed1', issueId: 'iss_one', state: 'reopened', said: ['still-happens: Still 2px off on the right'] })
+    expect(work.map(w => w.issue_id)).toEqual(['iss_two'])
+    expect((await call(b, 'POST', '/v1/batches/bat_feed1/followups', { page: true, body: reopen('iss_two') })).status).toBe(403)
+    expect((await call(b, 'GET', '/v1/work')).body.open.map(w => w.issue_id)).toEqual(['iss_two'])
   })
 
   it('a waiting request returns as soon as work arrives, or empty when the wait ends', async () => {
@@ -89,9 +95,17 @@ describe('page channel', () => {
     expect(first.events).toEqual([])
     const waiting = call(b, 'GET', `/v1/page/next?after=${first.seq}&wait=10`, { page: true })
     setTimeout(() => void call(b, 'POST', '/v1/batches/bat_feed1/followups', { body: result('iss_two', 'res_2') }), 200)
-    const next = (await waiting).body
-    expect(next.events).toEqual([{ seq: first.seq + 1, kind: 'results', batchId: 'bat_feed1', actor: 'agent' }])
-    expect(next.seq).toBe(first.seq + 1)
+    // An agent's first call also says it is there: a status event, which may come in a poll of its own.
+    let next = (await waiting).body
+    const seen = [...next.events]
+    while (!seen.some(e => e.kind === 'results')) {
+      next = (await call(b, 'GET', `/v1/page/next?after=${next.seq}&wait=10`, { page: true })).body
+      seen.push(...next.events)
+    }
+    expect(seen.filter(e => e.kind !== 'status')).toEqual([
+      expect.objectContaining({ kind: 'results', batchId: 'bat_feed1' }),
+    ])
+    expect(next.seq).toBeGreaterThan(first.seq)
     expect((await call(b, 'GET', '/v1/page/next')).status).toBe(403)
   })
 })
@@ -134,7 +148,10 @@ describe('checks', () => {
     const close = page(b, request => ({ status: 'live', echo: request }))
     try {
       await new Promise(done => setTimeout(done, 100))
-      expect(await call(b, 'POST', '/v1/checks', { body: ask })).toEqual({ status: 200, body: { status: 'live', echo: ask } })
+      expect(await call(b, 'POST', '/v1/checks', { body: ask })).toEqual({
+        status: 200,
+        body: { status: 'live', echo: ask, answeredBy: { page: 'win_test', sentTheBatch: false } },
+      })
       expect((await call(b, 'POST', '/v1/checks', { page: true, body: ask })).status).toBe(403)
       expect((await call(b, 'POST', '/v1/checks', { body: { kind: 'issue', batchId: '../x', issueId: 'iss_one' } })).status).toBe(422)
       expect((await call(b, 'POST', '/v1/checks/chk_unknown', { body: {} })).status).toBe(403)
@@ -142,6 +159,84 @@ describe('checks', () => {
     }
     finally {
       close()
+    }
+  })
+})
+
+interface Seen {
+  checks: string[]
+  stop: () => void
+}
+
+/** A page with an id and a viewport that answers the checks put to it, after `delay` ms. */
+function pageAt(b: Broker, id: string, options: { width: number, focused?: boolean, observer?: boolean, delay?: number }): Seen {
+  const seen: Seen = { checks: [], stop: () => {} }
+  let stop = false
+  seen.stop = () => (stop = true)
+  const flags = `&visible=1${options.focused ? '&focused=1' : ''}${options.observer ? '&observer=1' : ''}`
+  void (async () => {
+    let after = (await call(b, 'GET', `/v1/page/next?page=${id}${flags}`)).body.seq
+    while (!stop) {
+      const res = (await call(b, 'GET', `/v1/page/next?page=${id}${flags}&after=${after}&wait=2`, { page: true, id })).body
+      after = res.seq
+      for (const e of res.events) {
+        if (e.kind !== 'check') continue
+        seen.checks.push(e.id)
+        await new Promise(done => setTimeout(done, options.delay ?? 0))
+        const conditions = { viewport: { width: options.width, height: 800 }, devicePixelRatio: 1, colorScheme: 'light' }
+        await call(b, 'POST', `/v1/checks/${e.id}`, { page: true, id, body: { status: 'live', conditions } })
+      }
+    }
+  })().catch(() => {})
+  return seen
+}
+
+describe('which page answers', () => {
+  it('asks the page that sent the batch first and returns its answer, with its viewport', async () => {
+    const { b } = await broker()
+    await call(b, 'POST', '/v1/batches', { page: true, body: batch() })
+    // The sender (win_1, in batch().window) is slower and not focused; the other page is quick and focused.
+    const sender = pageAt(b, 'win_1', { width: 768, delay: 300 })
+    const other = pageAt(b, 'win_phone', { width: 390, focused: true })
+    try {
+      await new Promise(done => setTimeout(done, 150))
+      const res = await call(b, 'POST', '/v1/checks', { body: { kind: 'issue', batchId: 'bat_feed1', issueId: 'iss_one' } })
+      expect(res.status).toBe(200)
+      expect(res.body).toMatchObject({
+        status: 'live',
+        conditions: { viewport: { width: 768 } },
+        answeredBy: { page: 'win_1', sentTheBatch: true },
+      })
+      // With no sender open, the focused page answers.
+      sender.stop()
+      await new Promise(done => setTimeout(done, 5200))
+      const next = await call(b, 'POST', '/v1/checks', { body: { kind: 'selection' } })
+      expect(next.body).toMatchObject({ conditions: { viewport: { width: 390 } }, answeredBy: { page: 'win_phone' } })
+    }
+    finally {
+      sender.stop()
+      other.stop()
+    }
+  }, 15_000)
+
+  it('never asks an observer page', async () => {
+    const { b } = await broker()
+    await call(b, 'POST', '/v1/batches', { page: true, body: batch() })
+    const observer = pageAt(b, 'win_robot', { width: 1280, observer: true })
+    try {
+      await new Promise(done => setTimeout(done, 150))
+      // An observer alone is no page to ask.
+      expect((await call(b, 'POST', '/v1/checks', { body: { kind: 'selection' } })).status).toBe(409)
+      const real = pageAt(b, 'win_1', { width: 768 })
+      await new Promise(done => setTimeout(done, 150))
+      const res = await call(b, 'POST', '/v1/checks', { body: { kind: 'issue', batchId: 'bat_feed1', issueId: 'iss_one' } })
+      expect(res.body).toMatchObject({ answeredBy: { page: 'win_1' } })
+      real.stop()
+      expect(observer.checks).toEqual([])
+      expect((await call(b, 'POST', '/v1/checks/chk_any', { page: true, id: 'win_robot', body: {} })).status).toBe(404)
+    }
+    finally {
+      observer.stop()
     }
   })
 })
@@ -159,9 +254,9 @@ describe('MCP tools for the loop', () => {
     }
     try {
       const names = (await client.listTools()).tools.map(t => t.name).sort()
-      expect(names).toEqual(['check_issue', 'get_batch', 'get_issue_evidence', 'get_selection', 'list_batches', 'next_work', 'report_result'])
+      expect(names).toEqual(['check_issue', 'get_attachment', 'get_batch', 'get_issue_evidence', 'get_selection', 'list_batches', 'next_work', 'report_result'])
       const work = JSON.parse((await tool('next_work')).text)
-      expect((work.open as Work[]).map(w => w.issueId)).toEqual(['iss_one', 'iss_two'])
+      expect((work.open as Work[]).map(w => w.issue_id)).toEqual(['iss_one', 'iss_two'])
       const none = await tool('check_issue', { batch_id: 'bat_feed1', issue_id: 'iss_one' })
       expect(none.isError).toBe(true)
       expect(none.text).toMatch(/no page/i)
