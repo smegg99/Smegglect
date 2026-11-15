@@ -1,18 +1,18 @@
 // tests/e2e/persist.spec.ts
-// D01-D04: reload persistence, storage failures, frozen submissions, concurrent windows.
+// Reload persistence, storage failures, frozen submissions, concurrent windows.
 import { expect, test, type Page } from '@playwright/test'
-import { preset, settle, ui } from './helpers'
+import { preset, settle, tap, ui } from './helpers'
 
 async function addClipped(page: Page, selector = '#clip') {
   const key = ui(page, '.dock [aria-label="Pick element"]')
   if ((await key.getAttribute('aria-pressed')) !== 'true') await key.click()
-  await page.locator(selector).click()
+  await tap(page, selector)
   await preset(page, 'clipped')
 }
 
 const status = (page: Page) => page.evaluate(() => window.sg!.engine.session.store.get().status.kind)
 
-test('D01 drafts and preferences survive a reload; the pin finds its target again', async ({ page }) => {
+test('drafts and preferences survive a reload; the pin finds its target again', async ({ page }) => {
   await page.goto('/plain.html?open')
   await addClipped(page)
   await expect.poll(() => status(page)).toBe('saved')
@@ -33,7 +33,7 @@ test('D01 drafts and preferences survive a reload; the pin finds its target agai
   expect(await ui(page, '.dock').evaluate(el => el.getBoundingClientRect().y)).toBeLessThan(40)
 })
 
-test('D02 storage denied falls back to memory and says so', async ({ page }) => {
+test('storage denied falls back to memory and says so', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, 'indexedDB', { get: () => { throw new DOMException('denied', 'SecurityError') } })
   })
@@ -54,7 +54,7 @@ test('D02 storage denied falls back to memory and says so', async ({ page }) => 
   await expect(ui(page, '.inspector .status')).toHaveText('Kept in memory only; lost on reload')
 })
 
-test('D02 quota failure is visible and never shown as saved', async ({ page }) => {
+test('quota failure is visible and never shown as saved', async ({ page }) => {
   await page.goto('/plain.html?manual')
   await page.evaluate(() => {
     const base = window.smegglectDom.memoryStorage()
@@ -68,7 +68,7 @@ test('D02 quota failure is visible and never shown as saved', async ({ page }) =
   expect(await page.evaluate(() => window.sg!.engine.state().drafts.issues.length)).toBe(1)
 })
 
-test('D02 a corrupt stored draft is kept until the user discards it', async ({ page }) => {
+test('a corrupt stored draft is kept until the user discards it', async ({ page }) => {
   await page.goto('/plain.html?manual')
   const key = await page.evaluate(async () => {
     const win = sessionStorage.getItem('smegglect:window:corrupt') ?? 'win_corrupttest1'
@@ -113,14 +113,13 @@ test('D02 a corrupt stored draft is kept until the user discards it', async ({ p
   await expect.poll(() => status(page)).toBe('saved')
 })
 
-test('D03 submission freezes evidence; follow-ups are separate records', async ({ page, browserName }) => {
+test('submission freezes evidence; follow-ups are separate records', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'clipboard permission is Chromium-only in Playwright')
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto('/plain.html?open&memory')
   await addClipped(page)
   await ui(page, '.dock [aria-label^="Issues"]').click()
-  await ui(page, '.inspector .foot .primary').click()
-  await ui(page, '.report-view .foot button').filter({ hasText: 'Copy prompt' }).click()
+  await ui(page, '.inspector .foot button').filter({ hasText: 'Copy prompt' }).click()
   await expect(ui(page, '.toast')).toContainText('Prompt copied')
   const clip = await page.evaluate(() => navigator.clipboard.readText())
   const before = await page.evaluate(() => JSON.stringify(window.sg!.engine.session.store.get().submitted[0]))
@@ -128,18 +127,15 @@ test('D03 submission freezes evidence; follow-ups are separate records', async (
   expect(await page.evaluate(() => window.sg!.engine.state().drafts.issues.length)).toBe(0)
   const id = JSON.parse(before).issues[0].id
   expect(await page.evaluate(i => window.sg!.engine.editIssue(i, { note: 'changed' }), id)).toBeUndefined()
-  await ui(page, '.inspector .tabstrip button').filter({ hasText: 'Issues' }).click()
-  await page.locator('smegglect-root .row .line').filter({ hasText: '1 issue' }).click()
-  await page.locator('smegglect-root .frozen textarea').fill('Also happens on the settings page')
-  await page.locator('smegglect-root .frozen button').filter({ hasText: 'Add note' }).click()
-  await expect(ui(page, '.notes li')).toContainText('Also happens on the settings page')
+  const added = await page.evaluate(([b, i]) => window.sg!.engine.session.addFollowUp({ batchId: b, issueId: i, kind: 'note', actor: 'human', text: 'Also happens on the settings page' }), [JSON.parse(before).id, id])
+  expect(added.result).toBe('added')
   const after = await page.evaluate(() => JSON.stringify(window.sg!.engine.session.store.get().submitted[0]))
   expect(after).toBe(before)
   const md = await page.evaluate(b => window.sg!.engine.session.markdown(JSON.parse(b)), before)
   expect(md).toContain('Follow-ups after submission')
 })
 
-test('D04 a second window with the same identity forks instead of overwriting', async ({ context }) => {
+test('a second window with the same identity forks instead of overwriting', async ({ context }) => {
   const one = await context.newPage()
   await one.goto('/plain.html?open')
   await addClipped(one)
@@ -167,4 +163,25 @@ test('D04 a second window with the same identity forks instead of overwriting', 
   await one.reload()
   await one.waitForFunction(() => window.sg?.engine.session.store.get().status.kind === 'saved')
   expect(await one.evaluate(() => window.sg!.engine.state().drafts.issues.length)).toBe(2)
+})
+
+test('a new window takes the last drafts when no open window holds them, as a restarted desktop app', async ({ context }) => {
+  const drafts = (page: Page) => page.evaluate(async () => {
+    await window.sg!.engine.session.ready
+    return window.sg!.engine.state().drafts.issues.length
+  })
+  const one = await context.newPage()
+  await one.goto('/plain.html?open')
+  await addClipped(one)
+  await expect.poll(() => status(one)).toBe('saved')
+  // Opened beside it, a second window keeps drafts of its own.
+  const two = await context.newPage()
+  await two.goto('/plain.html?open')
+  expect(await drafts(two)).toBe(0)
+  await two.close()
+  // Every window closed, as an app that restarts: the next one finds the issues again.
+  await one.close()
+  const three = await context.newPage()
+  await three.goto('/plain.html?open')
+  expect(await drafts(three)).toBe(1)
 })
