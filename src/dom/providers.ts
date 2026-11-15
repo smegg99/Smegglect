@@ -7,7 +7,7 @@ import { checkSource } from '../core/validate'
 
 export interface SourceProvider {
   name: string
-  source: (el: Element) => SourceRef | null | Promise<SourceRef | null>
+  source: (element: Element) => SourceRef | null | Promise<SourceRef | null>
 }
 
 export interface ContextProvider {
@@ -17,11 +17,15 @@ export interface ContextProvider {
   read: (signal: AbortSignal) => Record<string, unknown> | Promise<Record<string, unknown>>
 }
 
-export const PROVIDER_TIMEOUT_MS = 250
+/** Longest wait for one provider; a slower one is reported as timed out. */
+const PROVIDER_TIMEOUT_MS = 250
 
 export const VISUAL_ONLY: SourceRef = { quality: 'visual-only', provenance: 'none' }
 
-async function bounded<T>(work: (signal: AbortSignal) => T | Promise<T>, ms: number): Promise<T | 'timeout' | 'failed'> {
+async function bounded<T>(
+  work: (signal: AbortSignal) => T | Promise<T>,
+  ms: number,
+): Promise<T | 'timeout' | 'failed'> {
   const ctl = new AbortController()
   let timer: ReturnType<typeof setTimeout> | undefined
   try {
@@ -33,6 +37,7 @@ async function bounded<T>(work: (signal: AbortSignal) => T | Promise<T>, ms: num
     ])
   }
   catch {
+    // A provider that throws is reported as failed; enrichment never stops the capture it enriches.
     return 'failed'
   }
   finally {
@@ -41,38 +46,38 @@ async function bounded<T>(work: (signal: AbortSignal) => T | Promise<T>, ms: num
   }
 }
 
-export async function sourceOf(el: Element, providers: readonly SourceProvider[]): Promise<SourceRef> {
-  for (const p of providers) {
-    const got = await bounded(() => p.source(el), PROVIDER_TIMEOUT_MS)
+export async function sourceOf(element: Element, providers: readonly SourceProvider[]): Promise<SourceRef> {
+  for (const provider of providers) {
+    const got = await bounded(() => provider.source(element), PROVIDER_TIMEOUT_MS)
     if (!got || got === 'timeout' || got === 'failed') continue
     const problems: string[] = []
-    checkSource(got, p.name, problems)
+    checkSource(got, provider.name, problems)
     if (problems.length) continue
     return { ...got, provenance: cleanText(got.provenance, 64) }
   }
   return VISUAL_ONLY
 }
 
-function safeValue(v: unknown): string | number | boolean | undefined {
-  if (typeof v === 'boolean') return v
-  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined
-  if (typeof v === 'string') return cleanText(maskSecrets(v), 120)
+function safeValue(value: unknown): string | number | boolean | undefined {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined
+  if (typeof value === 'string') return cleanText(maskSecrets(value), 120)
   return undefined
 }
 
 export async function contextOf(providers: readonly ContextProvider[]): Promise<ContextEntry[]> {
   const out: ContextEntry[] = []
-  for (const p of providers) {
-    const got = await bounded(signal => p.read(signal), PROVIDER_TIMEOUT_MS)
-    const name = cleanText(p.name, 48)
+  for (const provider of providers) {
+    const got = await bounded(signal => provider.read(signal), PROVIDER_TIMEOUT_MS)
+    const name = cleanText(provider.name, 48)
     if (got === 'timeout' || got === 'failed' || !got || typeof got !== 'object') {
       out.push({ provider: name, fields: {}, status: got === 'timeout' ? 'timeout' : 'failed' })
       continue
     }
     const fields: ContextEntry['fields'] = {}
-    for (const key of p.fields.slice(0, 16)) {
-      const v = safeValue((got as Record<string, unknown>)[key])
-      if (v !== undefined) fields[cleanText(key, 48)] = v
+    for (const key of provider.fields.slice(0, 16)) {
+      const value = safeValue((got as Record<string, unknown>)[key])
+      if (value !== undefined) fields[cleanText(key, 48)] = value
     }
     out.push({ provider: name, fields })
   }

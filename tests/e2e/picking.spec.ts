@@ -1,7 +1,7 @@
 // tests/e2e/picking.spec.ts
-// P01-P10: selection without activating host controls, boundaries, groups, identity.
+// Selection without activating host controls, boundaries, groups, identity.
 import { expect, test, type Page } from '@playwright/test'
-import { events, preset, settle, ui } from './helpers'
+import { events, preset, settle, tap, ui } from './helpers'
 
 async function pickMode(page: Page) {
   const key = ui(page, '.dock [aria-label="Pick element"]')
@@ -20,7 +20,7 @@ test.describe('plain host', () => {
     await events(page)
   })
 
-  test('P01 picking a submit button, checkbox and link activates none of them', async ({ page }) => {
+  test('picking a submit button, checkbox and link activates none of them', async ({ page }) => {
     const url = page.url()
     // Each pick ends pick mode, so it is switched on again for every target.
     await pickMode(page)
@@ -40,7 +40,7 @@ test.describe('plain host', () => {
     expect(await chip(page)).toMatch(/^input/)
   })
 
-  test('P01 the click that ends a one-shot pick never reaches the host', async ({ page }) => {
+  test('the click that ends a one-shot pick never reaches the host', async ({ page }) => {
     const url = page.url()
     for (const target of ['#express', '#submit', '#link']) {
       await pickMode(page)
@@ -56,7 +56,7 @@ test.describe('plain host', () => {
     expect(await page.isChecked('#express')).toBe(true)
   })
 
-  test('review 5: a long press while picking still never reaches the host', async ({ page }) => {
+  test('a long press while picking still never reaches the host', async ({ page }) => {
     await pickMode(page)
     const b = (await page.locator('#express').boundingBox())!
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
@@ -68,7 +68,7 @@ test.describe('plain host', () => {
     expect(await chip(page)).toMatch(/^input/)
   })
 
-  test('review 4: Add to group switches off when picking ends', async ({ page }) => {
+  test('Add to group switches off when picking ends', async ({ page }) => {
     await pickMode(page)
     await page.click('#box-a')
     await ui(page, '.inspector .target [aria-label="Add to group with each pick"]').click()
@@ -77,12 +77,12 @@ test.describe('plain host', () => {
     await page.keyboard.press('Escape')
     expect(await page.evaluate(() => window.sg!.engine.state().extend)).toBe(false)
     await pickMode(page)
-    await page.click('#submit')
+    await tap(page, '#submit')
     expect(await chip(page)).toBe('button "Save order"')
     await expect(ui(page, '.dock [aria-label="Pick element"]')).toHaveAttribute('aria-pressed', 'false')
   })
 
-  test('P02 leaving pick mode restores clicks, typing and scrolling', async ({ page }) => {
+  test('leaving pick mode restores clicks, typing and scrolling', async ({ page }) => {
     await pickMode(page)
     await page.click('#cancel')
     await expect(ui(page, '.dock [aria-label="Pick element"]')).toHaveAttribute('aria-pressed', 'false')
@@ -96,7 +96,7 @@ test.describe('plain host', () => {
     await page.waitForFunction(() => window.scrollY > 0 || document.documentElement.scrollHeight <= innerHeight)
   })
 
-  test('P03 toolkit controls operate the toolkit and are never inspected', async ({ page }) => {
+  test('toolkit controls operate the toolkit and are never inspected', async ({ page }) => {
     await pickMode(page)
     await page.click('#cancel')
     await ui(page, '.dock [aria-label="Measurements"]').click()
@@ -106,7 +106,7 @@ test.describe('plain host', () => {
     expect(await chip(page)).toBe('button "Cancel"')
   })
 
-  test('P04 shift-click and the group toggle build a group; parent escalates', async ({ page }) => {
+  test('shift-click and the group toggle build a group; parent escalates', async ({ page }) => {
     await pickMode(page)
     await page.click('#box-a')
     await pickMode(page)
@@ -119,11 +119,11 @@ test.describe('plain host', () => {
     await ui(page, '.inspector .target [aria-label="Add to group with each pick"]').click()
     await page.click('#box-a')
     expect(await chip(page)).toBe('2 elements')
-    await page.click('#submit')
+    await tap(page, '#submit')
     expect(await chip(page)).toBe('3 elements')
   })
 
-  test('P04 parent escalation from an svg child to its button', async ({ page }) => {
+  test('parent escalation from an svg child to its button', async ({ page }) => {
     await page.goto('/workbench.html?open')
     await pickMode(page)
     await page.locator('.rail .rk').nth(1).locator('svg path').click({ force: true })
@@ -132,7 +132,7 @@ test.describe('plain host', () => {
     expect(await chip(page)).toBe('button "Rooms"')
   })
 
-  test('P08 native modal dialog: pick by shortcut inside it, Escape cancels Smegglect first', async ({ page }) => {
+  test('native modal dialog: pick by shortcut inside it, Escape cancels Smegglect first', async ({ page }) => {
     await page.click('#open-dialog')
     await expect(page.locator('#dialog')).toBeVisible()
     // Escape while picking ends the pick mode; the host dialog does not see it.
@@ -152,7 +152,7 @@ test.describe('plain host', () => {
     expect(host).toEqual({ open: true, dialogOpen: true })
   })
 
-  test('P09 a region keeps its document position when the page scrolls', async ({ page }) => {
+  test('a region keeps its document position when the page scrolls', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 400 })
     await ui(page, '.dock [aria-label="Draw region"]').click()
     await page.mouse.move(100, 100)
@@ -168,7 +168,7 @@ test.describe('plain host', () => {
   })
 })
 
-test('P05 open shadow content is selectable; P06 closed roots and frames are boundaries', async ({ page }) => {
+test('open shadow content is selectable; P06 closed roots and frames are boundaries', async ({ page }) => {
   await page.goto('/boundaries.html')
   await expect(ui(page, '.dock')).toBeVisible()
   await pickMode(page)
@@ -193,7 +193,7 @@ test('P05 open shadow content is selectable; P06 closed roots and frames are bou
   await expect(ui(page, '.inspector .target .notice')).toContainText('Frame content')
 })
 
-test('P01 pointerdown-driven host handlers do not run while picking', async ({ page }) => {
+test('pointerdown-driven host handlers do not run while picking', async ({ page }) => {
   await page.goto('/boundaries.html')
   await pickMode(page)
   await page.click('#toggle')
@@ -202,7 +202,7 @@ test('P01 pointerdown-driven host handlers do not run while picking', async ({ p
 })
 
 test.describe('vue host', () => {
-  test('P07 teleported menu and CSS dialog content can be picked', async ({ page }) => {
+  test('teleported menu and CSS dialog content can be picked', async ({ page }) => {
     await page.goto('/vue.html?open')
     await page.click('#open-menu')
     await pickMode(page)
@@ -211,7 +211,7 @@ test.describe('vue host', () => {
     await expect(page.locator('#menu')).toBeVisible()
   })
 
-  test('P10 repeated rows keep their own identity through reorder and removal', async ({ page }) => {
+  test('repeated rows keep their own identity through reorder and removal', async ({ page }) => {
     await page.goto('/vue.html?open')
     await pickMode(page)
     await page.locator('.item-row').nth(1).locator('.remove').click()

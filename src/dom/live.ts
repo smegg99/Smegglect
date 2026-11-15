@@ -2,8 +2,9 @@
 // Frame-coalesced geometry for the current selection, candidate and pins. Idle when nothing is tracked.
 
 import type { Rect } from '../core/model'
-import { rectOf } from './capture'
+import { rectOf, rendered } from './capture'
 import type { Scope } from './scope'
+import type { HostWindow } from './window'
 
 export interface Tracked {
   /** Elements whose resize should trigger a sample. */
@@ -18,9 +19,6 @@ export interface Tracked {
 export interface LiveTracker {
   /** Re-reads the tracked set and starts or stops listening. */
   sync: () => void
-  /** Request one sample on the next frame. */
-  request: () => void
-  readonly listening: boolean
 }
 
 export function sameRect(a: Rect | null | undefined, b: Rect | null | undefined): boolean {
@@ -28,76 +26,123 @@ export function sameRect(a: Rect | null | undefined, b: Rect | null | undefined)
   return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
 }
 
-export function rectOrNull(el: Element | null | undefined): Rect | null {
-  return el && el.isConnected ? rectOf(el) : null
+export function rectOrNull(element: Element | null | undefined): Rect | null {
+  return element && rendered(element) ? rectOf(element) : null
 }
 
-export function createTracker(win: Window & typeof globalThis, parent: Scope, tracked: () => Tracked, sample: () => void): LiveTracker {
-  let scope: Scope | null = null
-  let observer: ResizeObserver | null = null
-  let observed = new Set<Element>()
-  let mutations: MutationObserver | null = null
-  let cancel: (() => void) | null = null
+/** What the tracker's functions share: its inputs, and what it listens with while anything is tracked. */
+interface TrackerState {
+  win: HostWindow
+  parent: Scope
+  tracked: () => Tracked
+  sample: () => void
+  /** Present while listening; disposing it removes every listener and observer below. */
+  scope: Scope | null
+  observer: ResizeObserver | null
+  observed: Set<Element>
+  /** Present while added and removed nodes are watched; stops the watching and leaves the scope. */
+  unwatch: (() => void) | null
+  /** `continuous` as of the last sync: every change to it syncs, so a frame need not build the set again. */
+  continuous: boolean
+  /** Cancels the sample requested for the next frame. */
+  cancel: (() => void) | null
+}
 
-  function frame() {
-    cancel = null
-    if (!scope) return
-    sample()
-    if (tracked().continuous) request()
-  }
+function onFrame(state: TrackerState): void {
+  state.cancel = null
+  if (!state.scope) return
+  state.sample()
+  if (state.continuous) requestSample(state)
+}
 
-  function request() {
-    if (!scope || cancel) return
-    cancel = scope.frame(frame)
-  }
+function requestSample(state: TrackerState): void {
+  if (!state.scope || state.cancel) return
+  state.cancel = state.scope.frame(() => onFrame(state))
+}
 
-  function observe(elements: readonly Element[]) {
-    if (!observer) return
-    const next = new Set(elements)
-    for (const el of observed) if (!next.has(el)) observer.unobserve(el)
-    // Border box: padding and border changes move the drawn outline even when the content box keeps its size.
-    for (const el of next) if (!observed.has(el)) observer.observe(el, { box: 'border-box' })
-    observed = next
-  }
+function observe(state: TrackerState, elements: readonly Element[]): void {
+  const { observer, observed } = state
+  if (!observer) return
+  const next = new Set(elements)
+  for (const element of observed) if (!next.has(element)) observer.unobserve(element)
+  // Border box: padding and border changes move the drawn outline even when the content box keeps its size.
+  for (const element of next) if (!observed.has(element)) observer.observe(element, { box: 'border-box' })
+  state.observed = next
+}
 
-  return {
-    sync() {
-      const t = tracked()
-      if (!t.any) {
-        scope?.dispose()
-        scope = null
-        observer = null
-        mutations = null
-        observed = new Set()
-        cancel = null
-        return
-      }
-      if (!scope) {
-        scope = parent.child()
-        const opts = { capture: true, passive: true }
-        scope.listen(win, 'scroll', request, opts)
-        scope.listen(win, 'resize', request, { passive: true })
-        if (win.visualViewport) scope.listen(win.visualViewport, 'resize', request, { passive: true })
-        scope.listen(win, 'popstate', request)
-        scope.listen(win, 'hashchange', request)
-        if (typeof win.ResizeObserver === 'function') observer = scope.observe(new win.ResizeObserver(request))
-      }
-      observe(t.elements)
-      if (t.structure && !mutations && typeof win.MutationObserver === 'function') {
-        mutations = new win.MutationObserver(request)
-        mutations.observe(win.document.documentElement, { childList: true, subtree: true })
-        const own = mutations
-        scope.add(() => own.disconnect())
-      }
-      else if (!t.structure && mutations) {
-        mutations.disconnect()
-        mutations = null
-      }
-      request()
-    },
-    request,
-    get listening() {
-      return scope !== null
-    },
+/** Nothing is tracked: every listener and observer goes. */
+function stopTracking(state: TrackerState): void {
+  state.scope?.dispose()
+  state.scope = null
+  state.observer = null
+  state.unwatch = null
+  state.observed = new Set()
+  state.continuous = false
+  state.cancel = null
+}
+
+/** Starts listening for whatever moves a tracked box: scrolling, resizing and history changes. */
+function startListening(state: TrackerState, request: () => void): Scope {
+  const win = state.win
+  const scope = state.parent.child()
+  state.scope = scope
+  const opts = { capture: true, passive: true }
+  scope.listen(win, 'scroll', request, opts)
+  scope.listen(win, 'resize', request, { passive: true })
+  if (win.visualViewport) scope.listen(win.visualViewport, 'resize', request, { passive: true })
+  scope.listen(win, 'popstate', request)
+  scope.listen(win, 'hashchange', request)
+  if (typeof win.ResizeObserver === 'function') state.observer = scope.observe(
+    new win.ResizeObserver(request),
+  )
+  return scope
+}
+
+function watchStructure(state: TrackerState, scope: Scope, structure: boolean, request: () => void): void {
+  const win = state.win
+  if (structure && !state.unwatch && typeof win.MutationObserver === 'function') {
+    const own = new win.MutationObserver(request)
+    own.observe(win.document.documentElement, { childList: true, subtree: true })
+    state.unwatch = scope.add(() => own.disconnect())
   }
+  else if (!structure && state.unwatch) {
+    state.unwatch()
+    state.unwatch = null
+  }
+}
+
+function sync(state: TrackerState, request: () => void): void {
+  const wanted = state.tracked()
+  if (!wanted.any) {
+    stopTracking(state)
+    return
+  }
+  const scope = state.scope ?? startListening(state, request)
+  state.continuous = wanted.continuous
+  observe(state, wanted.elements)
+  watchStructure(state, scope, wanted.structure, request)
+  request()
+}
+
+export function createTracker(
+  win: HostWindow,
+  parent: Scope,
+  tracked: () => Tracked,
+  sample: () => void,
+): LiveTracker {
+  const state: TrackerState = {
+    win,
+    parent,
+    tracked,
+    sample,
+    scope: null,
+    observer: null,
+    observed: new Set(),
+    unwatch: null,
+    continuous: false,
+    cancel: null,
+  }
+  // Every listener and observer calls this one function.
+  const request = () => requestSample(state)
+  return { sync: () => sync(state, request) }
 }

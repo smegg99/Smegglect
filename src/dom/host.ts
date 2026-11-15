@@ -27,23 +27,20 @@ export interface OwnedHost {
   element: HTMLElement
   shadow: ShadowRoot
   mountPoint: HTMLElement
-  /** True for the host element and anything inside its shadow tree. */
-  owns: (node: EventTarget | null) => boolean
   /** True when the event passed through Smegglect's own tree. */
   inPath: (event: Event) => boolean
   /** Moves the host to the top of the top layer, above host dialogs and popovers opened since. */
   raise: () => void
-  topLayer: boolean
   destroy: () => void
 }
 
-export interface HostOptions {
+interface HostOptions {
   instance: string
   styles: readonly string[]
 }
 
-function supportsPopover(el: HTMLElement): boolean {
-  return typeof el.showPopover === 'function' && typeof el.hidePopover === 'function'
+function supportsPopover(element: HTMLElement): boolean {
+  return typeof element.showPopover === 'function' && typeof element.hidePopover === 'function'
 }
 
 function adopt(doc: Document, shadow: ShadowRoot, css: readonly string[]) {
@@ -89,19 +86,12 @@ export function createHost(doc: Document, options: HostOptions): OwnedHost {
   }
   raise()
 
-  const owns = (node: EventTarget | null): boolean => {
-    if (!node || !(node instanceof doc.defaultView!.Node)) return false
-    return node === element || node.getRootNode() === shadow
-  }
-
   return {
     element,
     shadow,
     mountPoint,
-    owns,
     inPath: event => event.composedPath().includes(element),
     raise,
-    topLayer,
     destroy() {
       if (topLayer && element.matches(':popover-open')) element.hidePopover()
       element.remove()

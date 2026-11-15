@@ -1,14 +1,13 @@
 // tests/e2e/measure.spec.ts
-// M01-M05: rendered bounds in CSS pixels, transforms, DPR, pairwise direction, live updates.
+// Rendered bounds in CSS pixels, transforms, DPR, pairwise direction, live updates.
 import { expect, test, type Page } from '@playwright/test'
-import { instrument, owned, preset, settle, tile, ui } from './helpers'
+import { action, instrument, owned, pick as pickElement, preset, settle, ui } from './helpers'
 
 const TOLERANCE = 0.01
 
+/** Picks, then waits until the guides are drawn, since the readings are taken from them. */
 async function pick(page: Page, selector: string, opts: { shift?: boolean } = {}) {
-  const key = ui(page, '.dock [aria-label="Pick element"]')
-  if ((await key.getAttribute('aria-pressed')) !== 'true') await key.click()
-  await page.locator(selector).click(opts.shift ? { modifiers: ['Shift'] } : {})
+  await pickElement(page, selector, opts)
   await settle(page)
 }
 
@@ -30,7 +29,7 @@ function close(a: Record<string, number>, b: Record<string, number>) {
   for (const k of Object.keys(b)) expect(Math.abs((a[k] ?? NaN) - (b[k] ?? NaN)), k).toBeLessThanOrEqual(TOLERANCE)
 }
 
-test('M01 guides equal rendered bounds, through window scroll', async ({ page }) => {
+test('guides equal rendered bounds, through window scroll', async ({ page }) => {
   await page.goto('/plain.html?open')
   await pick(page, '#box-a')
   close(await guideA(page), await bounds(page, '#box-a'))
@@ -41,13 +40,13 @@ test('M01 guides equal rendered bounds, through window scroll', async ({ page })
   close(await guideA(page), await bounds(page, '#box-a'))
 })
 
-test('M02 transforms are rendered bounds and DPR 2 is not double scaled', async ({ browser }) => {
+test('transforms are rendered bounds and DPR 2 is not double scaled', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 800, height: 600 }, deviceScaleFactor: 2 })
   const page = await context.newPage()
   await page.goto('/plain.html?open')
   await pick(page, '#box-c')
   close(await guideA(page), await bounds(page, '#box-c'))
-  await preset(page, 'size', { choice: 'Too wide' })
+  await preset(page, 'size')
   const ev = await page.evaluate(() => window.sg!.engine.state().drafts.issues[0]!.evidence)
   expect(ev.a.transformed).toBe(true)
   expect(ev.capture.devicePixelRatio).toBe(2)
@@ -55,18 +54,18 @@ test('M02 transforms are rendered bounds and DPR 2 is not double scaled', async 
   await context.close()
 })
 
-test('M03 M04 match height keeps A as target and B as reference with exact deltas', async ({ page }) => {
+test('match height keeps A as target and B as reference with exact deltas', async ({ page }) => {
   await page.goto('/plain.html?open')
   await pick(page, '#box-a')
-  await tile(page, 'match-height').click()
+  await (await action(page, 'match-height')).click()
   await expect(ui(page, '.inspector .waiting')).toContainText('Pick B')
   await page.locator('#box-b').hover()
   await settle(page)
   // Only height guides: two extents, no gap line.
   expect(await page.locator('smegglect-root .guides line.dist').count()).toBe(2)
   await page.locator('#box-b').click()
-  await expect(ui(page, '.inspector .form .cmp')).toContainText('height')
-  await ui(page, '.inspector .form .key.primary').click()
+  await expect(ui(page, '.inspector .reference .cmp')).toContainText('height')
+  await ui(page, '.inspector .compose .add').click()
   const issue = await page.evaluate(() => window.sg!.engine.state().drafts.issues[0]!)
   const a = await bounds(page, '#box-a')
   const b = await bounds(page, '#box-b')
@@ -77,19 +76,21 @@ test('M03 M04 match height keeps A as target and B as reference with exact delta
   expect(issue.evidence.a.bounds.width).toBe(124.5)
 })
 
-test('M04 edge alignment draws the reference edge and records the offset', async ({ page }) => {
+test('edge alignment draws the reference edge and records the offset', async ({ page }) => {
   await page.goto('/plain.html?open')
   await pick(page, '#box-c')
-  await preset(page, 'align', { b: '#box-a', choice: 'Top edges' })
+  await preset(page, 'align', { b: '#box-a' })
   const issue = await page.evaluate(() => window.sg!.engine.state().drafts.issues[0]!)
-  expect(issue.intent).toMatchObject({ preset: { id: 'align' }, params: { edge: 'top' } })
+  expect(issue.intent).toMatchObject({ preset: { id: 'align' }, params: {} })
   const a = await bounds(page, '#box-c')
   const b = await bounds(page, '#box-a')
   expect(issue.evidence.relation!.delta.top).toBeCloseTo(b.y - a.y, 5)
 })
 
-test('M03 overlap and diagonal pairs are labelled distinctly', async ({ page }) => {
+test('overlap and diagonal pairs are labelled distinctly', async ({ page }) => {
   await page.goto('/plain.html?open')
+  // The drawer opens beside the toolbar: on the left edge it leaves the middle of the page free.
+  await page.evaluate(() => window.sg!.update({ placement: 'left' }))
   await page.evaluate(() => {
     const host = document.querySelector('.boxes')!
     host.insertAdjacentHTML('beforeend', '<div id="ov1" style="position:absolute;left:600px;top:500px;width:60px;height:40px;background:#cde"></div><div id="ov2" style="position:absolute;left:640px;top:520px;width:60px;height:40px;background:#edc"></div><div id="dg" style="position:absolute;left:760px;top:700px;width:30px;height:30px;background:#dce"></div>')
@@ -106,7 +107,7 @@ test('M03 overlap and diagonal pairs are labelled distinctly', async ({ page }) 
   expect(labels).toEqual(expect.arrayContaining(['dx 100', 'dy 160']))
 })
 
-test('M05 nested scroll, resize and animation update guides; hiding measurements stops sampling', async ({ page }) => {
+test('nested scroll, resize and animation update guides; hiding measurements stops sampling', async ({ page }) => {
   await instrument(page)
   await page.goto('/boundaries.html')
   await pick(page, '#deep')
@@ -122,8 +123,9 @@ test('M05 nested scroll, resize and animation update guides; hiding measurements
   await settle(page)
   expect((await owned(page)).frames).toBe(0)
   await ui(page, '.dock [aria-label="Measurements"]').click()
-  await page.locator('#deep').evaluate(el => el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(60px)' }], { duration: 400, fill: 'forwards' }))
-  await page.waitForTimeout(450)
+  await page.locator('#deep').evaluate(async (el) => {
+    await el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(60px)' }], { duration: 400, fill: 'forwards' }).finished
+  })
   await settle(page)
   close(await guideA(page), await bounds(page, '#deep'))
   expect((await owned(page)).frames).toBe(1)
@@ -175,7 +177,7 @@ async function hover(page: Page, selector: string) {
 
 const hovered = (page: Page) => page.evaluate(() => window.sg!.engine.geometry().candidate)
 
-test('M06 measure on with nothing selected reports the hovered box', async ({ page }) => {
+test('measure on with nothing selected reports the hovered box', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await ui(page, '.dock [aria-label="Measurements"]').click()
   await hover(page, '#box-b')
@@ -185,7 +187,7 @@ test('M06 measure on with nothing selected reports the hovered box', async ({ pa
   expect(Math.round(c!.rect.width)).toBe(100)
 })
 
-test('M07 measure in pass mode leaves host clicks alone', async ({ page }) => {
+test('measure in pass mode leaves host clicks alone', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await ui(page, '.dock [aria-label="Measurements"]').click()
   await hover(page, '#cancel')
@@ -194,7 +196,7 @@ test('M07 measure in pass mode leaves host clicks alone', async ({ page }) => {
   expect(await page.evaluate(() => window.events)).toContain('click:cancel')
 })
 
-test('M08 hover relation to the selection is self, inside, contains or apart', async ({ page }) => {
+test('hover relation to the selection is self, inside, contains or apart', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await ui(page, '.dock [aria-label="Measurements"]').click()
   await ui(page, '.dock [aria-label="Pick element"]').click()
@@ -214,7 +216,7 @@ test('M08 hover relation to the selection is self, inside, contains or apart', a
   expect((await hovered(page))?.relation).toBe('contains')
 })
 
-test('M09 hovering a child of the selection shows inset distances, not an overlap', async ({ page }) => {
+test('hovering a child of the selection shows inset distances, not an overlap', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await ui(page, '.dock [aria-label="Measurements"]').click()
   await ui(page, '.dock [aria-label="Pick element"]').click()
@@ -224,7 +226,7 @@ test('M09 hovering a child of the selection shows inset distances, not an overla
   expect(await ui(page, '.measure-label.dist').count()).toBeGreaterThanOrEqual(2)
 })
 
-test('M10 measuring with nothing selected draws the hovered box and its size', async ({ page }) => {
+test('measuring with nothing selected draws the hovered box and its size', async ({ page }) => {
   await page.goto('/plain.html?open&memory')
   await ui(page, '.dock [aria-label="Measurements"]').click()
   await hover(page, '#cancel')
@@ -232,7 +234,7 @@ test('M10 measuring with nothing selected draws the hovered box and its size', a
   await expect(ui(page, '.measure-label').first()).toContainText('x')
 })
 
-test('review 6: measuring a still selection does no per-frame text work and stops when collapsed', async ({ page }) => {
+test('measuring a still selection does no per-frame text work and stops when collapsed', async ({ page }) => {
   await instrument(page)
   await page.addInitScript(() => {
     const d = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent')!
@@ -252,4 +254,29 @@ test('review 6: measuring a still selection does no per-frame text work and stop
   await settle(page)
   await settle(page)
   expect((await owned(page)).frames).toBe(0)
+})
+
+test('Measure and Region are never on together, from the toolbar or the keyboard', async ({ page }) => {
+  await page.goto('/plain.html?open&memory')
+  const pressed = async () => {
+    const on = async (label: string) => (await ui(page, `.dock [aria-label="${label}"]`).getAttribute('aria-pressed')) === 'true'
+    return { measure: await on('Measurements'), region: await on('Draw region') }
+  }
+  await ui(page, '.dock [aria-label="Measurements"]').click()
+  expect(await pressed()).toEqual({ measure: true, region: false })
+  await ui(page, '.dock [aria-label="Draw region"]').click()
+  await expect.poll(pressed).toEqual({ measure: false, region: true })
+  await ui(page, '.dock [aria-label="Measurements"]').click()
+  await expect.poll(pressed).toEqual({ measure: true, region: false })
+  // The shortcuts keep the same rule.
+  await page.keyboard.press('Alt+Shift+R')
+  await expect.poll(pressed).toEqual({ measure: false, region: true })
+  await page.keyboard.press('Alt+Shift+M')
+  await expect.poll(pressed).toEqual({ measure: true, region: false })
+  // Picking still measures what it points at.
+  await ui(page, '.dock [aria-label="Pick element"]').click()
+  expect(await page.evaluate(() => {
+    const state = window.sg!.engine.state()
+    return [state.inspect.mode.kind, state.measuring]
+  })).toEqual(['pick', true])
 })
