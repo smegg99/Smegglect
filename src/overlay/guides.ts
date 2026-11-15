@@ -1,7 +1,9 @@
 // src/overlay/guides.ts
 // Which guides to draw for the current operation. Pure: rects in, lines and labels out.
 
-import { axis, bottom, centerX, centerY, horizontalGuide, intersection, px, right, verticalGuide } from '../core/geometry'
+import {
+  axis, bottom, centerX, centerY, horizontalGuide, intersection, px, right, verticalGuide,
+} from '../core/geometry'
 import type { Rect } from '../core/model'
 import type { BoxModel, Sides } from '../dom/boxmodel'
 
@@ -34,20 +36,27 @@ export function pairwise(a: Rect, b: Rect): Drawing {
   const over = intersection(a, b)
   if (over) {
     out.boxes.push({ rect: over, kind: 'over' })
-    out.labels.push({ x: centerX(over), y: centerY(over), text: `${px(over.width)} x ${px(over.height)}`, kind: 'over' })
+    out.labels.push({
+      x: centerX(over),
+      y: centerY(over),
+      text: `${px(over.width)} x ${px(over.height)}`,
+      kind: 'over',
+    })
     return out
   }
-  const h = horizontalGuide(a, b)
-  const v = verticalGuide(a, b)
-  if (h) {
-    out.lines.push({ ...h, kind: 'dist' })
-    out.labels.push({ x: (h.x1 + h.x2) / 2, y: h.y1, text: px(h.value), kind: 'dist' })
+  const horizontal = horizontalGuide(a, b)
+  const vertical = verticalGuide(a, b)
+  if (horizontal) {
+    out.lines.push({ ...horizontal, kind: 'dist' })
+    const middle = (horizontal.x1 + horizontal.x2) / 2
+    out.labels.push({ x: middle, y: horizontal.y1, text: px(horizontal.value), kind: 'dist' })
   }
-  if (v) {
-    out.lines.push({ ...v, kind: 'dist' })
-    out.labels.push({ x: v.x1, y: (v.y1 + v.y2) / 2, text: px(v.value), kind: 'dist' })
+  if (vertical) {
+    out.lines.push({ ...vertical, kind: 'dist' })
+    const middle = (vertical.y1 + vertical.y2) / 2
+    out.labels.push({ x: vertical.x1, y: middle, text: px(vertical.value), kind: 'dist' })
   }
-  if (!h && !v) {
+  if (!horizontal && !vertical) {
     const ax = axis(a.x, right(a), b.x, right(b))
     const ay = axis(a.y, bottom(a), b.y, bottom(b))
     // Diagonal: two separations, labelled per axis, never one "gap".
@@ -64,7 +73,12 @@ export function pairwise(a: Rect, b: Rect): Drawing {
       out.labels.push({ x, y: (y1 + y2) / 2, text: `dy ${px(ay.distance)}`, kind: 'dist' })
     }
     if (ax.kind === 'touch' || ay.kind === 'touch') {
-      out.labels.push({ x: (centerX(a) + centerX(b)) / 2, y: (centerY(a) + centerY(b)) / 2, text: '0', kind: 'dist' })
+      out.labels.push({
+        x: (centerX(a) + centerX(b)) / 2,
+        y: (centerY(a) + centerY(b)) / 2,
+        text: '0',
+        kind: 'dist',
+      })
     }
   }
   return out
@@ -73,28 +87,34 @@ export function pairwise(a: Rect, b: Rect): Drawing {
 /** Height-only (or width-only) guides for match presets: each box's extent and nothing else. */
 export function extents(a: Rect, b: Rect, dim: 'height' | 'width'): Drawing {
   const out = empty()
-  for (const r of [a, b]) {
+  for (const rect of [a, b]) {
     if (dim === 'height') {
-      const x = r.x - 6
-      out.lines.push({ x1: x, y1: r.y, x2: x, y2: bottom(r), kind: 'dist' })
-      out.lines.push({ x1: x - 3, y1: r.y, x2: x + 3, y2: r.y, kind: 'tick' }, { x1: x - 3, y1: bottom(r), x2: x + 3, y2: bottom(r), kind: 'tick' })
-      out.labels.push({ x: x - 4, y: centerY(r), text: px(r.height), kind: 'dist' })
+      const x = rect.x - 6
+      out.lines.push({ x1: x, y1: rect.y, x2: x, y2: bottom(rect), kind: 'dist' })
+      out.lines.push(
+        { x1: x - 3, y1: rect.y, x2: x + 3, y2: rect.y, kind: 'tick' },
+        { x1: x - 3, y1: bottom(rect), x2: x + 3, y2: bottom(rect), kind: 'tick' },
+      )
+      out.labels.push({ x: x - 4, y: centerY(rect), text: px(rect.height), kind: 'dist' })
     }
     else {
-      const y = bottom(r) + 6
-      out.lines.push({ x1: r.x, y1: y, x2: right(r), y2: y, kind: 'dist' })
-      out.lines.push({ x1: r.x, y1: y - 3, x2: r.x, y2: y + 3, kind: 'tick' }, { x1: right(r), y1: y - 3, x2: right(r), y2: y + 3, kind: 'tick' })
-      out.labels.push({ x: centerX(r), y: y + 4, text: px(r.width), kind: 'dist' })
+      const y = bottom(rect) + 6
+      out.lines.push({ x1: rect.x, y1: y, x2: right(rect), y2: y, kind: 'dist' })
+      out.lines.push(
+        { x1: rect.x, y1: y - 3, x2: rect.x, y2: y + 3, kind: 'tick' },
+        { x1: right(rect), y1: y - 3, x2: right(rect), y2: y + 3, kind: 'tick' },
+      )
+      out.labels.push({ x: centerX(rect), y: y + 4, text: px(rect.width), kind: 'dist' })
     }
   }
   return out
 }
 
-const EDGE: Record<string, (r: Rect) => number> = {
-  'left': r => r.x,
+const EDGE: Record<string, (rect: Rect) => number> = {
+  'left': rect => rect.x,
   'right': right,
   'center-x': centerX,
-  'top': r => r.y,
+  'top': rect => rect.y,
   'bottom': bottom,
   'center-y': centerY,
 }
@@ -108,17 +128,32 @@ export function edgeGuide(a: Rect, b: Rect, edge: string): Drawing {
   const target = at(b)
   const delta = target - at(a)
   if (vertical) {
-    out.lines.push({ x1: target, y1: Math.min(a.y, b.y) - 8, x2: target, y2: Math.max(bottom(a), bottom(b)) + 8, kind: 'edge' })
+    out.lines.push({
+      x1: target,
+      y1: Math.min(a.y, b.y) - 8,
+      x2: target,
+      y2: Math.max(bottom(a), bottom(b)) + 8,
+      kind: 'edge',
+    })
     out.labels.push({ x: at(a), y: a.y - 10, text: `${delta > 0 ? '+' : ''}${px(delta)}`, kind: 'dist' })
   }
   else {
-    out.lines.push({ x1: Math.min(a.x, b.x) - 8, y1: target, x2: Math.max(right(a), right(b)) + 8, y2: target, kind: 'edge' })
+    out.lines.push({
+      x1: Math.min(a.x, b.x) - 8,
+      y1: target,
+      x2: Math.max(right(a), right(b)) + 8,
+      y2: target,
+      kind: 'edge',
+    })
     out.labels.push({ x: a.x - 18, y: at(a), text: `${delta > 0 ? '+' : ''}${px(delta)}`, kind: 'dist' })
   }
   return out
 }
 
-/** Distances from each edge of `inner` to the same edge of `outer`: labelled as distances, not padding or margin. */
+/**
+ * Distances from each edge of `inner` to the same edge of `outer`:
+ * labelled as distances, not padding or margin.
+ */
 export function inset(inner: Rect, outer: Rect): Drawing {
   const out = empty()
   const cy = centerY(inner)
@@ -138,40 +173,65 @@ export function inset(inner: Rect, outer: Rect): Drawing {
   return out
 }
 
-const any = (s: Sides) => s.top !== 0 || s.right !== 0 || s.bottom !== 0 || s.left !== 0
+const any = (sides: Sides) => sides.top !== 0 || sides.right !== 0 || sides.bottom !== 0 || sides.left !== 0
 
 /** One label per non-zero side, centred in the band between `inner` and `outer`. */
-function bandLabels(inner: Rect, outer: Rect, s: Sides, kind: 'pad' | 'mar'): Label[] {
+function bandLabels(inner: Rect, outer: Rect, sides: Sides, kind: 'pad' | 'mar'): Label[] {
   const out: Label[] = []
-  if (s.top) out.push({ x: centerX(inner), y: (outer.y + inner.y) / 2, text: px(s.top), kind })
-  if (s.right) out.push({ x: (right(inner) + right(outer)) / 2, y: centerY(inner), text: px(s.right), kind })
-  if (s.bottom) out.push({ x: centerX(inner), y: (bottom(inner) + bottom(outer)) / 2, text: px(s.bottom), kind })
-  if (s.left) out.push({ x: (outer.x + inner.x) / 2, y: centerY(inner), text: px(s.left), kind })
+  if (sides.top) out.push({ x: centerX(inner), y: (outer.y + inner.y) / 2, text: px(sides.top), kind })
+  if (sides.right) {
+    out.push({ x: (right(inner) + right(outer)) / 2, y: centerY(inner), text: px(sides.right), kind })
+  }
+  if (sides.bottom) out.push({
+    x: centerX(inner),
+    y: (bottom(inner) + bottom(outer)) / 2,
+    text: px(sides.bottom),
+    kind,
+  })
+  if (sides.left) out.push({ x: (outer.x + inner.x) / 2, y: centerY(inner), text: px(sides.left), kind })
   return out
 }
 
-/** Padding as a dashed box inside the border and margin as one outside, each side labelled when it is not zero. */
-export function boxGuides(r: Rect, box: BoxModel): Drawing {
+/**
+ * Padding as a dashed box inside the border and margin as one outside,
+ * each side labelled when it is not zero.
+ */
+export function boxGuides(rect: Rect, box: BoxModel): Drawing {
   const out = empty()
-  const { border: b, padding: p, margin: m } = box
-  if (any(p)) {
-    const edge = { x: r.x + b.left, y: r.y + b.top, width: r.width - b.left - b.right, height: r.height - b.top - b.bottom }
-    const content = { x: edge.x + p.left, y: edge.y + p.top, width: edge.width - p.left - p.right, height: edge.height - p.top - p.bottom }
+  const { border, padding, margin } = box
+  if (any(padding)) {
+    const edge = {
+      x: rect.x + border.left,
+      y: rect.y + border.top,
+      width: rect.width - border.left - border.right,
+      height: rect.height - border.top - border.bottom,
+    }
+    const content = {
+      x: edge.x + padding.left,
+      y: edge.y + padding.top,
+      width: edge.width - padding.left - padding.right,
+      height: edge.height - padding.top - padding.bottom,
+    }
     out.boxes.push({ rect: edge, kind: 'padding' })
-    out.labels.push(...bandLabels(content, edge, p, 'pad'))
+    out.labels.push(...bandLabels(content, edge, padding, 'pad'))
   }
-  if (any(m)) {
-    const outer = { x: r.x - m.left, y: r.y - m.top, width: r.width + m.left + m.right, height: r.height + m.top + m.bottom }
+  if (any(margin)) {
+    const outer = {
+      x: rect.x - margin.left,
+      y: rect.y - margin.top,
+      width: rect.width + margin.left + margin.right,
+      height: rect.height + margin.top + margin.bottom,
+    }
     out.boxes.push({ rect: outer, kind: 'margin' })
-    out.labels.push(...bandLabels(r, outer, m, 'mar'))
+    out.labels.push(...bandLabels(rect, outer, margin, 'mar'))
   }
   return out
 }
 
 export function merge(...parts: Drawing[]): Drawing {
   return {
-    lines: parts.flatMap(p => p.lines),
-    labels: parts.flatMap(p => p.labels),
-    boxes: parts.flatMap(p => p.boxes),
+    lines: parts.flatMap(part => part.lines),
+    labels: parts.flatMap(part => part.labels),
+    boxes: parts.flatMap(part => part.boxes),
   }
 }

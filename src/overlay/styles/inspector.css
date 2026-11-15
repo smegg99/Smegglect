@@ -12,58 +12,67 @@
 }
 
 /* The panel takes focus only to hold it; its controls show the focus ring, not the whole panel. */
-.sg .inspector:focus-visible, .sg[data-keyed] .inspector:focus, .sg[data-keyed] .report-view:focus { outline: none; }
+.sg .inspector:focus-visible, .sg[data-keyed] .inspector:focus { outline: none; }
 
-/* The header is a tab strip on the chrome face, its floor a 1px line the active tab paints over. */
+.inspector.window {
+  position: static;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The header is S99AB's tab strip (UiTabStrip, as in Goptivum Desktop): the chrome face, its floor a 1px
+   line drawn as a shadow so the tab in front can paint over it. Close is as far from the right as from the
+   top and bottom. */
 .inspector > .bar {
+  --sg-tab-h: 34px;
   display: flex;
   flex: none;
   align-items: center;
   gap: 4px;
-  min-height: 40px;
-  padding: 0 4px;
+  min-height: var(--sg-tab-h);
+  padding: 0 calc((var(--sg-tab-h) - 28px) / 2) 0 0;
   background: var(--sg-chrome);
   box-shadow: inset 0 -1px 0 var(--sg-line);
 }
 
-/* ---- folder tabs, as S99AB's TabStrip draws them in Goptivum-Desktop ---- */
+/* ---- tabs: S99AB's, restated, as its scoped styles cannot reach the shadow root ---- */
 
 .tabstrip {
   display: flex;
   flex: 1 1 auto;
   align-self: stretch;
-  align-items: flex-end;
   gap: 2px;
   min-width: 0;
-  padding-top: 6px;
 }
 
+/* Sized to their names up to S99AB's 184 px: the panel is narrower than three tabs of that width. */
 .tabstrip button {
-  display: inline-flex;
+  display: flex;
+  max-width: 184px;
   min-width: 0;
   flex: 0 1 auto;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 10px 0 8px;
+  /* 8 px, not S99AB's 10: three tab names in Polish share the strip with Settings and Close. */
+  padding: 0 8px;
   border: 0;
-  border-radius: 5px 5px 0 0;
+  border-radius: var(--sg-radius-panel) var(--sg-radius-panel) 0 0;
   background: transparent;
   box-shadow: inset 0 -1px 0 var(--sg-line);
   color: var(--sg-ink3);
-  font-size: 13px;
-  font-weight: 500;
+  font: inherit;
+  font-size: var(--s99ab-nav-item-size, 13.76px);
   cursor: pointer;
   pointer-events: auto;
 }
 
-.tabstrip button > svg { width: 16px; height: 16px; flex: none; }
-.tabstrip .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tabstrip .count { flex: none; }
-.inspector > .bar > .key { --sg-key: 28px; }
 .tabstrip button:hover { background: var(--sg-chrome2); color: var(--sg-ink2); }
 
-/* The active tab takes the panel's face and side lines, and has no floor: it opens into the panel. */
+/* The tab in front opens into the panel: its face, no floor, and side lines in the gap outside it, which the
+   panel's edge clips for the first tab. */
 .tabstrip button[aria-selected='true'],
 .tabstrip button[aria-selected='true']:hover {
   background: var(--sg-bg);
@@ -71,7 +80,32 @@
   color: var(--sg-ink);
 }
 
-.tabstrip button[aria-selected='true'] > svg { color: var(--sg-select); }
+.sg .tabstrip button:focus-visible { outline-offset: -2px; }
+.tabstrip svg { width: 16px; height: 16px; flex: none; fill: currentColor; }
+.tabstrip button[aria-selected='true'] svg { color: var(--sg-select); }
+.tabstrip .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* S99AB's pinned tab: the icon alone, square to the strip; Settings sits at the far end, by Close. */
+.tabstrip button.pinned {
+  width: var(--sg-tab-h);
+  min-width: var(--sg-tab-h);
+  flex: none;
+  justify-content: center;
+  margin-inline-start: auto;
+  padding: 0;
+}
+.inspector > .bar > .key { --sg-key: 28px; }
+
+/* In the pop-out the tools are a ribbon under the tabs, on the panel's face the active tab opens into; More sits at its far end. */
+.inspector > .dock.ribbon {
+  flex: none;
+  justify-content: flex-start;
+  padding: 4px;
+  background: var(--sg-bg);
+}
+
+.dock.ribbon > [data-tool='more'] { margin-inline-start: auto; }
+
 
 .inspector > .body {
   display: flex;
@@ -81,7 +115,14 @@
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  padding: 8px;
+  /* The panel's one inset. WebKitGTK's overlay scrollbar ignores scrollbar-gutter and covers the content's
+     right edge; S99AB keeps its hit zone clear, and every view here keeps 10 px more, so no control sits
+     against the scrollbar. */
+  --sg-inset: 20px;
+  --sg-inset-end: calc(var(--s99ab-overlay-zone, 22px) + 10px);
+  padding: var(--sg-inset);
+  padding-inline-end: var(--sg-inset-end);
+  scrollbar-gutter: stable;
 }
 
 .inspector > .foot {
@@ -89,11 +130,14 @@
   flex: none;
   flex-direction: column;
   gap: 8px;
-  padding: 8px;
+  padding: 12px 20px;
   border-top: 1px solid var(--sg-line);
 }
 
-.inspector .page { display: flex; flex-direction: column; gap: 4px; }
+/* One rhythm: 8 px between every line and button, every button one height. */
+.inspector > .foot > p { margin: 0; }
+.inspector > .foot .key { height: 36px; }
+
 .inspector .section { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
 
 /* ---- element tab ---- */
@@ -112,7 +156,7 @@
 .empty > svg { width: 24px; height: 24px; margin-bottom: 4px; color: var(--sg-ink3); }
 .empty h3 { margin: 0; color: var(--sg-ink); font-size: 13px; font-weight: 600; }
 .empty p { margin: 0; color: var(--sg-ink2); font-size: var(--sg-label); line-height: 1.45; }
-.empty .list { margin: 8px -8px 0; }
+.empty .list { margin: 8px calc(var(--sg-inset) * -1) 0; }
 
 .key kbd {
   margin-inline-start: auto;
@@ -210,8 +254,9 @@
   font-size: var(--sg-label);
 }
 
-.inspector .waiting { padding-inline-start: 4px; }
-.waiting-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inspector .waiting { padding-inline-start: 8px; }
+/* Wraps instead of being cut: a long instruction (Polish, a long issue type) takes a second line. */
+.waiting-text { flex: 1; min-width: 0; line-height: 1.3; overflow-wrap: anywhere; }
 .waiting .members { flex: none; color: var(--sg-ink); font-weight: 600; white-space: nowrap; }
 .inspector .waiting .warn { flex-basis: 100%; padding-bottom: 4px; color: var(--sg-warn); }
 
@@ -233,28 +278,47 @@
 
 /* ---- issue form ---- */
 
-.form {
+.reference { display: flex; flex-direction: column; gap: 6px; }
+.reference .b-line { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; font-size: 13px; }
+.reference .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Pinned to the bottom of the tab while the types scroll above it; it ends the tab even when little is above. */
+.compose {
+  position: sticky;
+  z-index: 1;
+  /* Out to the view's edges and its bottom, whatever the inset. */
+  bottom: calc(var(--sg-inset) * -1);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--sg-line-soft);
+  margin: auto calc(var(--sg-inset-end) * -1) calc(var(--sg-inset) * -1) calc(var(--sg-inset) * -1);
+  padding: 12px var(--sg-inset-end) var(--sg-inset) var(--sg-inset);
+  border-top: 1px solid var(--sg-line);
+  background: var(--sg-bg);
 }
 
-.form-head { display: flex; align-items: center; gap: 8px; }
-.form-head > svg { width: 16px; height: 16px; flex: none; color: var(--sg-select); }
-.form-head h2 { flex: 1; margin: 0; font-size: 13px; font-weight: 600; }
-.form .says { margin: 0; color: var(--sg-ink); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
-.form .label { color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
-.form .notice { margin: 0; padding: 8px; border: 1px solid var(--sg-warn); border-radius: var(--sg-radius); font-size: var(--sg-label); }
-.form .meta-line { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
-.form .field { min-height: 64px; }
-.form-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
-.form-foot .hint { margin-inline-end: auto; color: var(--sg-ink3); font-size: var(--sg-meta); }
+/* A short drawer has too little room to keep it pinned; there it ends the tab like anything else. */
+.inspector.short .compose { position: static; }
+.compose .field { min-height: 52px; }
+.compose .kind-line { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; font-size: 13px; }
+.compose .kind-line .label { color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
+.compose .kind-line > svg { width: 14px; height: 14px; flex: none; color: var(--sg-select); }
+.compose .kind-line .space { margin-left: 6px; color: var(--sg-ink2); font-family: var(--sg-mono); }
+/* Images pasted while writing: a line under the note until the issue is added. */
+.compose .pasted { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--sg-ink2); font-size: var(--sg-label); }
+.compose .kind-line .kind { min-width: 0; overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.compose .notice { margin: 0; padding: 8px; border: 1px solid var(--sg-warn); border-radius: var(--sg-radius); font-size: var(--sg-label); }
+.compose .add { align-self: flex-end; }
+
+/* Sending: the main way out first, copying and saving side by side under it. */
+.actions.send { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.actions.send .key { justify-content: center; white-space: nowrap; }
 
 /* ---- live measurements: tree rows, the value at the end ---- */
 
 .readout { user-select: text; }
+/* Measurements and the issue types read as one tree: no panel gap between them. */
+.inspector > .body > .readout + .actions-list { margin-block-start: -16px; }
 
 .swatch { flex: none; width: 12px; height: 12px; border: 1px solid var(--sg-line); border-radius: 2px; }
 
@@ -268,37 +332,9 @@
 .issue-view .dest, .issue-view .meta-line { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
 .issue-view .actions { flex-wrap: wrap; justify-content: flex-start; }
 
-/* The agent's latest result on a sent issue, with the person's decision under it. */
-.issue-view .result { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--sg-line); border-radius: var(--sg-radius); background: var(--sg-raised); }
-.issue-view .result .section { display: flex; align-items: center; margin: 0; }
-.issue-view .result .state { margin-inline-start: auto; }
-.issue-view .result .said { margin: 0; font-size: 13px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
-.seg.wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--sg-line); }
-.seg.wrap button { min-height: 28px; height: auto; padding: 4px 8px; border: 0; }
+/* A labelled block in an issue, such as the agent's latest result on a sent issue. */
 .field-group { display: flex; flex-direction: column; gap: 4px; }
 .field-group .label, .issue-view .label { color: var(--sg-ink3); font-size: var(--sg-meta); font-weight: 600; }
-
-/* ---- report view: the inspector widens for it ---- */
-
-.report-view { display: flex; flex: 1; flex-direction: column; min-height: 0; }
-
-.report-head {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-bottom: 1px solid var(--sg-line-soft);
-}
-
-.report-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
-.report-head .tabs { margin-inline-start: 8px; }
-.report-view .notice { margin: 8px 8px 0; font-size: var(--sg-label); }
-.report-view .body { flex: 1; min-height: 0; overflow: auto; padding: 8px; }
-.report-view .text { flex: 1; width: auto; max-height: none; margin: 8px; font-family: var(--sg-mono); font-size: var(--sg-meta); line-height: 1.5; resize: none; user-select: text; }
-.report-view .foot { display: flex; flex: none; flex-direction: column; gap: 8px; padding: 8px; border-top: 1px solid var(--sg-line); }
-.report-view .foot .dest { margin: 0; color: var(--sg-ink3); font-size: var(--sg-meta); }
-.report-view .foot .actions { flex-wrap: wrap; justify-content: flex-end; }
 
 /* ---- tree: rows like Goptivum's Explorer tree, one guide line per level ---- */
 
@@ -337,6 +373,9 @@
 .tree-row.quiet { cursor: default; }
 .tree-row.quiet:hover { --face: transparent; color: var(--sg-ink2); }
 .tree-row.quiet:hover:has(> .tree-remove) { --face: var(--sg-chrome2); color: var(--sg-ink); }
+/* The picked row of a choice tree: the pressed tint, an accent icon. */
+.tree-row.on, .tree-row.on:hover { --face: var(--sg-tint); color: var(--sg-ink); font-weight: 600; }
+.tree-row.on > svg { color: var(--sg-select); }
 
 .tree-twist { display: grid; flex: none; width: 16px; height: 16px; place-items: center; color: var(--sg-ink3); }
 .tree-twist svg { width: 14px; height: 14px; transition: transform var(--sg-motion); }
@@ -348,14 +387,16 @@
 .tree-row .num { min-width: 18px; height: 18px; }
 .tree-name { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* A value keeps its natural width up to a cap; a long name gives way first. */
+/* A value follows the name it belongs to, not the far edge; past its cap it gives way like the name. */
 .tree-meta {
   display: inline-flex;
-  max-width: 45%;
-  flex: none;
+  max-width: 55%;
+  min-width: 0;
+  flex: 0 1 auto;
   align-items: center;
   gap: 4px;
-  margin-inline-start: auto;
+  margin-inline-start: 8px;
+  overflow: hidden;
   color: var(--sg-ink3);
   font-size: var(--sg-meta);
   font-weight: 400;
@@ -368,10 +409,28 @@
 .tree-row > .link { margin-inline-start: auto; font-weight: 400; }
 
 /* Always there and muted; full strength on the row under the pointer or the focus. */
-.tree-row > .tree-remove { --sg-key: 24px; flex: none; margin-inline-start: auto; color: var(--sg-ink3); }
-.tree-meta + .tree-remove { margin-inline-start: 0; }
-.tree-row:hover > .tree-remove, .tree-row:focus-within > .tree-remove { color: var(--sg-ink); }
+.tree-row > :is(.tree-remove, .tree-act) { --sg-key: 24px; flex: none; color: var(--sg-ink3); }
+.tree-row > :is(.tree-remove, .tree-act):not(.tree-act ~ *, .tree-remove ~ *) { margin-inline-start: auto; }
+.tree-row:hover > :is(.tree-remove, .tree-act), .tree-row:focus-within > :is(.tree-remove, .tree-act) { color: var(--sg-ink); }
 .tree-row.warn .tree-meta { color: var(--sg-warn); }
+
+/* Where a row stands: always whole, at the far end; coloured only when it needs the person. */
+.tree-state {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  padding-inline-start: 8px;
+  color: var(--sg-ink2);
+  font-size: var(--sg-meta);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.tree-state svg { width: 14px; height: 14px; }
+.tree-state.warn { color: var(--sg-warn); }
+/* Beside a state the target gives way, so the issue's title stays readable up to its cap. */
+.tree-row:has(> .tree-state) > .tree-name { flex-shrink: 0; max-width: 45%; }
 
 /* A level's guide, down from the middle of its parent's chevron. */
 .tree-guide {
@@ -386,3 +445,105 @@
 
 .tree-guide.end { bottom: 4px; }
 
+
+/* The settings view's header names it where the tabs are. */
+
+/* ---- settings: S99AB's form layout (UiFormSection, UiFormRow) in one column, on its own tokens ---- */
+
+/* One setting per row: the sections space themselves. */
+.inspector > .body.settings { gap: 0; }
+.settings .form-section { display: flex; flex-direction: column; }
+.settings .form-section + .form-section { margin-top: 28px; }
+/* An uppercase label over a full-width hairline, as S99AB titles a section. */
+.settings .form-section__title {
+  margin: 0 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sg-line);
+  color: var(--sg-ink3);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: var(--s99ab-label-case, uppercase);
+}
+/* A setting: its name and a note on the left, a compact control on the right. */
+.settings .form-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+  min-width: 0;
+}
+.settings .form-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* A long name wraps; the control keeps its place at the right. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.settings .form-row__label { color: var(--sg-ink); font-size: 13px; font-weight: 600; }
+.settings .form-row__desc { color: var(--sg-ink3); font-size: 12px; line-height: 1.3; }
+.settings label.form-row { cursor: pointer; }
+.settings .form-row .v-switch { flex: none; }
+.settings .form-row .v-switch .v-selection-control { min-height: 32px; }
+.settings .form-row .v-btn-toggle { flex: none; }
+/* S99AB's UiToolGroup and UiToolKey: keys share their borders, the pressed one filled with the accent. */
+.tool-group { display: inline-flex; flex: none; }
+.tool-key {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--sg-edge);
+  border-radius: 0;
+  background: var(--sg-raised);
+  color: var(--sg-ink2);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--sg-motion), color var(--sg-motion);
+}
+.tool-key + .tool-key { margin-inline-start: -1px; }
+.tool-key:first-child { border-start-start-radius: var(--sg-radius); border-end-start-radius: var(--sg-radius); }
+.tool-key:last-child { border-start-end-radius: var(--sg-radius); border-end-end-radius: var(--sg-radius); }
+.tool-key.icon-only { width: 32px; padding: 0; }
+.tool-key:hover:not(:disabled) { background: var(--sg-chrome2); color: var(--sg-ink); }
+.tool-key.active,
+.tool-key.active:hover:not(:disabled) {
+  position: relative;
+  z-index: 1;
+  border-color: var(--sg-select);
+  background: var(--sg-select);
+  color: var(--sg-on-select);
+}
+.tool-key:focus-visible { position: relative; z-index: 2; }
+.tool-key:disabled { cursor: default; opacity: 0.45; }
+.settings .swatches { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+/* Square swatches with S99AB's radius, the same size whatever Vuetify's icon-button sizing says. */
+.settings .swatch.v-btn {
+  width: 24px;
+  min-width: 0;
+  height: 24px;
+  padding: 0;
+  border-radius: var(--s99ab-radius, 4px);
+}
+.settings .swatch[aria-checked='true'] { outline: 2px solid var(--sg-ink); outline-offset: 2px; }
+/* About: the logo at full size over the facts. */
+.settings .about-body { display: grid; gap: 16px; padding-block-start: 4px; }
+.settings .about-logo { justify-self: center; width: 176px; height: auto; color: var(--sg-ink); }
+.settings .about-body .about { margin: 0; align-items: center; }
+
+.settings .about {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+.settings .about dt { color: var(--sg-ink3); }
+.settings .about dd { margin: 0; overflow-wrap: anywhere; font-family: var(--sg-mono); }

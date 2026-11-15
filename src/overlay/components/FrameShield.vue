@@ -15,7 +15,7 @@ import { useRuntime } from '../runtime'
 // A frame's content receives its own pointer events; this cover takes the click so picking selects the frame.
 const { geo } = useRuntime()
 const rect = computed(() => {
-  const c = geo.value.candidate
-  return c && c.boundary === 'iframe' ? c.rect : null
+  const candidate = geo.value.candidate
+  return candidate && candidate.boundary === 'iframe' ? candidate.rect : null
 })
 </script>

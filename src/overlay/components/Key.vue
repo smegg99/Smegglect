@@ -9,7 +9,6 @@
     :aria-pressed="pressed"
     :aria-expanded="expanded"
     :aria-haspopup="popup"
-    :data-shape="shape"
     :disabled="disabled"
     @pointerenter="show"
     @pointerleave="hide"
@@ -43,13 +42,21 @@ const props = withDefaults(defineProps<{
   kbd?: string
   pressed?: boolean
   expanded?: boolean
-  popup?: 'menu' | 'dialog'
-  shape?: 'mode' | 'view'
+  popup?: 'menu'
   badge?: number
   caption?: string
   disabled?: boolean
   tipSide?: Tip['side']
-}>(), { kbd: undefined, pressed: undefined, expanded: undefined, popup: undefined, shape: undefined, badge: 0, caption: undefined, disabled: false, tipSide: 'above' })
+}>(), {
+  kbd: undefined,
+  pressed: undefined,
+  expanded: undefined,
+  popup: undefined,
+  badge: 0,
+  caption: undefined,
+  disabled: false,
+  tipSide: 'above',
+})
 
 const { ui } = useRuntime()
 const el = ref<HTMLButtonElement | null>(null)

@@ -28,21 +28,22 @@ const row = (id: string, meta: string, swatch?: string): TreeNode => ({
 
 /** One folded branch: a row per value, the value at the end. A group's sizes are in its member list. */
 const nodes = computed<TreeNode[]>(() => {
-  const r = geo.value.readout
+  const readout = geo.value.readout
   let children: TreeNode[] = []
-  if (r) {
-    const size = Number.parseFloat(r.font.size)
-    const line = Number.parseFloat(r.font.lineHeight)
+  if (readout) {
+    const size = Number.parseFloat(readout.font.size)
+    const line = Number.parseFloat(readout.font.lineHeight)
+    const fontSize = Number.isFinite(size) ? `${px(size)}px` : readout.font.size
     children = [
-      row('size', `${px(r.width)} x ${px(r.height)}`),
-      row('padding', shorthand(r.box.padding)),
-      row('margin', shorthand(r.box.margin)),
-      row('border', shorthand(r.box.border)),
-      row('font', `${Number.isFinite(size) ? `${px(size)}px` : r.font.size} ${r.font.weight}`),
-      row('family', family(r.font.family)),
-      row('lineHeight', Number.isFinite(line) ? `${px(line)}px` : r.font.lineHeight),
-      row('color', hex(r.color), r.color),
-      row('background', hex(r.background), r.background),
+      row('size', `${px(readout.width)} x ${px(readout.height)}`),
+      row('padding', shorthand(readout.box.padding)),
+      row('margin', shorthand(readout.box.margin)),
+      row('border', shorthand(readout.box.border)),
+      row('font', `${fontSize} ${readout.font.weight}`),
+      row('family', family(readout.font.family)),
+      row('lineHeight', Number.isFinite(line) ? `${px(line)}px` : readout.font.lineHeight),
+      row('color', hex(readout.color), readout.color),
+      row('background', hex(readout.background), readout.background),
     ]
   }
   if (!children.length) return []

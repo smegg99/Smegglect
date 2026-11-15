@@ -13,27 +13,102 @@
 .dock {
   z-index: 10;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  /* Keys sit against the edge and rows wrap away from it, so the button keeps its place as the dock grows. */
+  align-content: flex-start;
+  align-items: flex-start;
   gap: 2px;
   padding: 3px;
 }
 
+.dock.bottom, .dock.right { flex-wrap: wrap-reverse; }
+.dock.reversed { flex-direction: row-reverse; }
 .dock.vertical { flex-direction: column; }
+.dock.vertical.reversed { flex-direction: column-reverse; }
+.dock.wrapped .rule { display: none; }
+
+/* Dragged with any pointer, touch included, so a press must not scroll the page. */
+.dock .toggle {
+  color: var(--sg-ink);
+  touch-action: none;
+}
+
+/* ---- the pop-out window: the panel fills it, its tools a ribbon under the tabs ---- */
+
+.in-window {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--sg-bg);
+  pointer-events: auto;
+}
+
+
+/* The paw fills its button, open or folded: a glyph at the keys' size was lost in it. */
+.dock > .toggle > svg { width: calc(var(--sg-row) - 8px); height: calc(var(--sg-row) - 8px); }
+
+/* With one size on every edge, a side toolbar keeps its captions: its keys share the widest one's width, and
+   the button stays a square against the edge. */
+.dock.vertical.captions { align-items: stretch; }
+.dock.vertical.captions.right > .toggle { align-self: flex-end; }
+
+/* ---- motion: opening, moving and resizing ease, unless turned off in Settings or the system asks for less ---- */
+
+.sg-open-enter-active, .sg-open-leave-active { transition: opacity 160ms ease, transform 160ms ease; }
+.sg-open-enter-from, .sg-open-leave-to { opacity: 0; transform: scale(0.97); }
+.dock.float { transition: left 200ms ease, top 200ms ease, right 200ms ease, bottom 200ms ease; }
+.dock.float.dragging { transition: none; }
+.dock > .key {
+  transition: width 160ms ease, height 160ms ease,
+    background-color var(--sg-motion), color var(--sg-motion), border-color var(--sg-motion);
+}
+.dock > .key:not(.toggle) { animation: sg-key-in 160ms ease both; }
+.inspector.float { transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease; }
+/* The drawer slides out of its toolbar and back into it: from the toolbar's side, a little short and faded. */
+.inspector.drawer.bottom { --sg-drawer-from: bottom center; --sg-drawer-in: translateY(16px) scaleY(0.94); }
+.inspector.drawer.top { --sg-drawer-from: top center; --sg-drawer-in: translateY(-16px) scaleY(0.94); }
+.inspector.drawer.left { --sg-drawer-from: left center; --sg-drawer-in: translateX(-16px) scaleX(0.94); }
+.inspector.drawer.right { --sg-drawer-from: right center; --sg-drawer-in: translateX(16px) scaleX(0.94); }
+.inspector.drawer { transform-origin: var(--sg-drawer-from); }
+.inspector.drawer.sg-open-enter-active, .inspector.drawer.sg-open-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease,
+    left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
+.inspector.drawer.sg-open-enter-from, .inspector.drawer.sg-open-leave-to {
+  opacity: 0;
+  transform: var(--sg-drawer-in);
+}
+/* Dragged, the toolbar moves at once; its drawer goes with it. */
+.inspector.drawer.dragging { transition: none; }
+@keyframes sg-key-in {
+  from { opacity: 0; transform: scale(0.85); }
+}
+/* On the page the switch sits on the shadow host; in the pop-out, on the window's overlay root. */
+:host([data-motion='off']) *, :host([data-motion='off']) *::before, :host([data-motion='off']) *::after,
+[data-motion='off'] *, [data-motion='off'] *::before, [data-motion='off'] *::after {
+  transition: none !important;
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg *, .sg *::before, .sg *::after { transition: none !important; animation: none !important; }
+}
+
+/* One row height for every key, the button included: the button is the same centred square open or folded. */
+.dock { --sg-row: var(--sg-key); }
+.dock.captions { --sg-row: calc(var(--sg-key) + 8px); }
+.dock > .key { height: var(--sg-row); }
+.dock > .toggle { width: var(--sg-row); }
+.dock:not(.vertical) > .rule { height: calc(var(--sg-row) - 12px); }
 
 .dock .labelled {
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
-  height: auto;
-  min-height: var(--sg-key);
-  padding: 4px 4px 3px;
+  padding: 0 4px;
 }
 
-.launcher {
-  z-index: 10;
-  padding: 3px;
-}
-
-.launcher .key { color: var(--sg-ink); }
+.dock .labelled .caption { line-height: 1.2; }
 
 /* ---- target chip ---- */
 
@@ -111,8 +186,7 @@
 }
 
 .item:hover { background: var(--sg-chrome2); }
-.item[aria-checked='true'], .item[aria-current='true'] { background: var(--sg-wash); }
-.item .hint { margin-inline-start: auto; color: var(--sg-ink3); font-size: var(--sg-meta); }
+.item[aria-checked='true'] { background: var(--sg-wash); }
 
 .sep {
   height: 1px;
@@ -149,8 +223,11 @@
 
 /* ---- toast ---- */
 
+/* Holds no box of its own; the toast inside is placed on its own. Over the panel, which the toast lies
+   across while open; under menus and tooltips. */
+.toast-live { position: fixed; top: 0; left: 0; z-index: 19; width: 0; height: 0; }
+
 .toast {
-  z-index: 16;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -160,84 +237,11 @@
 }
 
 .toast.plain { padding-inline-end: 10px; min-height: calc(var(--sg-key) + 8px); }
+/* Across the open panel: the words at the start, Undo at the end. */
+.toast.in-panel { justify-content: space-between; }
 .toast .warn { color: var(--sg-warn); }
 
-.row {
-  border-radius: var(--sg-radius-panel);
-}
 
-.row .line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 40px;
-  padding: 4px 6px;
-  border: 0;
-  border-radius: var(--sg-radius-panel);
-  background: transparent;
-  color: var(--sg-ink);
-  text-align: start;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.row .line:hover { background: var(--sg-chrome2); }
-
-.row .num {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 4px;
-  border: 1px solid var(--sg-tint-line);
-  border-radius: var(--sg-radius-badge);
-  background: var(--sg-tint);
-  color: var(--sg-ink);
-  font-size: var(--sg-meta);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.row .num[data-status='unavailable'], .row .num[data-status='ambiguous'], .row .num[data-status='elsewhere'] {
-  border: 1px dashed var(--sg-ink3);
-  background: transparent;
-  color: var(--sg-ink2);
-}
-
-.row .text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
-.row .title { overflow: hidden; font-size: 13px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-.row .sub { overflow: hidden; color: var(--sg-ink3); font-size: var(--sg-meta); text-overflow: ellipsis; white-space: nowrap; }
-.row .state { flex: none; color: var(--sg-warn); }
-.row .state svg { width: 14px; height: 14px; }
-.row .line > svg { width: 16px; height: 16px; flex: none; color: var(--sg-ink2); }
-
-.seg {
-  display: flex;
-  overflow: hidden;
-  border: 1px solid var(--sg-line);
-  border-radius: var(--sg-radius);
-}
-
-.seg button {
-  height: 26px;
-  padding: 0 8px;
-  border: 0;
-  border-inline-start: 1px solid var(--sg-line);
-  background: var(--sg-raised);
-  color: var(--sg-ink2);
-  font-size: var(--sg-label);
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.seg button { flex: 1; }
-.seg button:first-child { border-inline-start: 0; }
-.seg button[aria-pressed='true'] { background: var(--sg-tint); color: var(--sg-ink); font-weight: 600; }
-
-.checks { display: flex; flex-direction: column; gap: 2px; }
 
 .check {
   display: flex;
@@ -282,6 +286,15 @@
 .status .warn { color: var(--sg-warn); }
 .status .key { margin-inline-start: auto; }
 
+/* The line about Claude above Send: an icon names the state (an ear, a wrench, a crossed ear, a clock, a link),
+   amber when the bridge is out of reach. */
+.status.claude { gap: 6px; color: var(--sg-ink2); }
+.status.claude svg { width: 16px; height: 16px; flex: none; fill: currentColor; color: var(--sg-ink3); }
+.status.claude[data-state='unlinked'] { color: var(--sg-warn); }
+.status.claude[data-state='unlinked'] svg { color: currentColor; }
+.status.claude .said { min-width: 0; }
+.status.claude .via { flex: none; margin-inline-start: auto; color: var(--sg-ink3); white-space: nowrap; }
+
 .section {
   margin: 8px 6px 4px;
   color: var(--sg-ink3);
@@ -314,69 +327,8 @@
 .file .key { --sg-key: 28px; }
 .picker { display: none; }
 
-.frozen { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-top: 1px solid var(--sg-line-soft); }
-.frozen .title { font-size: var(--sg-label); font-weight: 600; }
-.frozen .sub { color: var(--sg-ink3); font-size: var(--sg-meta); }
-.notes { margin: 0; padding-inline-start: 16px; font-size: var(--sg-meta); }
-.notes .who { color: var(--sg-ink3); }
 
-.frozen .state, .plate .state, .result .state {
-  margin-inline-start: 6px;
-  padding: 0 4px;
-  border: 1px solid var(--sg-line);
-  border-radius: var(--sg-radius-badge);
-  color: var(--sg-ink2);
-  font-size: var(--sg-meta);
-  font-weight: 500;
-}
-
-.state[data-state='accepted'] { border-color: var(--sg-ok); color: var(--sg-ok); }
-.state:is([data-state='needs-review'], [data-state='reopened'], [data-state='blocked'], [data-state='partial']) { border-color: var(--sg-warn); color: var(--sg-warn); }
-.notes .said { display: block; color: var(--sg-ink2); white-space: pre-wrap; overflow-wrap: anywhere; }
-.actions.review { justify-content: flex-start; flex-wrap: wrap; }
-
-/* ---- tabs, sections, links ---- */
-
-.tabs { display: flex; gap: 2px; margin-inline-end: auto; }
-
-.tabs button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: var(--sg-radius);
-  background: transparent;
-  color: var(--sg-ink2);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.tabs button:hover { background: var(--sg-chrome2); }
-/* The selected tab is on like any other key: the soft tint, nothing underneath. */
-.tabs button[aria-selected='true'] { background: var(--sg-tint); color: var(--sg-ink); }
-.tabs button[aria-selected='true']:hover { background: var(--sg-tint-hover); }
-
-/* A count is a small filled pill with full-contrast figures, readable on any face. */
-.count {
-  display: inline-block;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  border: 1px solid var(--sg-line);
-  border-radius: 9px;
-  background: var(--sg-raised);
-  color: var(--sg-ink);
-  font-size: var(--sg-meta);
-  font-weight: 700;
-  line-height: 16px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
+/* ---- sections, links ---- */
 
 .section { display: flex; align-items: center; gap: 8px; }
 
@@ -415,26 +367,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.choices { display: flex; flex-wrap: wrap; gap: 4px; }
 
-.chipkey {
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--sg-line);
-  border-radius: var(--sg-radius);
-  background: var(--sg-raised);
-  color: var(--sg-ink2);
-  font-size: var(--sg-label);
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.chipkey:hover { background: var(--sg-chrome2); }
-.chipkey[aria-checked='true'] { border-color: var(--sg-tint-line); background: var(--sg-tint); color: var(--sg-ink); font-weight: 600; }
-
-.more summary { color: var(--sg-ink2); font-size: var(--sg-label); cursor: pointer; pointer-events: auto; }
-.more[open] summary { margin-bottom: 8px; }
-.more .seg { margin-bottom: 8px; }
 
 .cmp {
   width: 100%;
@@ -457,14 +390,6 @@
 .cmp td { font-family: var(--sg-mono); color: var(--sg-ink); }
 .cmp tr[data-flagged] td, .cmp tr[data-flagged] th { color: var(--sg-warn); font-weight: 600; }
 
-/* ---- report entries ---- */
-
-.entry { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--sg-line-soft); }
-.entry header { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.entry .says { margin: 0; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
-.entry dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; font-size: var(--sg-label); }
-.entry dt { color: var(--sg-ink3); }
-.entry dd { margin: 0; color: var(--sg-ink2); }
 .said { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* ---- history ---- */
@@ -475,4 +400,3 @@
 .history .what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .history .link { color: var(--sg-ink); font-size: var(--sg-label); text-align: start; }
 .history .when { color: var(--sg-ink3); font-size: var(--sg-meta); overflow-wrap: anywhere; }
-.page + .page { margin-top: 6px; }

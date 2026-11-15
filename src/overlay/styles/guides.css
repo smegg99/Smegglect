@@ -17,10 +17,18 @@
 .guides .a-halo { stroke: var(--sg-select); stroke-width: 6; stroke-opacity: 0.22; }
 .guides .b { stroke: var(--sg-ref); stroke-dasharray: 5 3; }
 .guides .cand { fill: var(--sg-ref); fill-opacity: 0.08; stroke: var(--sg-ref); stroke-width: 1.5; stroke-dasharray: 4 3; }
+/* The space a click would pick: filled in the selection colour, so it reads as the thing under the pointer. */
+.guides .space { fill: var(--sg-select); fill-opacity: 0.35; stroke: var(--sg-select); stroke-width: 1.5; }
 .guides .member { stroke: var(--sg-select); stroke-width: 1; }
 .guides .member-on { stroke-width: 2.5; }
-.guides .anchor { stroke-width: 2.5; }
 .guides .region { stroke: var(--sg-select); stroke-dasharray: 6 3; }
+/* As in CAD: a region that lists the elements fully inside is solid; one that lists what it touches stays dashed. */
+.guides .region.inside { stroke-dasharray: none; }
+/* The target the agent is checking: two beats in the selection colour, then a steady outline until it goes. */
+.guides .pulse { stroke: var(--sg-select); stroke-width: 2; animation: sg-pulse 0.6s ease-in-out 2; }
+@keyframes sg-pulse {
+  50% { stroke-width: 7; stroke-opacity: 0.3; }
+}
 .guides .bracket { fill: none; stroke: var(--sg-select); stroke-width: 2; stroke-linecap: square; }
 .guides .dist { stroke: var(--sg-ref); stroke-width: 1; }
 .guides .dist.over { stroke: var(--sg-warn); stroke-dasharray: 3 2; }
@@ -114,9 +122,7 @@
 .plate .num { height: 18px; min-width: 18px; }
 .plate-main > svg { width: 14px; height: 14px; color: var(--sg-ink2); }
 .plate .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* A sent issue's plate ends with its review state instead of an X. */
-.plate.sent .plate-main { grid-template-columns: auto auto 1fr auto; border-radius: var(--sg-radius); }
-.plate.sent .said { grid-column: 2 / 5; }
+/* The note, one line under the type. */
 .plate .said { grid-column: 2 / 4; overflow: hidden; color: var(--sg-ink2); font-size: var(--sg-meta); font-weight: 400; line-height: 15px; text-overflow: ellipsis; white-space: nowrap; }
 
 .plate-x {

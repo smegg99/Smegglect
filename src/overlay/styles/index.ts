@@ -6,5 +6,7 @@ import inspector from './inspector.css?inline'
 import keys from './keys.css?inline'
 import surfaces from './surfaces.css?inline'
 import tokens from './tokens.css?inline'
+import { KIT_STYLES } from '../vuetify/styles'
 
-export const STYLES: readonly string[] = [tokens, keys, surfaces, inspector, guides]
+/** Vuetify and S99AB first, so the overlay's own rules follow them. */
+export const STYLES: readonly string[] = [...KIT_STYLES, tokens, keys, surfaces, inspector, guides]

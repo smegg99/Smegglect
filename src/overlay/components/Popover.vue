@@ -2,9 +2,8 @@
 <template>
   <div
     ref="panel"
-    class="float"
-    :class="kind"
-    :role="role"
+    class="float pop"
+    role="menu"
     :aria-label="label"
     :style="{ left: `${pos.x}px`, top: `${pos.y}px`, visibility: placed ? 'visible' : 'hidden' }"
     @keydown="onKey"
@@ -16,19 +15,20 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { place, type Box, type Side } from '../place'
-import { useRuntime } from '../runtime'
+import { useRuntime, useSurface } from '../runtime'
 
 const props = withDefaults(defineProps<{
   anchor: Box | null
   opener?: HTMLElement | null
-  role?: 'menu' | 'dialog'
-  kind?: string
   label: string
   order?: Side[]
-}>(), { opener: null, role: 'menu', kind: 'pop', order: () => ['above', 'below', 'right', 'left'] })
+}>(), { opener: null, order: () => ['above', 'below', 'right', 'left'] })
 
 const emit = defineEmits<{ close: [] }>()
-const { engine, ui, doc } = useRuntime()
+const { engine } = useRuntime()
+/** The window the menu is in: outside clicks and room are counted there. */
+const surface = useSurface()
+const doc = surface.doc
 const panel = ref<HTMLElement | null>(null)
 const pos = ref({ x: 0, y: 0 })
 const placed = ref(false)
@@ -37,17 +37,16 @@ function reposition() {
   if (!panel.value || !props.anchor) return
   const { width, height } = panel.value.getBoundingClientRect()
   const size = { width, height }
-  const box = place(props.anchor, size, ui.viewport, props.order, [], 6)
+  const box = place(props.anchor, size, surface.viewport, props.order, 6)
   pos.value = { x: box.x, y: box.y }
   placed.value = true
 }
 
 function items(): HTMLElement[] {
-  return [...(panel.value?.querySelectorAll<HTMLElement>('.item:not(:disabled), [data-focus]') ?? [])]
+  return [...(panel.value?.querySelectorAll<HTMLElement>('.item:not(:disabled)') ?? [])]
 }
 
 function onKey(event: KeyboardEvent) {
-  if (props.role !== 'menu') return
   const list = items()
   const at = list.indexOf(event.target as HTMLElement)
   let next: number
@@ -75,11 +74,10 @@ onMounted(async () => {
   reposition()
   // Hidden until placed; focus only lands once the placed state has rendered.
   await nextTick()
-  const first = panel.value?.querySelector<HTMLElement>('[data-autofocus]') ?? items()[0]
-  first?.focus()
+  items()[0]?.focus()
 })
 
-watch(() => [props.anchor, ui.viewport], () => nextTick(reposition))
+watch(() => [props.anchor, surface.viewport.width, surface.viewport.height], () => nextTick(reposition))
 
 onBeforeUnmount(() => {
   release()
@@ -89,5 +87,4 @@ onBeforeUnmount(() => {
   if (props.opener && (!active || panel.value?.contains(active))) props.opener.focus()
 })
 
-defineExpose({ reposition })
 </script>

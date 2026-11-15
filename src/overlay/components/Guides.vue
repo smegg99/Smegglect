@@ -9,11 +9,11 @@
     :height="ui.viewport.height"
   >
     <rect
-      v-for="(m, i) in geo.members"
+      v-for="(member, i) in geo.members"
       :key="`m${i}`"
       class="box member"
       :class="{ 'member-on': ui.member === i }"
-      v-bind="box(m)"
+      v-bind="box(member)"
     />
     <rect
       v-if="geo.a && sel !== 'region'"
@@ -28,6 +28,7 @@
     <rect
       v-if="geo.a && sel === 'region'"
       class="box region"
+      :class="state.selected?.contents?.mode"
       v-bind="box(geo.a)"
     />
     <path
@@ -42,29 +43,42 @@
     />
     <rect
       v-if="geo.region"
-      class="box region"
+      class="box region draft"
+      :class="ui.regionMode"
       v-bind="box(geo.region)"
+    />
+    <rect
+      v-if="pulse"
+      :key="(ui.checking ?? ui.pointed)?.until"
+      class="box pulse"
+      v-bind="box(pulse)"
     />
     <rect
       v-if="cand"
       class="box cand"
       v-bind="box(cand)"
     />
+    <!-- While measuring, the space under the pointer, which a click picks. -->
     <rect
-      v-for="(o, i) in drawing.boxes"
+      v-if="hoveredSpace"
+      class="box space"
+      v-bind="box(hoveredSpace.rect)"
+    />
+    <rect
+      v-for="(area, i) in drawing.boxes"
       :key="`o${i}`"
       class="box"
-      :class="o.kind === 'over' ? 'dist over' : o.kind"
-      v-bind="box(o.rect)"
+      :class="area.kind === 'over' ? 'dist over' : area.kind"
+      v-bind="box(area.rect)"
     />
     <line
-      v-for="(l, i) in drawing.lines"
+      v-for="(line, i) in drawing.lines"
       :key="`l${i}`"
-      :class="l.kind === 'tick' ? 'tick' : l.kind === 'edge' ? 'edge' : l.kind === 'over' ? 'dist over' : 'dist'"
-      :x1="l.x1"
-      :y1="l.y1"
-      :x2="l.x2"
-      :y2="l.y2"
+      :class="lineClass(line)"
+      :x1="line.x1"
+      :y1="line.y1"
+      :x2="line.x2"
+      :y2="line.y2"
     />
   </svg>
   <div
@@ -81,14 +95,22 @@
   >
     {{ sizeLabel.text }}
   </div>
+  <!-- Which elements the region being drawn will list, at its top-left corner. -->
   <div
-    v-for="(l, i) in drawing.labels"
+    v-if="geo.region && ui.regionMode"
+    class="measure-label region-mode"
+    :style="cornerLabel(geo.region)"
+  >
+    {{ t(ui.regionMode === 'inside' ? 'inspector.regionInside' : 'inspector.regionTouching') }}
+  </div>
+  <div
+    v-for="(label, i) in drawing.labels"
     :key="`t${i}`"
     class="measure-label"
-    :class="l.kind"
-    :style="at(l.x, l.y, 'center')"
+    :class="label.kind"
+    :style="at(label.x, label.y, 'center')"
   >
-    {{ l.text }}
+    {{ label.text }}
   </div>
   <template v-if="(refMode || state.composing?.bBounds) && geo.a">
     <span
@@ -96,9 +118,9 @@
       :style="corner(geo.a)"
     >A</span>
     <span
-      v-if="cand || state.composing?.bBounds"
+      v-if="bMark"
       class="letter b"
-      :style="corner((cand ?? state.composing?.bBounds)!)"
+      :style="corner(bMark)"
     >B</span>
   </template>
 </template>
@@ -107,34 +129,68 @@
 import { computed } from 'vue'
 import { px } from '../../core/geometry'
 import type { Rect } from '../../core/model'
-import { boxGuides, edgeGuide, extents, inset, merge, pairwise, type Drawing } from '../guides'
+import { boxGuides, edgeGuide, extents, inset, merge, pairwise, type Drawing, type Line } from '../guides'
 import { useRuntime } from '../runtime'
 
-const { state, geo, ui } = useRuntime()
+const { engine, state, geo, ui, t } = useRuntime()
 
 const mode = computed(() => state.value.inspect.mode)
 const sel = computed(() => state.value.inspect.selection.kind)
 const refMode = computed(() => mode.value.kind === 'reference')
-const picking = computed(() => mode.value.kind === 'pick' || mode.value.kind === 'reference' || mode.value.kind === 'anchor')
+/**
+ * The target of the issue the agent is checking, or of the one Show on page pointed at; followed as the page
+ * scrolls (`geo` changes with it).
+ */
+const pulse = computed<Rect | null>(() => {
+  const shown = ui.checking ?? ui.pointed
+  return shown && geo.value ? engine.targetRect(shown.issue) : null
+})
+const picking = computed(() => mode.value.kind === 'pick'
+  || mode.value.kind === 'reference'
+  || mode.value.kind === 'anchor')
 
-/** The hovered element: while picking (unless it is the selection itself) and in every mode while measuring. */
+/**
+ * The hovered element: while picking (unless it is the selection itself) and in every mode while
+ * measuring.
+ */
 const cand = computed<Rect | null>(() => {
-  const c = geo.value.candidate
+  const candidate = geo.value.candidate
   // While an issue is being composed the hover target is not what the person is looking at.
-  if (!(picking.value || state.value.measuring) || !c || state.value.composing) return null
+  if (!(picking.value || state.value.measuring) || !candidate || state.value.composing) return null
   const a = geo.value.a
-  const same = a && c.rect.x === a.x && c.rect.y === a.y && c.rect.width === a.width && c.rect.height === a.height
+  const same = a && candidate.rect.x === a.x && candidate.rect.y === a.y
+    && candidate.rect.width === a.width && candidate.rect.height === a.height
   if (same && !state.value.measuring) return null
-  return c.rect
+  return candidate.rect
+})
+
+/** Where the B tag sits: on the hovered element, else on the B already chosen. */
+const bMark = computed(() => cand.value ?? state.value.composing?.bBounds ?? null)
+
+/** The space under the pointer while picking with measurements on: a click on it picks that space. */
+const hoveredSpace = computed(() => {
+  const space = geo.value.candidate?.space
+  return cand.value && picking.value && state.value.measuring && space ? space : null
 })
 
 const candLabel = computed(() => {
-  const c = geo.value.candidate
-  if (!cand.value || !c) return null
+  const candidate = geo.value.candidate
+  if (!cand.value || !candidate) return null
+  const space = hoveredSpace.value
+  if (space) {
+    const text = `${space.name} ${px(space.size)}`
+    return { x: space.rect.x, y: space.rect.y, end: space.rect.x > ui.viewport.width - 200, text }
+  }
   // In reference mode the B tag sits on the corner; the label starts after it.
+  const start = candidate.rect.x + (refMode.value ? 12 : 0)
   // Near the right edge the label ends at the candidate's right edge instead of running off-screen.
-  const end = c.rect.x > ui.viewport.width - 280
-  return { x: end ? c.rect.x + c.rect.width : c.rect.x + (refMode.value ? 12 : 0), y: c.rect.y, end, text: `${c.chip}  ${px(c.rect.width)} x ${px(c.rect.height)}` }
+  const end = candidate.rect.x > ui.viewport.width - 280
+  return {
+    x: end ? candidate.rect.x + candidate.rect.width : start,
+    y: candidate.rect.y,
+    end,
+    text: `${candidate.chip}  ${px(candidate.rect.width)} x ${px(candidate.rect.height)}`,
+  }
 })
 
 const sizeLabel = computed(() => {
@@ -146,38 +202,48 @@ const sizeLabel = computed(() => {
 
 const drawing = computed<Drawing>(() => {
   const a = geo.value.a
-  const m = mode.value
-  if (m.kind === 'reference' && cand.value) {
+  const inspectMode = mode.value
+  if (inspectMode.kind === 'reference' && cand.value) {
     if (!a) return merge()
-    if (m.preset === 'match-height') return extents(a, cand.value, 'height')
-    if (m.preset === 'match-width') return extents(a, cand.value, 'width')
-    if (m.preset === 'align' && m.params.edge) return edgeGuide(a, cand.value, m.params.edge)
+    if (inspectMode.preset === 'match-height') return extents(a, cand.value, 'height')
+    if (inspectMode.preset === 'match-width') return extents(a, cand.value, 'width')
+    if (inspectMode.preset === 'align' && inspectMode.params.edge) {
+      return edgeGuide(a, cand.value, inspectMode.params.edge)
+    }
     return pairwise(a, cand.value)
   }
-  if (!state.value.measuring || !cand.value) return merge()
-  const c = geo.value.candidate!
-  const h = c.rect
-  const own = c.box ? boxGuides(h, c.box) : merge()
+  const candidate = geo.value.candidate
+  if (!state.value.measuring || !cand.value || !candidate) return merge()
+  const hovered = candidate.rect
+  const own = candidate.box ? boxGuides(hovered, candidate.box) : merge()
   if (!a) return own
-  if (c.relation === 'self') return own
-  if (c.relation === 'inside') return merge(own, inset(h, a))
-  if (c.relation === 'contains') return inset(a, h)
-  return pairwise(a, h)
+  if (candidate.relation === 'self') return own
+  if (candidate.relation === 'inside') return merge(own, inset(hovered, a))
+  if (candidate.relation === 'contains') return inset(a, hovered)
+  return pairwise(a, hovered)
 })
 
-function box(r: Rect) {
-  return { x: r.x, y: r.y, width: Math.max(r.width, 0), height: Math.max(r.height, 0) }
+/** A guide line's classes by its kind; an overlap is also a distance. */
+function lineClass(line: Line): string {
+  if (line.kind === 'tick') return 'tick'
+  if (line.kind === 'edge') return 'edge'
+  if (line.kind === 'over') return 'dist over'
+  return 'dist'
 }
 
-function brackets(r: Rect): string {
-  const s = Math.min(8, r.width / 3, r.height / 3)
-  const x2 = r.x + r.width
-  const y2 = r.y + r.height
+function box(rect: Rect) {
+  return { x: rect.x, y: rect.y, width: Math.max(rect.width, 0), height: Math.max(rect.height, 0) }
+}
+
+function brackets(rect: Rect): string {
+  const arm = Math.min(8, rect.width / 3, rect.height / 3)
+  const x2 = rect.x + rect.width
+  const y2 = rect.y + rect.height
   return [
-    `M${r.x} ${r.y + s}V${r.y}H${r.x + s}`,
-    `M${x2 - s} ${r.y}H${x2}V${r.y + s}`,
-    `M${x2} ${y2 - s}V${y2}H${x2 - s}`,
-    `M${r.x + s} ${y2}H${r.x}V${y2 - s}`,
+    `M${rect.x} ${rect.y + arm}V${rect.y}H${rect.x + arm}`,
+    `M${x2 - arm} ${rect.y}H${x2}V${rect.y + arm}`,
+    `M${x2} ${y2 - arm}V${y2}H${x2 - arm}`,
+    `M${rect.x + arm} ${y2}H${rect.x}V${y2 - arm}`,
   ].join('')
 }
 
@@ -189,17 +255,34 @@ function clampY(y: number) {
   return Math.max(4, Math.min(y, ui.viewport.height - 4))
 }
 
+/** A label's vertical shift from its point, by where it sits. */
+const SHIFT_Y = { above: 'calc(-100% - 4px)', below: '4px', center: '-50%' } as const
+
 function at(x: number, y: number, where: 'above' | 'below' | 'center') {
   const tx = where === 'above' ? '0' : '-50%'
-  const ty = where === 'above' ? 'calc(-100% - 4px)' : where === 'below' ? '4px' : '-50%'
+  const ty = SHIFT_Y[where]
   return { left: `${clampX(x)}px`, top: `${clampY(y)}px`, transform: `translate(${tx}, ${ty})` }
+}
+
+/** Above a region's top-left corner, or just inside it when there is no room above. */
+function cornerLabel(rect: Rect) {
+  const room = rect.y >= 24
+  return {
+    left: `${clampX(rect.x)}px`,
+    top: `${clampY(room ? rect.y : rect.y + 4)}px`,
+    transform: room ? 'translate(0, calc(-100% - 4px))' : 'none',
+  }
 }
 
 function atEnd(x: number, y: number) {
   return { left: `${clampX(x)}px`, top: `${clampY(y)}px`, transform: 'translate(-100%, calc(-100% - 4px))' }
 }
 
-function corner(r: Rect) {
-  return { left: `${clampX(r.x - 8)}px`, top: `${clampY(r.y - 8)}px`, transform: 'translate(-50%, -50%)' }
+function corner(rect: Rect) {
+  return {
+    left: `${clampX(rect.x - 8)}px`,
+    top: `${clampY(rect.y - 8)}px`,
+    transform: 'translate(-50%, -50%)',
+  }
 }
 </script>

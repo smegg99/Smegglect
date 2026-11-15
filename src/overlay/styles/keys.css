@@ -1,5 +1,5 @@
 /* src/overlay/styles/keys.css */
-/* Keys: no ripple, a pressed mode is a filled face, a pressed view is a sunk framed face. */
+/* Keys: no ripple; anything that is on, a mode or an open view, shows the same soft accent tint. */
 
 .key {
   position: relative;

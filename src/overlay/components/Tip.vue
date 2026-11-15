@@ -1,7 +1,7 @@
 <!-- src/overlay/components/Tip.vue -->
 <template>
   <div
-    v-if="ui.tip"
+    v-if="ui.tip && ui.tip.doc === surface.doc"
     ref="el"
     class="tip"
     role="tooltip"
@@ -14,9 +14,11 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 import { place, type Side } from '../place'
-import { useRuntime } from '../runtime'
+import { useRuntime, useSurface } from '../runtime'
 
 const { ui } = useRuntime()
+/** A tip shows in the window of the element that raised it. */
+const surface = useSurface()
 const el = ref<HTMLElement | null>(null)
 const pos = ref({ x: -9999, y: -9999 })
 
@@ -29,17 +31,17 @@ const ORDER: Record<string, Side[]> = {
 
 watch(() => ui.tip, async (tip) => {
   pos.value = { x: -9999, y: -9999 }
-  if (!tip) return
+  if (!tip || tip.doc !== surface.doc) return
   await nextTick()
   if (!el.value || ui.tip !== tip) return
   const { width, height } = el.value.getBoundingClientRect()
   const size = { width, height }
-  const r = tip.rect
+  const rect = tip.rect
   // Centre on the key along the side's axis before clamping.
   const anchor = tip.side === 'above' || tip.side === 'below'
-    ? { x: r.x + r.width / 2 - size.width / 2, y: r.y, width: size.width, height: r.height }
-    : { x: r.x, y: r.y + r.height / 2 - size.height / 2, width: r.width, height: size.height }
-  const box = place(anchor, size, ui.viewport, ORDER[tip.side], [], 6)
+    ? { x: rect.x + rect.width / 2 - size.width / 2, y: rect.y, width: size.width, height: rect.height }
+    : { x: rect.x, y: rect.y + rect.height / 2 - size.height / 2, width: rect.width, height: size.height }
+  const box = place(anchor, size, surface.viewport, ORDER[tip.side], 6)
   pos.value = { x: box.x, y: box.y }
 })
 </script>

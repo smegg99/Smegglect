@@ -4,11 +4,14 @@
     viewBox="0 0 24 24"
     aria-hidden="true"
     focusable="false"
-  ><path :d="iconOf(name)" /></svg>
+  ><path
+    :d="iconOf(name)"
+    :fill-rule="EVENODD.has(name) ? 'evenodd' : undefined"
+  /></svg>
 </template>
 
 <script setup lang="ts">
-import { iconOf } from '../icons'
+import { EVENODD, iconOf } from '../icons'
 
 defineProps<{ name: string }>()
 </script>

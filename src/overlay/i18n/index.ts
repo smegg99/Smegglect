@@ -19,7 +19,7 @@ for (const [path, tree] of Object.entries(files)) {
 export function pickLocale(wanted: readonly string[]): Locale {
   for (const tag of wanted) {
     const base = tag.toLowerCase().split('-')[0]
-    const hit = locales.find(l => l === base)
+    const hit = locales.find(locale => locale === base)
     if (hit) return hit
   }
   return defaultLocale
@@ -36,8 +36,10 @@ function lookup(tree: Tree | undefined, key: string): string | undefined {
 
 export type Translate = (key: string, params?: Params) => string
 
-export function createTranslator(locale: Locale, onMissing: (key: string) => void): Translate {
+/** Reads the locale on every call, so a component that renders with it follows a change at once. */
+export function createTranslator(localeOf: () => Locale, onMissing: (key: string) => void): Translate {
   return (key, params = {}) => {
+    const locale = localeOf()
     const raw = lookup(bundles[locale], key) ?? lookup(bundles[defaultLocale], key)
     if (raw === undefined) {
       onMissing(key)
@@ -46,8 +48,10 @@ export function createTranslator(locale: Locale, onMissing: (key: string) => voi
     let text = raw
     if (raw.includes(' | ') && typeof params.count === 'number') {
       const bands = raw.split(' | ')
-      text = bands[(pluralRules[locale] ?? pluralRules[defaultLocale]!)(params.count, bands.length)] ?? raw
+      const plural = pluralRules[locale] ?? pluralRules[defaultLocale]
+      const band = plural ? bands[plural(params.count, bands.length)] : undefined
+      text = band ?? raw
     }
-    return text.replace(/\{(\w+)\}/g, (m, name: string) => name in params ? String(params[name]) : m)
+    return text.replace(/\{(\w+)\}/g, (whole, name: string) => name in params ? String(params[name]) : whole)
   }
 }
