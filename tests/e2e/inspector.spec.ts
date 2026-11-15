@@ -1,5 +1,5 @@
 // tests/e2e/inspector.spec.ts
-// The side inspector: opening on a selection, closing, moving out of the way, Escape, narrow sheets.
+// The inspector: opening on a selection, closing, Escape, a phone-sized drawer.
 import { expect, test, type Page } from '@playwright/test'
 import { action, pick, preset, settle, ui } from './helpers'
 
@@ -32,28 +32,6 @@ test('closing the inspector keeps the selection, and the next pick opens it agai
   await expect(ui(page, '.inspector .target .name')).toHaveText('button "Save order"')
 })
 
-test('a selection under the inspector moves it to the other side; the dock never sits under it', async ({ page }) => {
-  await pick(page, '#box-c')
-  await settle(page)
-  const left = await box(page, '.inspector')
-  expect(left.x).toBeLessThan(100)
-  expect(overlaps(left, (await page.locator('#box-c').boundingBox())!)).toBe(false)
-  expect(overlaps(left, await box(page, '.dock'))).toBe(false)
-  // A selection that is free on both sides leaves the panel where it is.
-  await pick(page, '#link')
-  await settle(page)
-  expect((await box(page, '.inspector')).x).toBe(left.x)
-})
-
-test('the side can be switched by hand and is remembered', async ({ page }) => {
-  await pick(page, '#cancel')
-  await ui(page, '.dock [aria-label="More"]').click()
-  await page.locator('smegglect-root .pop .item').filter({ hasText: 'On the left' }).click()
-  await settle(page)
-  expect((await box(page, '.inspector')).x).toBeLessThan(100)
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('smegglect:prefs:playground') ?? '{}').side)).toBe('left')
-})
-
 test('Escape with focus in a host field leaves the inspector open', async ({ page }) => {
   await pick(page, '#cancel')
   await page.keyboard.press('Escape')
@@ -75,39 +53,21 @@ test('the Element tab shows live measurements of the selection', async ({ page }
   await expect(value('background')).toHaveText(/^#[0-9a-f]{6}$/)
 })
 
-test('a narrow viewport uses a sheet away from the selection, and shrinks it while waiting for B', async ({ page }) => {
+test('on a phone the drawer opens from the toolbar, of one height also while waiting for B', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 })
   await pick(page, '#submit')
   await settle(page)
-  const sheet = await box(page, '.inspector')
-  const target = (await page.locator('#submit').boundingBox())!
-  expect(sheet.width).toBeGreaterThan(300)
-  expect(overlaps(sheet, target)).toBe(false)
-  expect(overlaps(sheet, await box(page, '.dock'))).toBe(false)
+  const drawer = await box(page, '.inspector')
+  expect(drawer.width).toBeGreaterThan(300)
+  expect(overlaps(drawer, await box(page, '.dock'))).toBe(false)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
   await (await action(page, 'match-height')).click()
   await settle(page)
-  const waiting = await box(page, '.inspector')
-  expect(waiting.height).toBeLessThan(120)
+  expect((await box(page, '.inspector')).height).toBe(drawer.height)
   await expect(ui(page, '.inspector .waiting')).toContainText('Pick B')
 })
 
-test('an opened fold stays open after an issue is added from it', async ({ page }) => {
-  await pick(page, '#cancel')
-  await preset(page, 'consistent-padding', { b: '#submit' })
-  await expect(ui(page, '.inspector [data-node="group:differs"]')).toHaveAttribute('aria-expanded', 'true')
-})
-
-test('the action list is hidden while the issue form is open', async ({ page }) => {
-  await pick(page, '#cancel')
-  await preset(page, 'size', { keepOpen: true })
-  await expect(ui(page, '.inspector .form')).toBeVisible()
-  await expect(ui(page, '.inspector .actions-list')).toBeHidden()
-  await ui(page, '.inspector .form .key.raised').filter({ hasText: 'Cancel' }).click()
-  await expect(ui(page, '.inspector .actions-list')).toBeVisible()
-})
-
-test('review 1: a plate opens its issue again after the inspector was closed', async ({ page }) => {
+test('a plate opens its issue again after the inspector was closed', async ({ page }) => {
   await pick(page, '#clip')
   await preset(page, 'clipped')
   await ui(page, '.plate .plate-main').click()
@@ -117,7 +77,7 @@ test('review 1: a plate opens its issue again after the inspector was closed', a
   await expect(ui(page, '.inspector .issue-view')).toBeVisible()
 })
 
-test('review 2: with an issue open, Pick then Escape or Cancel ends pick mode and keeps the issue', async ({ page }) => {
+test('with an issue open, Pick then Escape or Cancel ends pick mode and keeps the issue', async ({ page }) => {
   await pick(page, '#clip')
   await preset(page, 'clipped')
   await ui(page, '.plate .plate-main').click()
@@ -131,7 +91,7 @@ test('review 2: with an issue open, Pick then Escape or Cancel ends pick mode an
   await expect(ui(page, '.inspector .issue-view')).toBeVisible()
 })
 
-test('review 3: closing the inspector or leaving the Element tab cancels B and the form', async ({ page }) => {
+test('leaving the Element tab ends the step for B', async ({ page }) => {
   await pick(page, '#cancel')
   await (await action(page, 'match-height')).click()
   // While waiting the header offers only Cancel; leaving the Element tab from the dock also ends the step.
@@ -141,34 +101,23 @@ test('review 3: closing the inspector or leaving the Element tab cancels B and t
   await page.evaluate(() => window.events.splice(0))
   await page.locator('#express').click()
   expect(await page.isChecked('#express')).toBe(true)
-  await pick(page, '#cancel')
-  await (await action(page, 'size')).click()
-  await expect(ui(page, '.inspector .form')).toBeVisible()
-  await ui(page, '.inspector .tabstrip button').filter({ hasText: 'Issues' }).click()
   expect(await page.evaluate(() => window.sg!.engine.state().composing)).toBeNull()
 })
 
-test('review 7: the report and the panel never cover the dock at 1024 and 760 px', async ({ page }) => {
+test('the panel never covers the dock at 1024 and 760 px', async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 })
   await pick(page, '#clip')
   await preset(page, 'clipped')
   await ui(page, '.inspector .tabstrip button').filter({ hasText: 'Issues' }).click()
-  await ui(page, '.inspector .foot .primary').click()
-  // The width animates; measure once it has settled.
-  await page.waitForTimeout(300)
-  const wide = await box(page, '.inspector')
-  expect(wide.width).toBeGreaterThan(400)
-  expect(overlaps(wide, await box(page, '.dock'))).toBe(false)
-  await ui(page, '.report-view [aria-label="Back"]').click()
-  await page.waitForTimeout(300)
-  expect((await box(page, '.inspector')).width).toBe(360)
+  await settle(page)
+  expect(overlaps(await box(page, '.inspector'), await box(page, '.dock'))).toBe(false)
   await page.setViewportSize({ width: 760, height: 700 })
   await settle(page)
   await settle(page)
   expect(overlaps(await box(page, '.inspector'), await box(page, '.dock'))).toBe(false)
 })
 
-test('review 8: a note typed in the issue view is kept when leaving with Escape', async ({ page }) => {
+test('a note typed in the issue view is kept when leaving with Escape', async ({ page }) => {
   await pick(page, '#clip')
   await preset(page, 'clipped')
   await ui(page, '.plate .plate-main').click()
@@ -179,7 +128,7 @@ test('review 8: a note typed in the issue view is kept when leaving with Escape'
 })
 
 for (const [w, h] of [[1280, 800], [1024, 768]] as const) {
-  test(`the dock never moves or changes when the inspector or the report opens (${w})`, async ({ page }) => {
+  test(`the dock never moves or changes when the inspector opens (${w})`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h })
     await page.reload()
     await settle(page)
@@ -188,23 +137,23 @@ for (const [w, h] of [[1280, 800], [1024, 768]] as const) {
     await pick(page, '#clip')
     await preset(page, 'clipped')
     await ui(page, '.dock [aria-label^="Issues"]').click()
-    await ui(page, '.inspector .foot .primary').click()
-    await page.waitForTimeout(300)
+    await expect(ui(page, '.inspector [data-tree="issues"] [data-issue]')).toHaveCount(1)
+    await settle(page)
     expect(await box(page, '.dock')).toEqual(before)
     expect(await ui(page, '.dock .caption').count()).toBe(captions)
     expect(overlaps(await box(page, '.inspector'), before)).toBe(false)
   })
 }
 
-test('new issue types sit in folded groups and export their own task sentence', async ({ page }) => {
+test('the rarer issue types sit in folded groups under More and export their own task sentence', async ({ page }) => {
   await pick(page, '#submit')
   await expect(ui(page, '.inspector [data-node="group:access"]')).toHaveAttribute('aria-expanded', 'false')
-  await preset(page, 'state-missing', { choice: 'Focus ring' })
+  await preset(page, 'state-missing')
   await pick(page, '#submit')
-  await preset(page, 'responsive', { choice: 'When zoomed in' })
+  await preset(page, 'responsive')
   const md = await page.evaluate(() => window.sg!.engine.session.markdown(window.sg!.engine.session.draftBatch()))
-  expect(md).toContain('has no visible focus ring')
-  expect(md).toContain('when the page is zoomed in')
+  expect(md).toContain('missing a visible state')
+  expect(md).toContain('breaks at another screen size')
 })
 
 test('folds keep what the person chose across tabs and selections', async ({ page }) => {
@@ -227,17 +176,32 @@ test('empty states say what the place is for and offer the next step', async ({ 
   await expect(ui(page, '.inspector .target .name')).toHaveText('button "Cancel"')
 })
 
-test('the tabs are folder tabs: the active one opens into the panel, arrows move between them', async ({ page }) => {
+test('the tabs are S99AB\'s strip: the open one opens into the panel, its icon in the accent; arrows move between them', async ({ page }) => {
   await ui(page, '.dock [aria-label^="Issues"]').click()
   const tab = ui(page, '.inspector .tabstrip button[aria-selected="true"]')
   await expect(tab).toContainText('Issues')
-  const look = await tab.evaluate((el) => {
-    const panel = el.closest('.inspector')!
-    return { shadow: getComputedStyle(el).boxShadow, bg: getComputedStyle(el).backgroundColor, panel: getComputedStyle(panel).backgroundColor }
+  const look = (selector: string) => ui(page, selector).first().evaluate((el) => {
+    const style = getComputedStyle(el)
+    return { bg: style.backgroundColor, shadow: style.boxShadow, icon: getComputedStyle(el.querySelector('svg')!).fill }
   })
-  // Side lines only (outer shadows), no floor under the active tab, and the panel's own face.
-  expect(look.shadow).not.toContain('inset')
-  expect(look.bg).toBe(look.panel)
+  const panel = await ui(page, '.inspector').first().evaluate(el => getComputedStyle(el).backgroundColor)
+  const accent = await ui(page, '.sg').first().evaluate((el) => {
+    const probe = document.createElement('i')
+    probe.style.color = 'var(--sg-select)'
+    el.append(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+  })
+  const open = await look('.inspector .tabstrip button[aria-selected="true"]')
+  const closed = await look('.inspector .tabstrip button[aria-selected="false"]')
+  // In front: the panel's face, a side line either side and no floor. Behind: the strip's floor line.
+  expect(open.bg).toBe(panel)
+  expect(open.shadow).toMatch(/1px 0px 0px 0px, .*-1px 0px 0px 0px$/)
+  expect(open.shadow).not.toContain('inset')
+  expect(open.icon).toBe(accent)
+  expect(closed.shadow).toMatch(/0px -1px 0px 0px inset$/)
+  expect(closed.icon).not.toBe(accent)
   await tab.focus()
   await page.keyboard.press('ArrowRight')
   await expect(ui(page, '.inspector .tabstrip button[aria-selected="true"]')).toContainText('History')
@@ -254,11 +218,12 @@ test('the trees walk with the arrow keys and open branches with Right', async ({
   await expect(ui(page, '.inspector [data-node="group:look"]')).toHaveAttribute('aria-expanded', 'true')
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('Enter')
-  await expect(ui(page, '.inspector .form')).toBeVisible()
+  await expect(ui(page, '.inspector [data-tree="actions"] [data-preset="readability"]')).toHaveAttribute('aria-selected', 'true')
 })
 
 test('building a group shows one line, the member count and a single Done', async ({ page }) => {
   await pick(page, '#cancel')
+  const size = (await box(page, '.inspector')).height
   await ui(page, '.inspector .target [aria-label="Add to group with each pick"]').click()
   await page.locator('#submit').click()
   const header = ui(page, '.inspector .waiting')
@@ -267,7 +232,7 @@ test('building a group shows one line, the member count and a single Done', asyn
   await expect(header.locator('button')).toHaveCount(1)
   await expect(header.locator('button')).toHaveText('Done')
   await expect(ui(page, '.inspector [aria-label="Close inspector"]')).toHaveCount(0)
-  expect((await box(page, '.inspector')).height).toBeLessThan(56)
+  expect((await box(page, '.inspector')).height).toBe(size)
   await header.locator('button').click()
   expect((await state(page)).mode).toBe('pass')
 })
@@ -308,11 +273,13 @@ test('a member leaves the group by the X on its row or by Delete; the last but o
   await expect(ui(page, '.inspector [data-tree="members"]')).toHaveCount(0)
   await expect(ui(page, '.inspector .target .name')).toContainText('h1')
   expect(await state(page)).toEqual({ mode: 'pass', selection: 'dom' })
-  const focused = await page.evaluate(() => document.querySelector('smegglect-root')!.shadowRoot!.activeElement?.closest('[data-tree]')?.getAttribute('data-tree'))
-  expect(focused).toBe('actions')
+  const focused = await page.evaluate(() => document.querySelector('smegglect-root')!.shadowRoot!.activeElement?.closest('.compose') !== null)
+  expect(focused).toBe(true)
 })
 
 test('each member\'s size stays whole and inside its row next to a long name', async ({ page }) => {
+  // The drawer opens beside the toolbar: on the left edge it leaves the middle of the page free.
+  await page.evaluate(() => window.sg!.update({ placement: 'left' }))
   await page.evaluate(() => {
     const wide = document.createElement('div')
     wide.id = 'wide'
@@ -336,19 +303,17 @@ test('each member\'s size stays whole and inside its row next to a long name', a
   }
 })
 
-test('sections carry no counts: groups, members, issues by page, reported here, the report', async ({ page }) => {
+test('sections carry no counts: groups, members, issues by page, reported here', async ({ page }) => {
   await pick(page, '#cancel')
   await pick(page, '#submit', { shift: true })
   await page.keyboard.press('Escape')
   await preset(page, 'note', { note: 'Spacing' })
-  await expect(ui(page, '.inspector .here')).toBeVisible()
-  await expect(ui(page, '.inspector .body .count')).toHaveCount(0)
+  // Headings are names alone: no number beside "Reported here", the group or the page.
+  await expect(ui(page, '.inspector .here .section')).toHaveText('Reported here')
+  await expect(ui(page, '.inspector [data-tree="members"] .tree-row.branch .tree-name').first()).toHaveText('Elements')
   await ui(page, '.inspector .tabstrip [role="tab"]').nth(1).click()
   await expect(ui(page, '.inspector [data-tree="issues"] [data-issue]')).toHaveCount(1)
-  await expect(ui(page, '.inspector .body .count')).toHaveCount(0)
-  await ui(page, '.inspector .foot button').filter({ hasText: 'Review report' }).click()
-  await expect(ui(page, '.inspector .report-view')).toBeVisible()
-  await expect(ui(page, '.inspector .report-view .count')).toHaveCount(0)
+  await expect(ui(page, '.inspector [data-tree="issues"] [data-page] .tree-name')).toHaveText('This page')
 })
 
 
@@ -373,10 +338,12 @@ test('pointing is blue and dashed with a wash; selecting is solid red with a hal
   expect(look.sel.halo).toBe(true)
   expect(look.hover.stroke).not.toBe(look.sel.stroke)
   await page.keyboard.press('Escape')
-  const count = ui(page, '.inspector .tabstrip .count').first()
+  // The one count left is the toolbar's Issues key.
+  await page.evaluate(() => window.sg!.engine.apply('note', {}, 'Count me'))
+  const count = ui(page, '.dock [data-tool="issues"] .badge')
   const pill = await count.evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, weight: getComputedStyle(el).fontWeight }))
   expect(pill.bg).not.toBe('rgba(0, 0, 0, 0)')
-  expect(Number(pill.weight)).toBeGreaterThanOrEqual(700)
+  expect(Number(pill.weight)).toBeGreaterThanOrEqual(600)
 })
 
 test('a tooltip goes away when its button is pressed and disappears', async ({ page }) => {

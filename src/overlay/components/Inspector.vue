@@ -3,16 +3,18 @@
   <section
     ref="el"
     class="float inspector"
-    :class="[layout.kind, layout.edge]"
-    :style="{ left: `${layout.box.x}px`, top: `${layout.box.y}px`, width: `${layout.box.width}px`, height: `${layout.box.height}px` }"
+    :class="inWindow ? 'window' : ['drawer', layout.edge, { short, dragging: ui.dragging }]"
+    :style="inWindow ? undefined : {
+      left: `${layout.box.x}px`,
+      top: `${layout.box.y}px`,
+      width: `${layout.box.width}px`,
+      height: `${layout.box.height}px`
+    }"
     role="complementary"
     :aria-label="t('inspector.title')"
     tabindex="-1"
   >
-    <header
-      ref="head"
-      class="bar"
-    >
+    <header class="bar">
       <div
         v-if="waiting"
         class="waiting"
@@ -52,79 +54,97 @@
         :aria-label="t('inspector.title')"
         @keydown="onTabKey"
       >
+        <!-- Settings is a pinned tab, as S99AB draws one: its icon alone, named in its tooltip. -->
         <button
           v-for="tab in tabs"
+          :id="`sg-tab-${tab.id}`"
           :key="tab.id"
           type="button"
           role="tab"
+          :class="{ pinned: tab.pinned }"
+          :data-tab="tab.id"
+          :aria-controls="current === tab.id ? 'sg-tabpanel' : undefined"
           :aria-selected="current === tab.id"
+          :aria-label="tab.pinned ? tab.label : undefined"
           :tabindex="current === tab.id ? 0 : -1"
           @click="ui.view = tab.id"
+          @pointerenter="tab.pinned && showTip(ui, $event.currentTarget as Element, tab.label, 'below')"
+          @pointerleave="tab.pinned && hideTip(ui, tab.label)"
         >
-          <Icon :name="tab.icon" /><span class="label">{{ tab.label }}</span><span
-            v-if="tab.count !== undefined"
-            class="count"
-          >{{ tab.count }}</span>
+          <Icon :name="tab.icon" /><span
+            v-if="!tab.pinned"
+            class="label"
+          >{{ tab.label }}</span>
         </button>
       </div>
+      <!-- Only the tabs and Close: moving the panel and popping it out are in the toolbar's More menu. -->
       <Key
-        v-if="!waiting"
+        v-if="!waiting && !inWindow"
         icon="close"
         :label="t('inspector.close')"
         tip-side="below"
         @click="ui.inspector = false"
       />
     </header>
+    <Dock v-if="inWindow" />
     <ElementTab v-if="ui.view === 'element'" />
     <IssuesTab v-else-if="ui.view === 'issues'" />
     <div
       v-else-if="ui.view === 'history'"
+      id="sg-tabpanel"
       class="body"
       role="tabpanel"
+      aria-labelledby="sg-tab-history"
     >
       <History />
     </div>
+    <SettingsTab v-else-if="ui.view === 'settings'" />
     <IssueView
       v-else-if="ui.view === 'issue' && shown"
       :key="shown.id"
       :issue="shown"
     />
-    <ReportView v-else-if="ui.view === 'report' && ui.report" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import { panelLayout } from '../inspector'
 import { presetLabel } from '../labels'
 import { hideTip, showTip } from '../tip'
 import { closeIssue } from '../navigate'
-import { useRuntime } from '../runtime'
+import { useRuntime, useSurface } from '../runtime'
+import Dock from './Dock.vue'
 import ElementTab from './ElementTab.vue'
 import History from './History.vue'
 import IssuesTab from './IssuesTab.vue'
 import IssueView from './IssueView.vue'
 import Icon from './Icon.vue'
 import Key from './Key.vue'
-import ReportView from './ReportView.vue'
+import SettingsTab from './SettingsTab.vue'
 
-const { engine, state, geo, sess, settings, ui, t } = useRuntime()
+const { engine, state, sess, ui, t } = useRuntime()
+const surface = useSurface()
+/** In the pop-out the panel fills the window under the toolbar. */
+const inWindow = computed(() => surface.window)
 const el = ref<HTMLElement | null>(null)
-const head = ref<HTMLElement | null>(null)
-const headHeight = ref(40)
 
 /** The issue in the issue view: a draft, or one in a submitted batch. */
 const shown = computed(() => {
   const id = ui.issue
   if (!id) return null
-  return state.value.drafts.issues.find(i => i.id === id) ?? sess.value.submitted.flatMap(b => b.issues).find(i => i.id === id) ?? null
+  return state.value.drafts.issues.find(issue => issue.id === id)
+    ?? sess.value.submitted.flatMap(batch => batch.issues).find(issue => issue.id === id)
+    ?? null
 })
 
-const current = computed(() => ui.view === 'issue' ? ui.back : ui.view === 'report' ? 'issues' : ui.view)
+const current = computed(() => ui.view === 'issue' ? ui.back : ui.view)
+/** The count of issues is on the toolbar's Issues key; the tabs carry names only. */
 const tabs = computed(() => [
-  { id: 'element' as const, icon: 'pick', label: t('inspector.element'), count: undefined },
-  { id: 'issues' as const, icon: 'issues', label: t('history.issuesTab'), count: state.value.drafts.issues.length },
-  { id: 'history' as const, icon: 'history', label: t('history.tab'), count: undefined },
+  { id: 'element' as const, icon: 'pick', label: t('inspector.element'), pinned: false },
+  { id: 'issues' as const, icon: 'issues', label: t('history.issuesTab'), pinned: false },
+  { id: 'history' as const, icon: 'history', label: t('history.tab'), pinned: false },
+  { id: 'settings' as const, icon: 'settings', label: t('settings.title'), pinned: true },
 ])
 
 /** Left and Right move between tabs and open them, as a tab strip does. */
@@ -132,7 +152,8 @@ function onTabKey(event: KeyboardEvent) {
   if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
   const list = tabs.value
   const i = list.findIndex(tab => tab.id === current.value)
-  const next = list[(i + (event.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length]!
+  const next = list[(i + (event.key === 'ArrowRight' ? 1 : -1) + list.length) % list.length]
+  if (!next) return
   const strip = event.currentTarget as HTMLElement
   ui.view = next.id
   event.preventDefault()
@@ -140,74 +161,76 @@ function onTabKey(event: KeyboardEvent) {
 }
 
 const mode = computed(() => state.value.inspect.mode.kind)
-/** The panel shrinks to its header while Smegglect waits for a click on the page; the header says what to click. */
-const peek = computed(() => mode.value !== 'pass')
 
 const waiting = computed(() => {
-  const m = state.value.inspect.mode
-  if (m.kind === 'reference') return t('reference.pickB', { preset: presetLabel(engine.registry.byId.get(m.preset), m.preset, t) })
-  if (m.kind === 'anchor') return t('reference.pickAnchor')
-  if (m.kind === 'pick') return state.value.extend ? t('inspector.grouping') : t('inspector.picking')
-  if (m.kind === 'region') return t('inspector.drawing')
+  const inspectMode = state.value.inspect.mode
+  if (inspectMode.kind === 'reference') return t('reference.pickB', {
+    preset: presetLabel(engine.registry.byId.get(inspectMode.preset), inspectMode.preset, t),
+  })
+  if (inspectMode.kind === 'anchor') return t('reference.pickAnchor')
+  if (inspectMode.kind === 'pick') {
+    return state.value.extend ? t('inspector.grouping') : t('inspector.picking')
+  }
+  if (inspectMode.kind === 'region') return t('inspector.drawing')
   return ''
 })
 
 const grouping = computed(() => mode.value === 'pick' && state.value.extend)
 const members = computed(() => {
-  const s = state.value.selected
-  return s?.kind === 'group' ? s.descriptors.length : s ? 1 : 0
+  const selected = state.value.selected
+  if (!selected) return 0
+  if (selected.kind === 'group') return selected.descriptors.length
+  return 1
 })
 const finish = computed(() => grouping.value ? t('inspector.done') : t('reference.cancel'))
 
 /** Shown until the next valid pick; the notice id ties it to this operation. */
 const warning = computed(() => {
-  const n = state.value.notice?.value
-  if (!peek.value || !n || n.kind !== 'reference-invalid') return ''
-  return n.reason === 'same' ? t('reference.same') : n.reason === 'member' ? t('reference.member') : t('reference.outsideGroup')
+  const notice = state.value.notice?.value
+  if (!waiting.value || !notice || notice.kind !== 'reference-invalid') return ''
+  if (notice.reason === 'same') return t('reference.same')
+  if (notice.reason === 'member') return t('reference.member')
+  return t('reference.outsideGroup')
 })
 
-const dock = computed(() => ui.dock ? { box: ui.dock, placement: settings.placement } : null)
-const options = computed(() => ({ wide: ui.view === 'report', selection: geo.value.a, head: headHeight.value, dock: dock.value }))
-const layout = computed(() => panelLayout(ui.viewport, settings.side, { ...options.value, peek: peek.value }))
+/** Below 400 px the issue form is not pinned to the drawer's foot: it would leave too little above it. */
+const short = computed(() => layout.value.box.height < 400)
+/** The toolbar the drawer opens from, kept while the overlay folds, so the drawer leaves at its size. */
+const anchor = ref(ui.dock)
+watch(() => ui.dock, (dock) => {
+  if (state.value.expanded && dock) anchor.value = dock
+})
+const layout = computed(() => panelLayout(ui.viewport, anchor.value))
 
 // An issue that is gone (undone, deleted elsewhere) leaves its view.
 watchEffect(() => {
   if (ui.view === 'issue' && !shown.value) closeIssue(ui)
 })
 
-// The toast keeps clear of the full panel, so it does not jump while the panel is shrunk.
+// The toast and the dock keep clear of the panel while it is on the page.
 watchEffect(() => {
-  ui.panel = panelLayout(ui.viewport, settings.side, { ...options.value, peek: false })
+  ui.panel = inWindow.value ? null : layout.value
 })
 
-// Closed last: Escape first unwinds forms, modes and the selection.
+// Closed last: Escape first unwinds forms, modes and the selection. The pop-out is the panel; it stays.
 const release = engine.pushLayer(() => {
-  ui.inspector = false
+  if (!inWindow.value) ui.inspector = false
 }, 'last')
 
 let opener: HTMLElement | null = null
 
-let observer: ResizeObserver | null = null
-
 onMounted(async () => {
   const root = el.value?.getRootNode() as ShadowRoot | undefined
   opener = (root?.activeElement as HTMLElement | null) ?? null
+  if (ui.restored) {
+    ui.restored = false
+    return
+  }
   await nextTick()
-  // The header grows when an instruction wraps; a shrunk panel must still show all of it.
-  const measure = () => {
-    if (head.value) headHeight.value = Math.ceil(head.value.getBoundingClientRect().height) + 2
-  }
-  measure()
-  const RO = el.value?.ownerDocument.defaultView?.ResizeObserver
-  if (RO && head.value) {
-    observer = new RO(measure)
-    observer.observe(head.value)
-  }
   el.value?.focus({ preventScroll: true })
 })
 
 onBeforeUnmount(() => {
-  observer?.disconnect()
   release()
   ui.panel = null
   const root = el.value?.getRootNode() as ShadowRoot | undefined

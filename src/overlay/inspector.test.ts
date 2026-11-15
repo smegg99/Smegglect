@@ -1,71 +1,54 @@
 // src/overlay/inspector.test.ts
 import { describe, expect, it } from 'vitest'
-import { INSPECTOR_WIDTH, panelLayout, sideFor } from './inspector'
+import { INSPECTOR_WIDTH, panelLayout, type DockSpot } from './inspector'
 
 const desk = { width: 1280, height: 800 }
 const phone = { width: 360, height: 640 }
-const at = (x: number, y: number) => ({ x, y, width: 40, height: 20 })
+const dock = (placement: DockSpot['placement'], x: number, y: number, width: number, height: number, reversed = false) =>
+  ({ box: { x, y, width, height }, placement, reversed })
 
 describe('panelLayout', () => {
-  it('sits on the chosen side at full height with 8 px margins', () => {
-    expect(panelLayout(desk, 'right', { wide: false, selection: null, peek: false, head: 40 })).toEqual({ kind: 'side', edge: 'right', box: { x: 912, y: 8, width: INSPECTOR_WIDTH, height: 784 } })
-    expect(panelLayout(desk, 'left', { wide: false, selection: null, peek: false, head: 40 }).box.x).toBe(8)
+  it('on the bottom edge the drawer is as wide as the toolbar and opens just above it', () => {
+    expect(panelLayout(desk, dock('bottom', 430, 744, 420, 44))).toEqual({
+      edge: 'bottom', box: { x: 430, y: 256, width: 420, height: 480 },
+    })
   })
 
-  it('ends above a bottom dock it would cover, and leaves the dock where it is', () => {
-    const dock = { box: { x: 302, y: 712, width: 420, height: 44 }, placement: 'bottom' as const }
-    const wide = panelLayout({ width: 1024, height: 768 }, 'right', { wide: true, selection: null, peek: false, head: 40, dock })
-    expect(wide.box).toEqual({ x: 296, y: 8, width: 720, height: 696 })
-    const clear = panelLayout(desk, 'right', { wide: false, selection: null, peek: false, head: 40, dock: { box: { x: 430, y: 744, width: 420, height: 44 }, placement: 'bottom' } })
-    expect(clear.box.height).toBe(784)
+  it('on the top edge it opens just below the toolbar', () => {
+    expect(panelLayout(desk, dock('top', 700, 12, 420, 44))).toEqual({
+      edge: 'top', box: { x: 700, y: 64, width: 420, height: 480 },
+    })
   })
 
-  it('sits beside a side dock on its own edge and below a top dock', () => {
-    const right = panelLayout(desk, 'right', { wide: false, selection: null, peek: false, head: 40, dock: { box: { x: 1220, y: 200, width: 48, height: 400 }, placement: 'right' } })
-    expect(right.box.x + right.box.width).toBe(1212)
-    const top = panelLayout(desk, 'right', { wide: false, selection: null, peek: false, head: 40, dock: { box: { x: 700, y: 12, width: 420, height: 44 }, placement: 'top' } })
-    expect(top.box.y).toBe(64)
+  it('a toolbar narrower than the panel gets a drawer of the panel\'s width, centred on it and on screen', () => {
+    expect(panelLayout(desk, dock('bottom', 540, 744, 200, 44)).box).toEqual({ x: 448, y: 256, width: INSPECTOR_WIDTH, height: 480 })
+    expect(panelLayout(desk, dock('bottom', 1060, 744, 200, 44)).box.x).toBe(1280 - 8 - INSPECTOR_WIDTH)
   })
 
-  it('widens for the report, within the viewport', () => {
-    expect(panelLayout(desk, 'right', { wide: true, selection: null, peek: false, head: 40 }).box.width).toBe(720)
-    expect(panelLayout({ width: 730, height: 600 }, 'right', { wide: true, selection: null, peek: false, head: 40 }).box.width).toBe(714)
+  it('beside a side toolbar it starts where the toolbar starts, as long as it and no shorter than its reach', () => {
+    expect(panelLayout(desk, dock('right', 1220, 200, 48, 400))).toEqual({
+      edge: 'right', box: { x: 1220 - 8 - INSPECTOR_WIDTH, y: 200, width: INSPECTOR_WIDTH, height: 480 },
+    })
+    // Grown upwards from a button low on the edge, it ends where the toolbar ends.
+    expect(panelLayout(desk, dock('left', 12, 300, 48, 400, true))).toEqual({
+      edge: 'left', box: { x: 68, y: 220, width: INSPECTOR_WIDTH, height: 480 },
+    })
+    expect(panelLayout(desk, dock('right', 1220, 40, 48, 700)).box).toMatchObject({ y: 40, height: 700 })
+    // Kept on screen when the toolbar starts too low for it.
+    expect(panelLayout(desk, dock('right', 1220, 500, 48, 280)).box).toMatchObject({ y: 800 - 8 - 480, height: 480 })
   })
 
-  it('becomes a sheet on the edge away from the selection below 720 px', () => {
-    const low = panelLayout(phone, 'right', { wide: false, selection: at(20, 100), peek: false, head: 40 })
-    expect(low.kind).toBe('sheet')
-    expect(low.edge).toBe('bottom')
-    expect(low.box.height).toBeLessThanOrEqual(352)
-    expect(low.box.y + low.box.height).toBe(632)
-    const high = panelLayout(phone, 'right', { wide: false, selection: at(20, 500), peek: false, head: 40 })
-    expect(high.edge).toBe('top')
-    expect(high.box.y).toBe(8)
+  it('on a phone the drawer reaches less far and never wider than the screen', () => {
+    expect(panelLayout(phone, dock('bottom', 8, 540, 344, 88))).toEqual({
+      edge: 'bottom', box: { x: 8, y: 244, width: 344, height: 288 },
+    })
   })
 
-  it('fits the sheet into the free space beside a selection in the middle of the screen', () => {
-    const mid = panelLayout(phone, 'right', { wide: false, selection: { x: 20, y: 300, width: 80, height: 40 }, peek: false, head: 40 })
-    expect(mid.box.y).toBeGreaterThanOrEqual(340)
-    expect(mid.box.y + mid.box.height).toBe(632)
-    const tall = panelLayout(phone, 'right', { wide: false, selection: { x: 20, y: 100, width: 80, height: 480 }, peek: false, head: 40 })
-    expect(tall.box.height).toBe(160)
+  it('never runs past the room between the toolbar and the far edge', () => {
+    expect(panelLayout({ width: 1280, height: 300 }, dock('bottom', 430, 244, 420, 44)).box).toMatchObject({ y: 8, height: 228 })
   })
 
-  it('shrinks to its header while the page is being clicked, as a sheet and at the side', () => {
-    expect(panelLayout(phone, 'right', { wide: false, selection: null, peek: true, head: 40 }).box.height).toBe(40)
-    expect(panelLayout(desk, 'right', { wide: false, selection: null, peek: true, head: 40 }).box).toEqual({ x: 912, y: 8, width: INSPECTOR_WIDTH, height: 40 })
-  })
-})
-
-describe('sideFor', () => {
-  it('moves to the other side only when the selection is under the panel', () => {
-    expect(sideFor('right', at(1000, 100), desk)).toBe('left')
-    expect(sideFor('right', at(100, 100), desk)).toBe('right')
-    expect(sideFor('left', at(100, 100), desk)).toBe('right')
-    expect(sideFor('right', null, desk)).toBe('right')
-  })
-
-  it('stays when the selection would be covered on both sides', () => {
-    expect(sideFor('right', { x: 0, y: 0, width: 1280, height: 50 }, desk)).toBe('right')
+  it('before the toolbar is measured it opens from the middle of the bottom edge', () => {
+    expect(panelLayout(desk, null)).toEqual({ edge: 'bottom', box: { x: 448, y: 304, width: INSPECTOR_WIDTH, height: 480 } })
   })
 })

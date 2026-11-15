@@ -1,44 +1,6 @@
 empty:
   value: "Issues you add appear here, grouped by page. They stay marked on the page until you send the report."
   description: "Drawer text when there are no issues"
-toB:
-  value: "to {target}"
-  description: "Row subtitle after the target when a reference exists"
-  placeholders:
-    target: {type: string}
-scope:
-  value: "Scope"
-  description: "Details section heading"
-scopeOccurrence:
-  value: "This one"
-  description: "Scope option: this occurrence only"
-scopeScreen:
-  value: "This screen"
-  description: "Scope option"
-scopeComponent:
-  value: "Shared component"
-  description: "Scope option"
-keep:
-  value: "Keep"
-  description: "Details section heading for preservation constraints"
-keepResponsive:
-  value: "Responsive behaviour"
-  description: "Constraint"
-keepTokens:
-  value: "Theme tokens"
-  description: "Constraint"
-noFixedSize:
-  value: "No fixed sizes"
-  description: "Constraint"
-keepBehaviour:
-  value: "Existing behaviour"
-  description: "Constraint"
-keepOtherInstances:
-  value: "Other instances unchanged"
-  description: "Constraint"
-keepText:
-  value: "Text content"
-  description: "Constraint"
 note:
   value: "Note"
   description: "Details section heading"
@@ -57,6 +19,9 @@ statusAmbiguous:
 statusElsewhere:
   value: "Captured on another page"
   description: "Row state for an issue from another location"
+statusHidden:
+  value: "Hidden on the page right now"
+  description: "Row state for a target that is on the page but hidden, as in a view kept behind v-show"
 unsupported:
   value: "This preset is not registered here; the issue stays readable."
   description: "Details note for an unknown preset id or version"

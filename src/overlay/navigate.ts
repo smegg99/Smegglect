@@ -1,5 +1,5 @@
 // src/overlay/navigate.ts
-// Where the inspector goes when an issue or the report is opened from a plate, a row, the history or an export.
+// Where the inspector goes when an issue is opened from a plate, a row or the history.
 
 import type { Ui } from './runtime'
 
@@ -14,16 +14,4 @@ export function openIssue(ui: Ui, id: string): void {
 export function closeIssue(ui: Ui): void {
   if (ui.view === 'issue') ui.view = ui.back
   ui.issue = null
-}
-
-/** The report for the drafts (batchId null) or a submitted batch, optionally with a failure note. */
-export function openReport(ui: Ui, report: NonNullable<Ui['report']>): void {
-  ui.report = report
-  ui.view = 'report'
-  ui.inspector = true
-}
-
-export function closeReport(ui: Ui): void {
-  ui.report = null
-  if (ui.view === 'report') ui.view = 'issues'
 }

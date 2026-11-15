@@ -1,23 +1,22 @@
 // src/overlay/inspector.ts
-// Where the inspector goes: beside the page and around the dock, which never moves for it. Pure.
+// Where the inspector goes: a drawer out of the toolbar, as wide as it, on the side away from the edge. Pure.
 
 import type { Rect } from '../core/model'
 import type { Placement } from './settings'
 
-export const INSPECTOR_WIDTH = 360
-export const REPORT_WIDTH = 720
-/** Below this viewport width the inspector is a sheet at the top or bottom edge. */
+/** Wide enough for three tab names in Polish, the Settings tab and Close in one strip. */
+export const INSPECTOR_WIDTH = 384
+/** Below this viewport width the drawer reaches less far, so the page keeps some room. */
 export const NARROW = 720
 export const EDGE = 8
-const SHEET = 0.55
-/** Below this a sheet is too small to use; it then covers part of a very tall selection. */
-const MIN_SHEET = 160
-
-export type Side = 'left' | 'right'
+/** How far the drawer reaches from its toolbar, as a share of the viewport's height. */
+const REACH = 0.6
+const NARROW_REACH = 0.45
+const MIN_REACH = 240
 
 export interface PanelLayout {
-  kind: 'side' | 'sheet'
-  edge: 'left' | 'right' | 'top' | 'bottom'
+  /** The toolbar's edge; the drawer opens from the toolbar away from it. */
+  edge: Placement
   box: Rect
 }
 
@@ -26,57 +25,50 @@ interface Size {
   height: number
 }
 
-const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
-
-function sideBox(viewport: Size, side: Side, width: number, height = viewport.height - EDGE * 2): Rect {
-  return { x: side === 'right' ? viewport.width - EDGE - width : EDGE, y: EDGE, width, height }
-}
-
-/** Where the dock is; it never moves for the panel, so the panel fits around it. */
+/** Where the toolbar is drawn, the dragged edge mid-drag; the drawer follows it. */
 export interface DockSpot {
   box: Rect
   placement: Placement
+  /** The toolbar grew up or left from its button: the drawer ends where it ends. */
+  reversed: boolean
 }
 
-export function panelLayout(viewport: Size, side: Side, opts: { wide: boolean, selection: Rect | null, peek: boolean, head: number, dock?: DockSpot | null }): PanelLayout {
-  const dock = opts.dock ?? null
-  const across = dock?.placement === 'top' || dock?.placement === 'bottom'
-  // A dock on the left or right edge takes that edge; one at the top or bottom takes it where they meet.
-  const left = dock?.placement === 'left' ? dock.box.x + dock.box.width + EDGE : EDGE
-  const right = dock?.placement === 'right' ? dock.box.x - EDGE : viewport.width - EDGE
-  const span = (x: number, width: number) => {
-    let top = EDGE
-    let bottom = viewport.height - EDGE
-    if (dock && across && dock.box.x < x + width && x < dock.box.x + dock.box.width) {
-      if (dock.placement === 'bottom') bottom = dock.box.y - EDGE
-      else top = dock.box.y + dock.box.height + EDGE
-    }
-    return { top, bottom }
-  }
-  if (viewport.width >= NARROW) {
-    const width = Math.min(opts.wide ? REPORT_WIDTH : INSPECTOR_WIDTH, right - left)
-    const x = side === 'right' ? right - width : left
-    const { top, bottom } = span(x, width)
-    // While the page is being clicked the panel keeps only its header, so nothing under it is out of reach.
-    return { kind: 'side', edge: side, box: { x, y: top, width, height: opts.peek ? opts.head : bottom - top } }
-  }
-  const { top, bottom } = span(left, right - left)
-  const s = opts.selection
-  // The sheet takes the edge with more free space and fits into it, so the selection stays visible.
-  const above = s ? s.y - top : 0
-  const below = s ? bottom - s.y - s.height : bottom - top
-  const edge = above > below ? 'top' : 'bottom'
-  const room = Math.max(above, below) - EDGE
-  const height = opts.peek ? opts.head : Math.max(MIN_SHEET, Math.min(Math.floor(viewport.height * SHEET), room, bottom - top))
-  const y = edge === 'top' ? top : bottom - height
-  return { kind: 'sheet', edge, box: { x: left, y, width: right - left, height } }
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value))
+
+/** Before the toolbar is measured: the button's default spot, the middle of the bottom edge. */
+const unmeasured = (viewport: Size): DockSpot => ({
+  box: { x: viewport.width / 2, y: viewport.height - EDGE, width: 0, height: 0 },
+  placement: 'bottom',
+  reversed: false,
+})
+
+/** On the top or bottom edge: as wide as the toolbar (at least the panel's width), centred on it. */
+function across(viewport: Size, dock: DockSpot, reach: number): Rect {
+  const { box, placement } = dock
+  const width = Math.min(Math.max(box.width, INSPECTOR_WIDTH), viewport.width - EDGE * 2)
+  const x = clamp(box.x + box.width / 2 - width / 2, EDGE, viewport.width - EDGE - width)
+  const below = box.y + box.height + EDGE
+  const room = placement === 'bottom' ? box.y - EDGE * 2 : viewport.height - EDGE - below
+  const height = Math.min(room, reach)
+  return { x, y: placement === 'bottom' ? box.y - EDGE - height : below, width, height }
 }
 
-/** The other side when the selection lies under the panel and would be free there. */
-export function sideFor(side: Side, selection: Rect | null, viewport: Size): Side {
-  if (!selection || viewport.width < NARROW) return side
-  const width = Math.min(INSPECTOR_WIDTH, viewport.width - EDGE * 2)
-  const other: Side = side === 'right' ? 'left' : 'right'
-  if (!overlaps(sideBox(viewport, side, width), selection)) return side
-  return overlaps(sideBox(viewport, other, width), selection) ? side : other
+/** On a side edge: beside the toolbar, from where it starts, as long as it and no shorter than the reach. */
+function beside(viewport: Size, dock: DockSpot, reach: number): Rect {
+  const { box, placement, reversed } = dock
+  const room = placement === 'left' ? viewport.width - EDGE - (box.x + box.width + EDGE) : box.x - EDGE * 2
+  const width = Math.min(INSPECTOR_WIDTH, room)
+  const x = placement === 'left' ? box.x + box.width + EDGE : box.x - EDGE - width
+  const height = Math.min(Math.max(box.height, reach), viewport.height - EDGE * 2)
+  const start = reversed ? box.y + box.height - height : box.y
+  return { x, y: clamp(start, EDGE, viewport.height - EDGE - height), width, height }
+}
+
+/** One size whatever the drawer shows; it moves only with the toolbar. */
+export function panelLayout(viewport: Size, dock: DockSpot | null): PanelLayout {
+  const spot = dock ?? unmeasured(viewport)
+  const share = viewport.width < NARROW ? NARROW_REACH : REACH
+  const reach = Math.max(MIN_REACH, Math.round(viewport.height * share))
+  const flat = spot.placement === 'top' || spot.placement === 'bottom'
+  return { edge: spot.placement, box: flat ? across(viewport, spot, reach) : beside(viewport, spot, reach) }
 }

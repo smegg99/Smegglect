@@ -1,44 +1,6 @@
 empty:
   value: "Dodane zgłoszenia pojawią się tutaj, pogrupowane według stron. Zostają zaznaczone na stronie do wysłania raportu."
   description: "Drawer text when there are no issues"
-toB:
-  value: "do {target}"
-  description: "Row subtitle after the target when a reference exists"
-  placeholders:
-    target: {type: string}
-scope:
-  value: "Zakres"
-  description: "Details section heading"
-scopeOccurrence:
-  value: "Tylko ten"
-  description: "Scope option: this occurrence only"
-scopeScreen:
-  value: "Ten ekran"
-  description: "Scope option"
-scopeComponent:
-  value: "Wspólny komponent"
-  description: "Scope option"
-keep:
-  value: "Zachowaj"
-  description: "Details section heading for preservation constraints"
-keepResponsive:
-  value: "Zachowanie responsywne"
-  description: "Constraint"
-keepTokens:
-  value: "Tokeny motywu"
-  description: "Constraint"
-noFixedSize:
-  value: "Bez sztywnych rozmiarów"
-  description: "Constraint"
-keepBehaviour:
-  value: "Obecne działanie"
-  description: "Constraint"
-keepOtherInstances:
-  value: "Inne wystąpienia bez zmian"
-  description: "Constraint"
-keepText:
-  value: "Treść tekstu"
-  description: "Constraint"
 note:
   value: "Notatka"
   description: "Details section heading"
@@ -57,6 +19,9 @@ statusAmbiguous:
 statusElsewhere:
   value: "Zebrane na innej stronie"
   description: "Row state for an issue from another location"
+statusHidden:
+  value: "Element jest teraz ukryty na stronie"
+  description: "Row state for a target that is on the page but hidden, as in a view kept behind v-show"
 unsupported:
   value: "Ta opcja nie jest tu zarejestrowana; zgłoszenie można tylko czytać."
   description: "Details note for an unknown preset id or version"
