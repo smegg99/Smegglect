@@ -13,8 +13,8 @@ Look at the project's files and pick one path:
 - `nuxt.config.ts` or `nuxt.config.js`: the **Nuxt** module.
 - Any other `vite.config.*`: the **Vite** plugin. It adds the overlay to any page the dev server serves;
   component names and files come from Vue apps (tested with Vue 3 and plain pages).
-- A Wails v3 app (`go.mod` requires `github.com/wailsapp/wails/v3`): follow the Wails section of
-  [GUIDE.md](GUIDE.md). It needs Go changes; show the person the plan before making them.
+- A Wails v3 app (`go.mod` requires `github.com/wailsapp/wails/v3`): follow the Wails section of the guide,
+  https://lect.smegg.me/guide.md. It needs Go changes; show the person the plan before making them.
 - Anything else: `mount()` behind a build-time development flag (step 3).
 
 In a monorepo, configure the package that serves the interface, and run step 4 in the folder where the person

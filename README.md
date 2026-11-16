@@ -28,7 +28,7 @@ checks it on the open page, and you watch each issue go from "Claude has it" to 
 Easiest: ask your coding agent, in your project folder:
 
 ```text
-Add Smegglect to this app, following https://github.com/smegg99/Smegglect/blob/main/INSTALL.md
+Add Smegglect to this app, following https://lect.smegg.me/install.md
 ```
 
 By hand, for a Vite app:
