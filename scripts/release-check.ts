@@ -1,6 +1,6 @@
 // scripts/release-check.ts
 // W03 for web fixtures: release builds contain no Smegglect; explicit debug builds do.
-import { execFileSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -21,9 +21,16 @@ function hits(dir: string): string[] {
   })
 }
 
+/** Builds quietly; a build that fails shows its own output, then stops the check. */
 function build(cwd: string, cmd: string[], debug: boolean, out: string) {
   rmSync(join(cwd, out), { recursive: true, force: true })
-  execFileSync(cmd[0]!, cmd.slice(1), { cwd, stdio: 'ignore', env: { ...process.env, SMEGGLECT_DEBUG: debug ? '1' : '' } })
+  const env = { ...process.env, SMEGGLECT_DEBUG: debug ? '1' : '' }
+  const done = spawnSync(cmd[0]!, cmd.slice(1), { cwd, env, encoding: 'utf8', maxBuffer: 64 << 20 })
+  if (done.status === 0) return
+  process.stdout.write(done.stdout ?? '')
+  process.stderr.write(done.stderr ?? '')
+  const why = done.error?.message ?? (done.signal ? `signal ${done.signal}` : `exit ${done.status}`)
+  throw new Error(`${debug ? 'debug' : 'release'} build failed in ${cwd}: ${cmd.join(' ')} (${why})`)
 }
 
 const cases = [

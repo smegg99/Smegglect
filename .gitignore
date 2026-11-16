@@ -1,10 +1,10 @@
 # .gitignore
 node_modules/
 dist/
+# Packed releases, written by `just release`.
+release/
 test-results/
 playwright-report/
-# Review evidence and screenshots are kept out unless deliberately selected.
-docs/smegglect/evidence/
 # Runtime data written by the optional bridge.
 .smegglect/
 *.tgz
@@ -20,4 +20,8 @@ fixtures/*/frontend/node_modules/
 fixtures/*/bun.lock
 fixtures/*/frontend/bun.lock
 fixtures/pack/
+# The showcase installs the packed library too, so its lockfile changes with every build.
+showcase/.nuxt/
+showcase/.output/
+showcase/bun.lock
 fixtures/*/dist-debug/

@@ -1,21 +1,13 @@
 // src/vite/index.ts
 // Vite plugin: injects Smegglect into the dev server, or into a build only when `debug` is set at build time.
 
-import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
-import type { Broker } from '../bridge/server'
+import { BRIDGE_FILE, readBridgeFile } from '../bridge/bridge-file'
+import { bridgeRootFor } from '../bridge/bridge-root'
+import { devBridge, loopbackOrigins, type DevBridge } from '../bridge/dev-bridge'
+import { ID_BODY, isId } from '../core/limits'
 import { git } from './git'
-
-function bridgeInfo(root: string): { url: string, token: string } | null {
-  try {
-    const raw = JSON.parse(readFileSync(join(root, '.smegglect', 'bridge.json'), 'utf8')) as { url?: unknown, token?: unknown }
-    return typeof raw.url === 'string' && typeof raw.token === 'string' ? { url: raw.url, token: raw.token } : null
-  }
-  catch {
-    return null
-  }
-}
 
 export interface SmegglectPluginOptions {
   project: { id: string, name?: string }
@@ -37,26 +29,21 @@ export interface SmegglectPluginOptions {
    * A bridge already running for this project root is used instead.
    */
   bridge?: boolean
+  /**
+   * Where the bridge, the MCP server and source paths meet, relative to the Vite root or absolute.
+   * Default: the nearest folder upward whose `.mcp.json` has the smegglect server (`init` writes it),
+   * else the Vite root.
+   */
+  bridgeRoot?: string
 }
 
-/** Whether the broker named in bridge.json is up and holds that token. */
-async function answers(info: { url: string, token: string }): Promise<boolean> {
-  try {
-    const res = await fetch(`${info.url}/v1/health`, { headers: { authorization: `Bearer ${info.token}` }, signal: AbortSignal.timeout(1000) })
-    return res.ok
-  }
-  catch {
-    return false
-  }
-}
-
-/** The dev server's loopback origins; localhost and 127.0.0.1 are the same server. */
+/** The dev server's loopback origins, for each local address it listens at. */
 function originsOf(server: ViteDevServer): string[] {
   const out = new Set<string>()
   for (const local of server.resolvedUrls?.local ?? []) {
-    const u = new URL(local)
-    out.add(u.origin)
-    for (const host of ['localhost', '127.0.0.1']) out.add(`${u.protocol}//${host}:${u.port}`)
+    const url = new URL(local)
+    out.add(url.origin)
+    for (const origin of loopbackOrigins(Number(url.port), url.protocol)) out.add(origin)
   }
   return [...out]
 }
@@ -64,81 +51,103 @@ function originsOf(server: ViteDevServer): string[] {
 const ID = 'virtual:smegglect-client'
 const RESOLVED = `\0${ID}`
 
+/** The overlay's entry: mount options, the Vue source, the client module, and the bridge in `vite serve`. */
+function clientModule(options: SmegglectPluginOptions, config: ResolvedConfig, bridgeRoot: string): string {
+  const provider = options.git === false ? {} : git(config.root)
+  // Read when the module loads; only `vite serve` ever embeds the bridge token, never a build.
+  const file = options.bridge && config.command === 'serve' ? readBridgeFile(bridgeRoot) : null
+  const mountOptions = {
+    ...options.mount,
+    project: options.project,
+    provider: Object.keys(provider).length ? provider : undefined,
+    bridge: file ? { url: file.url, token: file.token } : undefined,
+  }
+  const vue = options.vue !== false
+  return [
+    `import { mount } from 'smegglect'`,
+    vue ? `import { vueSource } from 'smegglect/vue'` : '',
+    options.client ? `import client from ${JSON.stringify(options.client)}` : '',
+    `const options = ${JSON.stringify(mountOptions)}`,
+    // Source files read relative to the bridge root, where the agent works.
+    vue ? `options.sources = [vueSource({ root: ${JSON.stringify(bridgeRoot)} })]` : '',
+    options.client ? `Object.assign(options, await client())` : '',
+    `const instance = mount(options)`,
+    // HMR replaces this module; the old overlay goes first, so the new one mounts once.
+    `if (import.meta.hot) import.meta.hot.dispose(() => instance.destroy())`,
+  ].filter(Boolean).join('\n')
+}
+
+/** A bridge started or stopped elsewhere later reaches the page on its next load. */
+function reloadOnBridgeFile(server: ViteDevServer, bridgeRoot: string): void {
+  const file = join(bridgeRoot, '.smegglect', BRIDGE_FILE)
+  server.watcher.add(file)
+  const refresh = (changed: string) => {
+    if (changed !== file) return
+    const module = server.moduleGraph.getModuleById(RESOLVED)
+    if (module) server.moduleGraph.invalidateModule(module)
+  }
+  for (const event of ['add', 'change', 'unlink'] as const) server.watcher.on(event, refresh)
+}
+
+/** The bridge once the dev server listens; settles when it is up, reused or given up on. */
+function bridgeWithServer(
+  server: ViteDevServer,
+  bridgeRoot: string,
+  started: (bridge: DevBridge | null) => void,
+): Promise<void> {
+  const logger = server.config.logger
+  const log = {
+    info: (line: string) => logger.info(`  ${line}`),
+    warn: (line: string) => logger.warn(line),
+  }
+  const http = server.httpServer
+  if (!http) {
+    logger.warn(
+      'smegglect: bridge needs the Vite dev server\'s own HTTP server;'
+        + ' in middleware mode run smegglect-bridge serve',
+    )
+    return Promise.resolve()
+  }
+  return new Promise((done) => {
+    http.once('listening', () => {
+      devBridge(bridgeRoot, originsOf(server), log).then(started).finally(done)
+    })
+  })
+}
+
 export default function smegglect(options: SmegglectPluginOptions): Plugin {
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(options.project?.id ?? '')) throw new Error('smegglect: project.id must match [A-Za-z0-9_-]{1,64}')
+  if (!isId(options.project?.id)) throw new Error(`smegglect: project.id must match ${ID_BODY}`)
   let config: ResolvedConfig
-  let broker: Broker | null = null
-  // Settles once the dev server listens and the bridge is up, used or given up on.
+  let bridgeRoot = ''
+  let bridge: DevBridge | null = null
   let bridgeReady: Promise<void> = Promise.resolve()
   return {
     name: 'smegglect',
     enforce: 'pre',
-    apply: (_cfg, env) => env.command === 'serve' || options.debug === true,
+    apply: (_config, env) => env.command === 'serve' || options.debug === true,
     configResolved(resolved) {
       config = resolved
+      bridgeRoot = bridgeRootFor(resolved.root, options.bridgeRoot)
     },
     configureServer(server) {
       if (!options.bridge) return
-      const root = server.config.root
-      const logger = server.config.logger
-      const start = async () => {
-        const known = bridgeInfo(root)
-        if (known && await answers(known)) {
-          logger.info(`  smegglect: using the agent bridge at ${known.url}`)
-          return
-        }
-        try {
-          const { startBroker } = await import('../bridge/server')
-          broker = await startBroker({ root, origins: originsOf(server), log: (line) => {
-            if (line.startsWith('error')) logger.warn(`smegglect bridge: ${line}`)
-          } })
-          logger.info(`  smegglect: agent bridge on ${broker.url}`)
-        }
-        catch (e) {
-          logger.warn(`smegglect: the agent bridge did not start: ${(e as Error).message}`)
-        }
-      }
-      const http = server.httpServer
-      if (http) bridgeReady = new Promise(done => http.once('listening', () => void start().finally(done)))
-      else logger.warn('smegglect: bridge needs the Vite dev server\'s own HTTP server; in middleware mode run smegglect-bridge serve')
-      // A bridge started or stopped elsewhere later reaches the page on its next load.
-      const file = join(root, '.smegglect', 'bridge.json')
-      server.watcher.add(file)
-      const refresh = (changed: string) => {
-        if (changed !== file) return
-        const mod = server.moduleGraph.getModuleById(RESOLVED)
-        if (mod) server.moduleGraph.invalidateModule(mod)
-      }
-      for (const event of ['add', 'change', 'unlink'] as const) server.watcher.on(event, refresh)
+      bridgeReady = bridgeWithServer(server, bridgeRoot, (started) => {
+        bridge = started
+      })
+      reloadOnBridgeFile(server, bridgeRoot)
     },
     resolveId(id) {
       return id === ID ? RESOLVED : null
     },
     async closeBundle() {
-      const b = broker
-      broker = null
-      await b?.close()
+      const started = bridge
+      bridge = null
+      await started?.close()
     },
     async load(id) {
       if (id !== RESOLVED) return null
       await bridgeReady
-      const provider = options.git === false ? {} : git(config.root)
-      const mountOptions = { ...options.mount, project: options.project, ...(Object.keys(provider).length ? { provider } : {}) }
-      const vue = options.vue !== false
-      // Read when the module loads; only `vite serve` ever embeds the bridge token, never a build.
-      const bridge = options.bridge && config.command === 'serve' ? bridgeInfo(config.root) : null
-      if (bridge) Object.assign(mountOptions, { bridge })
-      return [
-        `import { mount } from 'smegglect'`,
-        vue ? `import { vueSource } from 'smegglect/vue'` : '',
-        options.client ? `import client from ${JSON.stringify(options.client)}` : '',
-        `const options = ${JSON.stringify(mountOptions)}`,
-        vue ? `options.sources = [vueSource({ root: ${JSON.stringify(config.root)} })]` : '',
-        options.client ? `Object.assign(options, await client())` : '',
-        `const instance = mount(options)`,
-        // HMR replaces this module; the old overlay goes first, so the new one mounts once.
-        `if (import.meta.hot) import.meta.hot.dispose(() => instance.destroy())`,
-      ].filter(Boolean).join('\n')
+      return clientModule(options, config, bridgeRoot)
     },
     transformIndexHtml: {
       order: 'pre',

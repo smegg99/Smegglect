@@ -13,21 +13,38 @@ interface Instance {
 
 const LIBRARY = /(^|\/)node_modules\//
 
-function instanceOf(el: Element): Instance | null {
-  for (let cur: Element | null = el; cur; cur = cur.parentElement) {
-    const inst = (cur as unknown as { __vueParentComponent?: Instance }).__vueParentComponent
-    if (inst && typeof inst === 'object') return inst
+function isInstance(value: unknown): value is Instance {
+  return !!value && typeof value === 'object'
+}
+
+function instanceOf(element: Element): Instance | null {
+  for (let cur: Element | null = element; cur; cur = cur.parentElement) {
+    const inst = '__vueParentComponent' in cur ? cur.__vueParentComponent : undefined
+    if (isInstance(inst)) return inst
   }
   return null
 }
 
+/** The name a component declares: the compiler's `__name`, else its own `name`. */
+function declaredName(type: NonNullable<Instance['type']>): string | undefined {
+  if (typeof type.__name === 'string') return type.__name
+  if (typeof type.name === 'string') return type.name
+  return undefined
+}
+
 function nameOf(inst: Instance): string | undefined {
-  const t = inst.type
-  if (!t) return undefined
-  const n = typeof t.__name === 'string' ? t.__name : typeof t.name === 'string' ? t.name : undefined
-  if (n) return cleanText(n, 64)
-  const file = typeof t.__file === 'string' ? t.__file : ''
+  const type = inst.type
+  if (!type) return undefined
+  const name = declaredName(type)
+  if (name) return cleanText(name, 64)
+  const file = typeof type.__file === 'string' ? type.__file : ''
   return file.match(/([^/\\]+)\.vue$/)?.[1]
+}
+
+/** How a component without a project file is listed among the owners. */
+function ownerSuffix(raw: string | undefined): string {
+  if (raw && LIBRARY.test(raw.replace(/\\/g, '/'))) return ' (library)'
+  return raw ? '' : ' (external)'
 }
 
 export interface VueSourceOptions {
@@ -40,8 +57,8 @@ export function relativeFile(file: string, root: string | undefined): string | u
   const norm = file.replace(/\\/g, '/')
   if (LIBRARY.test(norm)) return undefined
   if (root) {
-    const r = root.replace(/\\/g, '/').replace(/\/?$/, '/')
-    if (norm.startsWith(r)) return norm.slice(r.length)
+    const prefix = root.replace(/\\/g, '/').replace(/\/?$/, '/')
+    if (norm.startsWith(prefix)) return norm.slice(prefix.length)
     return undefined
   }
   // Without a root only an already relative path is safe to report.
@@ -55,18 +72,22 @@ export function relativeFile(file: string, root: string | undefined): string | u
 export function vueSource(options: VueSourceOptions = {}): SourceProvider {
   return {
     name: 'vue',
-    source(el): SourceRef | null {
-      const start = instanceOf(el)
+    source(element): SourceRef | null {
+      const start = instanceOf(element)
       if (!start) return null
       const owners: string[] = []
       let user: { name: string, file: string } | null = null
-      for (let inst: Instance | null | undefined = start, depth = 0; inst && depth < 32; inst = inst.parent, depth++) {
+      for (
+        let inst: Instance | null | undefined = start, depth = 0;
+        inst && depth < 32;
+        inst = inst.parent, depth++
+      ) {
         const name = nameOf(inst)
         if (!name) continue
         const raw = typeof inst.type?.__file === 'string' ? inst.type.__file : undefined
         const file = raw ? relativeFile(raw, options.root) : undefined
         // Project SFCs carry a dev-time __file; library components either live in node_modules or have none.
-        const kind = file ? '' : raw && LIBRARY.test(raw.replace(/\\/g, '/')) ? ' (library)' : raw ? '' : ' (external)'
+        const kind = file ? '' : ownerSuffix(raw)
         if (owners.length < 6) owners.push(`${name}${kind}`)
         if (!user && file) user = { name, file }
       }
@@ -92,14 +113,17 @@ export function routeContext(router: RouteLike): ContextProvider {
   return {
     name: 'route',
     fields: ['name', 'path'],
-    read: () => ({ name: String(router.currentRoute.value.name ?? ''), path: router.currentRoute.value.path }),
+    read: () => ({
+      name: String(router.currentRoute.value.name ?? ''),
+      path: router.currentRoute.value.path,
+    }),
   }
 }
 
 /** Route name for capture conditions, so hash and history routes are distinguishable. */
 export function routeScreen(router: RouteLike): () => string | undefined {
   return () => {
-    const r = router.currentRoute.value
-    return typeof r.name === 'string' && r.name ? r.name : r.path
+    const route = router.currentRoute.value
+    return typeof route.name === 'string' && route.name ? route.name : route.path
   }
 }

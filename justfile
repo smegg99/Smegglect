@@ -46,10 +46,13 @@ bridge-test: build
 e2e: build
     bun run e2e
 
-# Pack the SDK and reinstall it into every consumer fixture from that tarball only.
-fixtures: build
+# Pack the built library as fixtures/pack/smegglect.tgz, the same files npm would ship.
+pack: build
     rm -f fixtures/pack/smegglect.tgz
     bun pm pack --filename fixtures/pack/smegglect.tgz --quiet
+
+# Reinstall the packed library into every consumer fixture from that tarball only.
+fixtures: pack
     for f in vite-vue nuxt plain wails/frontend; do (cd fixtures/$f && rm -rf node_modules/smegglect node_modules/.vite .nuxt bun.lock && bun install --silent); done
 
 # Run the consumer fixtures (Vite, Nuxt, plain page) in Chromium and Firefox.
@@ -91,6 +94,10 @@ wails-build: fixtures
 wails-release-check: wails-build
     bun scripts/wails-release-check.ts
 
+# Run the showcase, Tabby, with Smegglect and the agent bridge on http://127.0.0.1:5280.
+showcase: pack
+    cd showcase && rm -rf node_modules/smegglect .nuxt bun.lock && bun install --silent && bun run dev
+
 # Run the demo desktop app with Smegglect in packaged debug mode (no dev server).
 demo: wails-build
     cd fixtures/wails && ./bin/desk-debug
@@ -106,18 +113,15 @@ check-version:
 # Run every repository check.
 check: check-version i18n-check lint typecheck test bridge-test e2e fixtures-test release-check wails-bindings-check wails-test wails-release-check
 
-# Run every check, then pack smegglect-VERSION.tgz and SHA256SUMS into dist/release/VERSION.
+# Run every check, then pack smegglect-VERSION.tgz and SHA256SUMS into release/VERSION.
 release: check
     #!/usr/bin/env bash
     set -euo pipefail
     version="$(tr -d '\r\n' < VERSION)"
-    out="dist/release/${version}"
-    # Packed outside dist first: the package ships dist, and must not ship its own release folder.
-    tmp="$(mktemp -d)"
-    trap 'rm -rf "$tmp"' EXIT
-    bun pm pack --filename "$tmp/smegglect-${version}.tgz" --quiet > /dev/null
+    # Outside dist, which every build empties and the package ships.
+    out="release/${version}"
     rm -rf "$out"
     mkdir -p "$out"
-    mv "$tmp/smegglect-${version}.tgz" "$out/"
+    bun pm pack --filename "$out/smegglect-${version}.tgz" --quiet > /dev/null
     (cd "$out" && sha256sum "smegglect-${version}.tgz" > SHA256SUMS)
     echo "$out"

@@ -11,7 +11,10 @@ import (
 	"smegglect/fixtures/wails/services"
 )
 
-// debugServices registers the native save used by the Smegglect overlay; only `-tags smegglect` builds have it.
+// debugServices registers the native save and the bridge proxy used by the Smegglect overlay; only `-tags smegglect` builds have them.
 func debugServices() []application.Service {
-	return []application.Service{application.NewService(&services.ExportService{Dir: os.Getenv("SMEGGLECT_EXPORT_DIR")})}
+	return []application.Service{
+		application.NewService(&services.ExportService{Dir: os.Getenv("SMEGGLECT_EXPORT_DIR")}),
+		application.NewService(&services.BridgeService{Root: os.Getenv("SMEGGLECT_ROOT")}),
+	}
 }

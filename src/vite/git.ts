@@ -6,7 +6,9 @@ import { execFileSync } from 'node:child_process'
 export function git(root: string): Record<string, string> {
   const run = (args: string[]) => {
     try {
-      return execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).toString().trim()
+      return execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 })
+        .toString()
+        .trim()
     }
     catch {
       return ''

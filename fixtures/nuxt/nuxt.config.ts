@@ -7,6 +7,8 @@ export default defineNuxtConfig({
     project: { id: 'nuxt-fixture' },
     // Explicit build-time switch; a normal build contains no Smegglect.
     debug: process.env.SMEGGLECT_DEBUG === '1',
+    // Started when `nuxt dev` listens, on whatever port it got: the tests run it on 5213, not the 5203 below.
+    bridge: true,
   },
   css: ['vuetify/styles'],
   build: { transpile: ['vuetify'] },
