@@ -119,6 +119,6 @@
     }
   },
   "bin": {
-    "smegglect-bridge": "./dist/bridge-cli.js"
+    "smegglect-bridge": "dist/bridge-cli.js"
   }
 }
