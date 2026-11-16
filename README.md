@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/smegglect.svg">
-    <img src="assets/smegglect-light.svg" alt="Smegglect" width="300">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/smegg99/Smegglect/main/assets/smegglect.svg">
+    <img src="https://raw.githubusercontent.com/smegg99/Smegglect/main/assets/smegglect-light.svg" alt="Smegglect" width="300">
   </picture>
 </h1>
 
@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="assets/demo.mp4">
-    <img src="assets/demo.webp" alt="Reporting UI problems with Smegglect and handing them to Claude Code" width="860">
+  <a href="https://lect.smegg.me/demo.mp4">
+    <img src="https://raw.githubusercontent.com/smegg99/Smegglect/main/assets/demo.webp" alt="Reporting UI problems with Smegglect and handing them to Claude Code" width="860">
   </a>
 </p>
 
 <p align="center">
-  <a href="assets/demo.mp4"><b>Watch the full-quality demo (MP4, 1:41)</b></a>
+  <a href="https://lect.smegg.me/demo.mp4"><b>Watch the full-quality demo (MP4, 1:41)</b></a>
 </p>
 
 Smegglect is an overlay for your app's dev server: a Vite or Nuxt app, a plain page, or a Wails desktop app.
@@ -40,11 +40,12 @@ npx smegglect-bridge init
 
 ```ts
 // vite.config.ts
-import smegglect from "smegglect/vite";
+import { defineConfig } from 'vite'
+import smegglect from 'smegglect/vite'
 
 export default defineConfig({
-  plugins: [smegglect({ project: { id: "my-app" }, bridge: true })],
-});
+  plugins: [smegglect({ project: { id: 'my-app' }, bridge: true })],
+})
 ```
 
 For Nuxt, add `modules: ['smegglect/nuxt']` and `smegglect: { project: { id: 'my-app' }, bridge: true }`
@@ -61,14 +62,15 @@ No Claude Code? **Copy prompt** or **Download .zip** gives any agent or develope
 
 ## Good to know
 
+- Needs Node.js 20 or newer, and Vite 6 or newer for the plugin (Nuxt 3.15 or newer for the module).
 - Tested in Chromium and Firefox, with Vue 3, Nuxt 4 and plain pages, and with Wails v3 on Linux.
   Windows and macOS webviews are not tested yet.
 - It records what you point at: element names, sizes, the component and file that render it. Never input
   values or query strings; secret-looking text is masked. Nothing leaves your machine.
 
 Everything else (every option, the keys, Wails, the agent bridge, security details, development) is in
-[GUIDE.md](GUIDE.md).
+[GUIDE.md](https://github.com/smegg99/Smegglect/blob/main/GUIDE.md).
 
 ## License
 
-GNU Affero General Public License v3.0 only. See [LICENSE](LICENSE).
+GNU Affero General Public License v3.0 only. See [LICENSE](https://github.com/smegg99/Smegglect/blob/main/LICENSE).
