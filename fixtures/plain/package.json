@@ -1,7 +1,0 @@
-{
-  "name": "smegglect-fixture-plain",
-  "private": true,
-  "dependencies": {
-    "smegglect": "file:../pack/smegglect.tgz"
-  }
-}

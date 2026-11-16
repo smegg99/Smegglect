@@ -48,6 +48,7 @@ e2e: build
 
 # Pack the built library as fixtures/pack/smegglect.tgz, the same files npm would ship.
 pack: build
+    mkdir -p fixtures/pack
     rm -f fixtures/pack/smegglect.tgz
     bun pm pack --filename fixtures/pack/smegglect.tgz --quiet
 

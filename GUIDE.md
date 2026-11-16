@@ -319,16 +319,14 @@ task sentence, scope, constraints, the note, A and B, and the captured evidence.
 
 ```sh
 just install          # bun install
-just dev              # playground pages on http://127.0.0.1:5199
+just build            # the library and its type declarations in dist/
 just showcase         # the showcase on http://127.0.0.1:5280
-just test             # unit tests
-just e2e              # browser tests, Chromium and Firefox
-just fixtures-test    # Vite, Nuxt and plain-page consumers of the packed tarball
-just release-check    # release builds contain no Smegglect, debug builds do
-just wails-build      # the Wails fixture: release, packaged debug and dev builds
-just check            # every check above, plus lint, typecheck, version, locale and binding drift
-just release          # just check, then the tarball and SHA256SUMS in release/<version>
+just lint             # ESLint
+just typecheck        # vue-tsc
+just i18n-check       # locale sources valid, generated bundles current
 ```
+
+The tests and the consumer apps they run against are kept outside this repository.
 
 `VERSION` holds the version; `just set-version 0.1.1` writes it and `package.json`.
 Locale sources live in `i18n/locales/{en,pl}`; `just i18n` regenerates the overlay

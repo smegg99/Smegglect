@@ -8,20 +8,25 @@ playwright-report/
 # Runtime data written by the optional bridge.
 .smegglect/
 *.tgz
-fixtures/*/node_modules/
-fixtures/*/.nuxt/
-fixtures/*/.output/
-fixtures/*/dist
-fixtures/*/bin/
-fixtures/*/build/bin/
-fixtures/*/frontend/dist/
-fixtures/*/frontend/node_modules/
-# Fixture lockfiles: the packed tarball changes on every build, so fixtures reinstall each time.
-fixtures/*/bun.lock
-fixtures/*/frontend/bun.lock
-fixtures/pack/
-# The showcase installs the packed library too, so its lockfile changes with every build.
+# Tests, the apps they run against and working notes stay out of the repository. The Wails app stays:
+# the guide points to it as the example.
+/tests/
+/fixtures/*
+!/fixtures/wails/
+/fixtures/wails/**/*_test.go
+/fixtures/wails/bin/
+# Its lockfile: the packed tarball changes on every build, so it reinstalls each time.
+/fixtures/wails/frontend/bun.lock
+/playground/
+/src/**/*.test.ts
+/src/core/__golden__/
+/vitest.config.ts
+/playwright.config.ts
+/playwright.fixtures.config.ts
+/scripts/release-check.ts
+/scripts/wails-release-check.ts
+/docs/
+# The showcase installs the packed library, so its lockfile changes with every build.
 showcase/.nuxt/
 showcase/.output/
 showcase/bun.lock
-fixtures/*/dist-debug/
