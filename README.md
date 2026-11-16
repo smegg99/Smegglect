@@ -40,11 +40,11 @@ npx smegglect-bridge init
 
 ```ts
 // vite.config.ts
-import smegglect from 'smegglect/vite'
+import smegglect from "smegglect/vite";
 
 export default defineConfig({
-  plugins: [smegglect({ project: { id: 'my-app' }, bridge: true })],
-})
+  plugins: [smegglect({ project: { id: "my-app" }, bridge: true })],
+});
 ```
 
 For Nuxt, add `modules: ['smegglect/nuxt']` and `smegglect: { project: { id: 'my-app' }, bridge: true }`
