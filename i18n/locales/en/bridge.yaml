@@ -1,13 +1,5 @@
-share:
-  value: "Make available to agent"
-  description: "Key that submits the batch to the local agent bridge"
-connected:
-  value: "Agent bridge connected at {url}"
-  description: "Drawer status when the local bridge answers"
-  placeholders:
-    url: {type: string}
 offline:
-  value: "Agent bridge not reachable"
+  value: "The bridge is not answering: copy or download instead"
   description: "Drawer status when the configured bridge does not answer"
 shared:
   value: "Available to agents as {id}. Claude Code picks it up while /smegglect is running."
@@ -17,29 +9,136 @@ shared:
 failed:
   value: "The bridge did not accept the batch. It stays submitted here."
   description: "Message when posting to the bridge failed"
-available:
-  value: "Available to agents"
-  description: "Submitted batch row label for a batch the bridge holds"
-copyRequest:
-  value: "Copy request for the agent"
-  description: "Key that copies text to paste into an agent session"
-request:
-  value: "Use the smegglect MCP tools on batch {id}: read it with get_batch, fix each issue, and record each outcome with report_result."
-  description: "Copyable request text for an agent session"
+listeningClaude:
+  value: "Claude is all ears"
+  description: "Status line: a Claude Code session waits for work with smegglect-bridge wait"
+listeningOther:
+  value: "An agent is all ears"
+  description: "Status line: an agent other than Claude Code waits for work"
+noAgent:
+  value: "Nobody is listening yet. Run /smegglect in Claude Code"
+  description: "Status line: no agent waits for work"
+seenClaude:
+  value: "Claude stepped out {minutes} min ago"
+  description: "Status line: Claude Code made its last call this long ago"
   placeholders:
-    id: {type: string}
-copied:
-  value: "Request copied"
-  description: "Toast after copying the agent request"
-refresh:
-  value: "Refresh agent results"
-  description: "Key that fetches results from the bridge"
-toCheck:
+    minutes: {type: integer}
+seenOther:
+  value: "The agent stepped out {minutes} min ago"
+  description: "Status line: an agent made its last call this long ago"
+  placeholders:
+    minutes: {type: integer}
+reportWaiting:
+  value: "Waiting for an agent"
+  description: "A sent report no agent has taken yet"
+reportTakenClaude:
+  value: "Claude Code has it"
+  description: "A sent report Claude Code took from the work list"
+reportTakenOther:
+  value: "An agent has it"
+  description: "A sent report an agent took from the work list"
+reportStalled:
+  value: "Stalled"
+  description: "A sent report whose agent went quiet before finishing it"
+reportDone:
+  value: "Done, see the agent's terminal"
+  description: "A sent report the agent answered for every issue; what it said is in its terminal"
+ready:
+  value: "Bridge connected"
+  description: "Status line above Send: the bridge answers and no word of an agent has come yet"
+via:
+  value: "via {name}"
+  description: "Status line above Send: the desktop app the bridge is reached through"
+  placeholders:
+    name: {type: string}
+workingClaude:
+  value: "Claude is on it"
+  description: "Status line above Send: Claude Code took a sent report and is working on it"
+workingOther:
+  value: "The agent is on it"
+  description: "Status line above Send: an agent took a sent report and is working on it"
+issueWaiting:
+  value: "Waiting"
+  description: "A sent issue no agent has taken yet"
+issueTakenClaude:
+  value: "Claude has it"
+  description: "A sent issue Claude Code took from the work list"
+issueTakenOther:
+  value: "An agent has it"
+  description: "A sent issue an agent took from the work list"
+issueWorking:
+  value: "Working on it"
+  description: "A sent issue the agent marked in progress"
+issueFixed:
+  value: "Fixed: check it"
+  description: "A sent issue the agent fixed; the person should look at it"
+issuePartial:
+  value: "Partly fixed"
+  description: "A sent issue the agent fixed in part"
+issueBlocked:
+  value: "Blocked: see the terminal"
+  description: "A sent issue the agent cannot go on with; its question is in its terminal"
+issueStalled:
+  value: "Stalled"
+  description: "A sent issue whose agent went quiet before finishing it"
+checkingClaude:
+  value: "Claude is checking issue {seq}"
+  description: "Status line above Send, for a few seconds: Claude Code asked this page to check a sent issue"
+  placeholders:
+    seq: {type: integer}
+checkingOther:
+  value: "The agent is checking issue {seq}"
+  description: "Status line above Send, for a few seconds: an agent asked this page to check a sent issue"
+  placeholders:
+    seq: {type: integer}
+fixedClaude:
+  value: "Claude fixed issue {seq}: check it"
+  description: "Toast: Claude Code marked a sent issue fixed"
+  placeholders:
+    seq: {type: integer}
+fixedOther:
+  value: "The agent fixed issue {seq}: check it"
+  description: "Toast: an agent marked a sent issue fixed"
+  placeholders:
+    seq: {type: integer}
+partialClaude:
+  value: "Claude partly fixed issue {seq}"
+  description: "Toast: Claude Code marked a sent issue partly fixed"
+  placeholders:
+    seq: {type: integer}
+partialOther:
+  value: "The agent partly fixed issue {seq}"
+  description: "Toast: an agent marked a sent issue partly fixed"
+  placeholders:
+    seq: {type: integer}
+blockedClaude:
+  value: "Claude is blocked on issue {seq}: see the terminal"
+  description: "Toast: Claude Code cannot go on with a sent issue; its question is in its terminal"
+  placeholders:
+    seq: {type: integer}
+blockedOther:
+  value: "The agent is blocked on issue {seq}: see the terminal"
+  description: "Toast: an agent cannot go on with a sent issue; its question is in its terminal"
+  placeholders:
+    seq: {type: integer}
+showOnPage:
+  value: "Show on page"
+  description: "Toast key: scrolls to the target of the issue the toast names"
+finishedClaude:
   plural:
     argument: count
     forms:
-      one: "The agent answered: {count} issue to check"
-      other: "The agent answered: {count} issues to check"
-  description: "Message when agent results arrive on the page; count is issues waiting for the person's review"
+      one: "Claude finished {count} issue"
+      other: "Claude finished {count} issues"
+  description: "Toast: Claude Code gave results for several sent issues at once"
+  placeholders:
+    count: {type: integer}
+finishedOther:
+  plural:
+    argument: count
+    forms:
+      one: "The agent finished {count} issue"
+      other: "The agent finished {count} issues"
+  description: "Toast: an agent gave results for several sent issues at once"
   placeholders:
     count: {type: integer}

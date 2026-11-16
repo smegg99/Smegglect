@@ -1,13 +1,5 @@
-share:
-  value: "Udostępnij agentowi"
-  description: "Key that submits the batch to the local agent bridge"
-connected:
-  value: "Most agenta połączony: {url}"
-  description: "Drawer status when the local bridge answers"
-  placeholders:
-    url: {type: string}
 offline:
-  value: "Most agenta nieosiągalny"
+  value: "Most nie odpowiada: skopiuj albo pobierz"
   description: "Drawer status when the configured bridge does not answer"
 shared:
   value: "Dostępne dla agentów jako {id}. Claude Code odbierze to, gdy działa /smegglect."
@@ -17,31 +9,140 @@ shared:
 failed:
   value: "Most nie przyjął partii. Pozostaje wysłana lokalnie."
   description: "Message when posting to the bridge failed"
-available:
-  value: "Dostępne dla agentów"
-  description: "Submitted batch row label for a batch the bridge holds"
-copyRequest:
-  value: "Kopiuj prośbę dla agenta"
-  description: "Key that copies text to paste into an agent session"
-request:
-  value: "Użyj narzędzi MCP smegglect dla partii {id}: odczytaj ją przez get_batch, popraw każde zgłoszenie i zapisz wynik przez report_result."
-  description: "Copyable request text for an agent session"
+listeningClaude:
+  value: "Claude zamienił się w słuch"
+  description: "Status line: a Claude Code session waits for work with smegglect-bridge wait"
+listeningOther:
+  value: "Agent zamienił się w słuch"
+  description: "Status line: an agent other than Claude Code waits for work"
+noAgent:
+  value: "Nikt jeszcze nie słucha. Uruchom /smegglect w Claude Code"
+  description: "Status line: no agent waits for work"
+seenClaude:
+  value: "Claude wyszedł {minutes} min temu"
+  description: "Status line: Claude Code made its last call this long ago"
   placeholders:
-    id: {type: string}
-copied:
-  value: "Skopiowano prośbę"
-  description: "Toast after copying the agent request"
-refresh:
-  value: "Odśwież wyniki agenta"
-  description: "Key that fetches results from the bridge"
-toCheck:
+    minutes: {type: integer}
+seenOther:
+  value: "Agent wyszedł {minutes} min temu"
+  description: "Status line: an agent made its last call this long ago"
+  placeholders:
+    minutes: {type: integer}
+reportWaiting:
+  value: "Czeka na agenta"
+  description: "A sent report no agent has taken yet"
+reportTakenClaude:
+  value: "Claude Code ma ten raport"
+  description: "A sent report Claude Code took from the work list"
+reportTakenOther:
+  value: "Agent ma ten raport"
+  description: "A sent report an agent took from the work list"
+reportStalled:
+  value: "Wstrzymany"
+  description: "A sent report whose agent went quiet before finishing it"
+reportDone:
+  value: "Gotowe, zobacz terminal agenta"
+  description: "A sent report the agent answered for every issue; what it said is in its terminal"
+ready:
+  value: "Most połączony"
+  description: "Status line above Send: the bridge answers and no word of an agent has come yet"
+via:
+  value: "przez {name}"
+  description: "Status line above Send: the desktop app the bridge is reached through"
+  placeholders:
+    name: {type: string}
+workingClaude:
+  value: "Claude się tym zajmuje"
+  description: "Status line above Send: Claude Code took a sent report and is working on it"
+workingOther:
+  value: "Agent się tym zajmuje"
+  description: "Status line above Send: an agent took a sent report and is working on it"
+issueWaiting:
+  value: "Czeka"
+  description: "A sent issue no agent has taken yet"
+issueTakenClaude:
+  value: "Claude to ma"
+  description: "A sent issue Claude Code took from the work list"
+issueTakenOther:
+  value: "Agent to ma"
+  description: "A sent issue an agent took from the work list"
+issueWorking:
+  value: "W toku"
+  description: "A sent issue the agent marked in progress"
+issueFixed:
+  value: "Poprawione: sprawdź"
+  description: "A sent issue the agent fixed; the person should look at it"
+issuePartial:
+  value: "Poprawione częściowo"
+  description: "A sent issue the agent fixed in part"
+issueBlocked:
+  value: "Utknął: zobacz terminal"
+  description: "A sent issue the agent cannot go on with; its question is in its terminal"
+issueStalled:
+  value: "Wstrzymane"
+  description: "A sent issue whose agent went quiet before finishing it"
+checkingClaude:
+  value: "Claude sprawdza zgłoszenie {seq}"
+  description: "Status line above Send, for a few seconds: Claude Code asked this page to check a sent issue"
+  placeholders:
+    seq: {type: integer}
+checkingOther:
+  value: "Agent sprawdza zgłoszenie {seq}"
+  description: "Status line above Send, for a few seconds: an agent asked this page to check a sent issue"
+  placeholders:
+    seq: {type: integer}
+fixedClaude:
+  value: "Claude poprawił zgłoszenie {seq}: sprawdź"
+  description: "Toast: Claude Code marked a sent issue fixed"
+  placeholders:
+    seq: {type: integer}
+fixedOther:
+  value: "Agent poprawił zgłoszenie {seq}: sprawdź"
+  description: "Toast: an agent marked a sent issue fixed"
+  placeholders:
+    seq: {type: integer}
+partialClaude:
+  value: "Claude częściowo poprawił zgłoszenie {seq}"
+  description: "Toast: Claude Code marked a sent issue partly fixed"
+  placeholders:
+    seq: {type: integer}
+partialOther:
+  value: "Agent częściowo poprawił zgłoszenie {seq}"
+  description: "Toast: an agent marked a sent issue partly fixed"
+  placeholders:
+    seq: {type: integer}
+blockedClaude:
+  value: "Claude utknął na zgłoszeniu {seq}: zobacz terminal"
+  description: "Toast: Claude Code cannot go on with a sent issue; its question is in its terminal"
+  placeholders:
+    seq: {type: integer}
+blockedOther:
+  value: "Agent utknął na zgłoszeniu {seq}: zobacz terminal"
+  description: "Toast: an agent cannot go on with a sent issue; its question is in its terminal"
+  placeholders:
+    seq: {type: integer}
+showOnPage:
+  value: "Pokaż na stronie"
+  description: "Toast key: scrolls to the target of the issue the toast names"
+finishedClaude:
   plural:
     argument: count
     forms:
-      one: "Agent odpowiedział: {count} zgłoszenie do sprawdzenia"
-      few: "Agent odpowiedział: {count} zgłoszenia do sprawdzenia"
-      many: "Agent odpowiedział: {count} zgłoszeń do sprawdzenia"
-      other: "Agent odpowiedział: {count} zgłoszenia do sprawdzenia"
-  description: "Message when agent results arrive on the page; count is issues waiting for the person's review"
+      one: "Claude zakończył {count} zgłoszenie"
+      few: "Claude zakończył {count} zgłoszenia"
+      many: "Claude zakończył {count} zgłoszeń"
+      other: "Claude zakończył {count} zgłoszenia"
+  description: "Toast: Claude Code gave results for several sent issues at once"
+  placeholders:
+    count: {type: integer}
+finishedOther:
+  plural:
+    argument: count
+    forms:
+      one: "Agent zakończył {count} zgłoszenie"
+      few: "Agent zakończył {count} zgłoszenia"
+      many: "Agent zakończył {count} zgłoszeń"
+      other: "Agent zakończył {count} zgłoszenia"
+  description: "Toast: an agent gave results for several sent issues at once"
   placeholders:
     count: {type: integer}

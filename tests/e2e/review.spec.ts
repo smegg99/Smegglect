@@ -1,5 +1,5 @@
 // tests/e2e/review.spec.ts
-// Stage 11: overlay -> local bridge -> MCP client -> results -> human review, end to end.
+// The overlay -> local bridge -> MCP client loop. What the agent says back is read in its terminal, not on the page.
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { expect, test, type Page } from '@playwright/test'
 import { startBroker, type Broker } from '../../src/bridge/server'
-import { preset, ui } from './helpers'
+import { pick, preset, ui } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -32,13 +32,7 @@ async function tool(name: string, args: Record<string, unknown> = {}) {
   return { text: res.content[0]?.text ?? '', isError: !!res.isError }
 }
 
-async function pick(page: Page, selector: string) {
-  const key = ui(page, '.dock [aria-label="Pick element"]')
-  if ((await key.getAttribute('aria-pressed')) !== 'true') await key.click()
-  await page.locator(selector).click()
-}
-
-test('collect two issues, submit to the bridge, agent reports, human reopens one and accepts the other', async ({ page, browserName }) => {
+test('issues sent to the bridge reach the agent; what it says back stays out of the page', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'one browser drives the shared broker')
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
@@ -52,9 +46,10 @@ test('collect two issues, submit to the bridge, agent reports, human reopens one
   await preset(page, 'match-height', { b: '#submit' })
 
   await ui(page, '.dock [aria-label^="Issues"]').click()
-  await expect(ui(page, '.inspector .status').filter({ hasText: 'Agent bridge' })).toHaveText(`Agent bridge connected at ${broker.url}`)
-  await ui(page, '.inspector .foot .primary').click()
-  await ui(page, '.report-view .foot button').filter({ hasText: 'Make available to agent' }).click()
+  // Reached directly, the line names no app; the bridge answers, so it is not out of reach.
+  await expect(ui(page, '.inspector .status.claude')).not.toHaveAttribute('data-state', 'unlinked')
+  await expect(ui(page, '.inspector .status.claude .via')).toHaveCount(0)
+  await ui(page, '.inspector .foot button').filter({ hasText: 'Send to Claude' }).click()
   await expect(ui(page, '.toast')).toContainText('Available to agents as bat_')
   await expect(ui(page, '.toast')).toContainText('/smegglect')
 
@@ -66,43 +61,26 @@ test('collect two issues, submit to the bridge, agent reports, human reopens one
   expect(summary.issues[1].task).toContain('Make the height of A match the height of B')
   expect(summary.issues[1].b.element.label).toBe('Save order')
 
-  await tool('report_result', { batch_id: batchId, issue_id: clip!.id, state: 'needs-review', summary: 'Added a tooltip with the full text', files: ['src/List.vue'], checks: [{ command: 'bun run test', outcome: 'passed' }], result_id: 'c1' })
-  await tool('report_result', { batch_id: batchId, issue_id: match!.id, state: 'needs-review', summary: '<b>Matched</b> both buttons to the control height token', result_id: 'm1' })
+  // The agent's results are recorded for its own queue; the page shows none of them.
+  await tool('report_result', { batch_id: batchId, issue_id: clip!.id, state: 'needs-review', summary: 'Added a tooltip with the full text', result_id: 'c1' })
+  await tool('report_result', { batch_id: batchId, issue_id: match!.id, state: 'blocked', summary: 'Which height?', result_id: 'm1' })
+  expect(JSON.parse((await tool('list_batches')).text)[0].issues.map((i: { state: string }) => i.state)).toEqual(['needs-review', 'blocked'])
+  expect(JSON.parse((await tool('next_work')).text).open).toEqual([])
+  await ui(page, `.inspector [data-tree="issues"] [data-batch="${batchId}"]`).click()
+  const row = (id: string) => ui(page, `.inspector [data-tree="issues"] [data-sent-issue="${id}"]`)
+  await expect(row(match!.id).locator('.tree-meta')).toHaveText('button "Cancel"')
+  await row(match!.id).click()
+  await expect(ui(page, '.inspector .issue-view')).not.toContainText('Which height?')
+  await expect(ui(page, '.inspector .issue-view')).not.toContainText('Accept')
+  await ui(page, '.inspector .issue-view [aria-label="Back"]').click()
+  await expect(ui(page, '.toast')).not.toContainText('to check')
 
-  await ui(page, '.inspector .tabstrip button').filter({ hasText: 'Issues' }).click()
-  await page.locator('smegglect-root .row .line').filter({ hasText: '2 issues' }).click()
-  await expect(ui(page, '.frozen').first()).toContainText('Reported by the agent, not verified by Smegglect: Needs review')
-  await expect(ui(page, '.frozen').first()).toContainText('Files: src/List.vue')
-  await expect(ui(page, '.frozen').first()).toContainText('bun run test (passed)')
-  await expect(ui(page, '.frozen').nth(1)).toContainText('<b>Matched</b>')
-  expect(await page.evaluate(() => document.querySelector('smegglect-root')!.shadowRoot!.querySelectorAll('.frozen b').length)).toBe(0)
-
-  // Reopen the first with a reason, accept the second.
-  await ui(page, '.frozen').first().locator('button', { hasText: 'Reopen' }).click()
-  await ui(page, '.frozen').first().locator('button', { hasText: 'Still happens' }).click()
-  await ui(page, '.frozen').nth(1).locator('button', { hasText: 'Accept' }).click()
-  await expect(ui(page, '.frozen').first().locator('.state')).toHaveText('Reopened')
-  await expect(ui(page, '.frozen').nth(1).locator('.state')).toHaveText('Accepted')
-
-  const after = JSON.parse((await tool('list_batches')).text)[0].issues.map((i: { state: string }) => i.state)
-  expect(after).toEqual(['reopened', 'accepted'])
-
-  // A stale agent result cannot undo acceptance; a blocked step is shown as blocked.
-  await tool('report_result', { batch_id: batchId, issue_id: match!.id, state: 'needs-review', summary: 'late', result_id: 'late' })
-  await tool('report_result', { batch_id: batchId, issue_id: clip!.id, state: 'blocked', summary: 'Cannot reproduce in a narrow window', checks: [{ command: 'visual check at 800px', outcome: 'not-run' }], result_id: 'c2' })
-  const final = JSON.parse((await tool('list_batches')).text)[0].issues.map((i: { state: string }) => i.state)
-  expect(final).toEqual(['blocked', 'accepted'])
-  await ui(page, '.frozen').first().locator('xpath=ancestor::div[contains(@class,"details")]').locator('button', { hasText: 'Refresh agent results' }).click()
-  await expect(ui(page, '.frozen').first().locator('.state')).toHaveText('Blocked')
-  await expect(ui(page, '.frozen').first()).toContainText('visual check at 800px (not run)')
-  await expect(ui(page, '.frozen').nth(1).locator('.state')).toHaveText('Accepted')
-  if (process.env.SMEGGLECT_SHOTS) await page.screenshot({ path: 'docs/smegglect/evidence/chromium-review.png' })
-
-  // The target of the first issue disappears: the row says so, the evidence stays.
+  // The target of the first issue disappears: its row says so, the evidence stays.
   await page.evaluate(() => document.getElementById('clip')?.remove())
-  await page.locator('smegglect-root .row .line').filter({ hasText: '2 issues' }).click()
-  await page.locator('smegglect-root .row .line').filter({ hasText: '2 issues' }).click()
-  await expect(ui(page, '.frozen').first()).toContainText('Target not found on this page')
+  await ui(page, '.inspector .tabstrip button').filter({ hasText: 'History' }).click()
+  await ui(page, '.inspector .tabstrip button').filter({ hasText: 'Issues' }).click()
+  await expect(row(clip!.id)).toHaveClass(/warn/)
+  await expect(row(clip!.id)).toContainText('Target not found on this page')
   const evidence = await tool('get_issue_evidence', { batch_id: batchId, issue_id: clip!.id })
   expect(JSON.parse(evidence.text).issue.operands.a.element.tag).toBe('p')
 })
@@ -112,7 +90,7 @@ async function polls(page: Page): Promise<number> {
   return page.evaluate(() => (window as unknown as { openPolls: number }).openPolls)
 }
 
-test('the page hears results by itself, re-measures an issue for the agent and tells it the selection', async ({ page, browserName }) => {
+test('the page re-measures an issue for the agent and tells it the selection', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'one browser drives the shared broker')
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
@@ -131,11 +109,12 @@ test('the page hears results by itself, re-measures an issue for the agent and t
   await pick(page, '#cancel')
   await preset(page, 'match-height', { b: '#submit' })
   await ui(page, '.dock [aria-label^="Issues"]').click()
-  await ui(page, '.inspector .foot .primary').click()
-  await ui(page, '.report-view .foot button').filter({ hasText: 'Make available to agent' }).click()
-  const work = JSON.parse((await tool('next_work')).text).open as { batchId: string, issueId: string }[]
+  await ui(page, '.inspector .foot button').filter({ hasText: 'Send to Claude' }).click()
+  // The work list and the report rows are read once the broker has the batch.
+  await expect(ui(page, '.toast')).toContainText('Available to agents as bat_')
+  const work = JSON.parse((await tool('next_work')).text).open as { batch_id: string, issue_id: string }[]
   expect(work).toHaveLength(1)
-  const { batchId, issueId } = work[0]!
+  const { batch_id: batchId, issue_id: issueId } = work[0]!
 
   // The agent asks the open page to find and measure the target again.
   const check = async () => JSON.parse((await tool('check_issue', { batch_id: batchId, issue_id: issueId })).text)
@@ -149,13 +128,7 @@ test('the page hears results by itself, re-measures an issue for the agent and t
   // A fix that changes the text still finds its target, and says how.
   await page.evaluate(() => (document.getElementById('cancel')!.textContent = 'Abort'))
   expect(await check()).toMatchObject({ status: 'live', found: 'without-label' })
-
-  // A result shows up without pressing anything.
-  await page.locator('smegglect-root .row .line').filter({ hasText: '1 issue' }).click()
-  await expect(ui(page, '.frozen').first().locator('.state')).toHaveText('Submitted')
   await tool('report_result', { batch_id: batchId, issue_id: issueId, state: 'needs-review', summary: 'Heights matched', result_id: 'live1' })
-  await expect(ui(page, '.frozen').first().locator('.state')).toHaveText('Needs review')
-  await expect(ui(page, '.toast')).toContainText('1 issue to check')
 
   // What the person points at now.
   await pick(page, '#submit')
@@ -174,79 +147,87 @@ test('the page hears results by itself, re-measures an issue for the agent and t
   await expect.poll(() => polls(page)).toBe(0)
 })
 
-test('a result is checked on the page: its plate shows the state, the issue view accepts it or sends it back', async ({ page, browserName }) => {
+test('a desktop app reaches the bridge through its own call instead of fetch, and the loop works through it', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'one browser drives the shared broker')
+  const origin = new URL(test.info().project.use.baseURL!).origin
+  // What the app's native side does: forward to the broker with the token, which the page never sees.
+  await page.exposeFunction('bridgeCall', async (r: { method: string, path: string, body?: string, type?: string, base64?: boolean }) => {
+    const body = r.body === undefined ? undefined : r.base64 ? Buffer.from(r.body, 'base64') : r.body
+    const res = await fetch(`${broker.url}${r.path}`, { method: r.method, headers: { authorization: `Bearer ${broker.token}`, origin, ...(r.type ? { 'content-type': r.type } : {}) }, ...(body === undefined ? {} : { body }) })
+    return { status: res.status, body: await res.text() }
+  })
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
-  await page.evaluate(({ url, token }) => {
-    window.sg = window.smegglect.mount({ project: { id: 'review' }, open: true, storage: 'memory', bridge: { url, token } })
-  }, { url: broker.url, token: broker.token })
+  await page.evaluate(() => {
+    const call = (window as unknown as { bridgeCall: (r: unknown) => Promise<{ status: number, body: string }> }).bridgeCall
+    window.sg = window.smegglect.mount({
+      project: { id: 'review' }, open: true, storage: 'memory',
+      bridge: { label: 'Desk', via: (request, signal) => new Promise((done, fail) => {
+        call(request).then(done, fail)
+        signal?.addEventListener('abort', () => fail(new DOMException('aborted', 'AbortError')), { once: true })
+      }) },
+    })
+  })
   await pick(page, '#cancel')
-  await preset(page, 'note', { note: 'Should say Abort' })
+  await preset(page, 'note', { note: 'Through the app' })
   await ui(page, '.dock [aria-label^="Issues"]').click()
-  await ui(page, '.inspector .foot .primary').click()
-  await ui(page, '.report-view .foot button').filter({ hasText: 'Make available to agent' }).click()
-  const open = JSON.parse((await tool('next_work')).text).open as { batchId: string, issueId: string }[]
+  await expect(ui(page, '.inspector .status.claude .via')).toHaveText('via Desk')
+  await ui(page, '.inspector .foot button').filter({ hasText: 'Send to Claude' }).click()
+  // The send goes through the app's call; the work list is read once the broker has the batch.
+  await expect(ui(page, '.toast')).toContainText('Available to agents as bat_')
+  const open = JSON.parse((await tool('next_work')).text).open as { batch_id: string, issue_id: string }[]
   expect(open).toHaveLength(1)
-  const { batchId, issueId } = open[0]!
-  const plate = ui(page, `.plate[data-id="${issueId}"]`)
-  await expect(plate).toHaveCount(0)
-
-  // The fix changed the button's text, as in the real run; its plate still finds it.
-  await page.evaluate(() => (document.getElementById('cancel')!.textContent = 'Abort'))
-  await tool('report_result', { batch_id: batchId, issue_id: issueId, state: 'needs-review', summary: 'Renamed it to Abort', files: ['src/Form.vue'], result_id: 'p1' })
-  await expect(plate.locator('.state')).toHaveText('Needs review')
-  await expect(plate.locator('.plate-x')).toHaveCount(0)
-  await plate.locator('.plate-main').click()
-  const result = ui(page, '.inspector .issue-view .result')
-  await expect(result).toContainText('Renamed it to Abort')
-  await expect(result).toContainText('src/Form.vue')
-  await expect(ui(page, '.inspector .issue-view')).not.toContainText('not registered')
-
-  // Sent back with a reason and a note: the agent gets both.
-  await result.getByRole('button', { name: 'Reopen' }).click()
-  await result.getByRole('button', { name: 'Still happens' }).click()
-  await result.locator('textarea').fill('The second form still says Cancel')
-  await result.getByRole('button', { name: 'Send back' }).click()
-  await expect(plate.locator('.state')).toHaveText('Reopened')
-  const back = JSON.parse((await tool('next_work')).text).open
-  expect(back).toEqual([expect.objectContaining({ issueId, state: 'reopened', said: ['still-happens: The second form still says Cancel'] })])
-
-  // The next answer is accepted, and the mark leaves the page.
-  await tool('report_result', { batch_id: batchId, issue_id: issueId, state: 'needs-review', summary: 'Both forms say Abort', result_id: 'p2' })
-  await expect(result).toContainText('Both forms say Abort')
-  await result.getByRole('button', { name: 'Accept' }).click()
-  await expect(plate).toHaveCount(0)
-  const listed = JSON.parse((await tool('list_batches')).text) as { id: string, issues: { state: string }[] }[]
-  expect(listed.find(b => b.id === batchId)!.issues[0]!.state).toBe('accepted')
+  const { batch_id: batchId, issue_id: issueId } = open[0]!
+  expect(JSON.parse((await tool('check_issue', { batch_id: batchId, issue_id: issueId })).text)).toMatchObject({ status: 'live' })
+  await tool('report_result', { batch_id: batchId, issue_id: issueId, state: 'needs-review', summary: 'Done through the app', result_id: 'desk1' })
+  expect(JSON.parse((await tool('list_batches')).text).find((b: { id: string }) => b.id === batchId).issues[0].state).toBe('needs-review')
 })
 
-test('answered issues are listed in the Issues tab; opening one moves the panel off its target', async ({ page, browserName }) => {
+test('after Send the page says whether an agent has the report, in its own words only', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'one browser drives the shared broker')
-  await page.setViewportSize({ width: 1280, height: 800 })
   await page.goto('/plain.html?manual')
   await page.waitForFunction(() => !!window.smegglect)
   await page.evaluate(({ url, token }) => {
-    window.sg = window.smegglect.mount({ project: { id: 'review' }, open: true, storage: 'memory', bridge: { url, token } })
+    window.sg = window.smegglect.mount({ project: { id: 'status' }, open: true, storage: 'memory', bridge: { url, token } })
   }, { url: broker.url, token: broker.token })
-  await pick(page, '#box-b')
-  await preset(page, 'note', { note: 'Too pale' })
+  await pick(page, '#cancel')
+  await preset(page, 'note', { note: 'Status words only' })
   await ui(page, '.dock [aria-label^="Issues"]').click()
-  await ui(page, '.inspector .foot .primary').click()
-  await ui(page, '.report-view .foot button').filter({ hasText: 'Make available to agent' }).click()
-  await expect(ui(page, '.toast')).toContainText('Available to agents')
-  const { batchId, issueId } = (JSON.parse((await tool('next_work')).text).open as { batchId: string, issueId: string }[])[0]!
-  await tool('report_result', { batch_id: batchId, issue_id: issueId, state: 'needs-review', summary: 'Darker fill', result_id: 'side1' })
+  await ui(page, '.inspector .foot button').filter({ hasText: 'Send to Claude' }).click()
+  // The work list and the report rows are read once the broker has the batch.
+  await expect(ui(page, '.toast')).toContainText('Available to agents as bat_')
+  const sentId = await page.evaluate(() => window.sg!.engine.session.store.get().submitted[0]!.id)
+  const report = ui(page, `.inspector [data-tree="issues"] [data-batch="${sentId}"] .tree-meta`)
+  await expect(report).toHaveText('Waiting for an agent')
 
-  // The panel is on the right, over the target and its plate.
-  const row = ui(page, `.inspector [data-tree="issues"] [data-sent="${issueId}"]`)
-  await expect(row).toContainText('Needs review')
-  const target = (await page.locator('#box-b').boundingBox())!
-  expect((await ui(page, '.inspector').boundingBox())!.x).toBeLessThan(target.x + target.width)
-  await row.click()
-  await expect(ui(page, '.inspector .issue-view .result')).toContainText('Darker fill')
-  await expect.poll(async () => (await ui(page, '.inspector').boundingBox())!.x + (await ui(page, '.inspector').boundingBox())!.width).toBeLessThan(target.x)
-  const plate = (await ui(page, `.plate[data-id="${issueId}"]`).boundingBox())!
-  const panel = (await ui(page, '.inspector').boundingBox())!
-  expect(plate.x).toBeGreaterThan(panel.x + panel.width)
+  // The agent's one call: the work list. Its client calls itself review-test; the page names no client.
+  const open = JSON.parse((await tool('next_work')).text).open as { batch_id: string, issue_id: string }[]
+  const mine = open.find(item => item.batch_id === sentId)!
+  await expect(report).toHaveText('An agent has it')
+  // It has the report and is not listening: it is working on it, not gone.
+  await expect(ui(page, '.inspector .status.claude')).toHaveText('The agent is on it')
+  await expect(ui(page, '.inspector .status.claude')).toHaveAttribute('data-state', 'working')
+
+  await tool('report_result', {
+    batch_id: mine.batch_id,
+    issue_id: mine.issue_id,
+    state: 'needs-review',
+    summary: 'AGENT-WROTE-THIS',
+    files: ['AGENT/FILE.vue'],
+    checks: [{ command: 'AGENT-CMD', outcome: 'passed' }],
+  })
+  await expect(report).toHaveText('Done, see the agent\'s terminal')
+  const text = await page.evaluate(() => {
+    const root = document.querySelector('smegglect-root')!.shadowRoot!
+    return [...root.querySelectorAll('*')].map(el => `${el.textContent} ${[...el.attributes].map(a => a.value).join(' ')}`).join('\n')
+  })
+  for (const written of ['AGENT-WROTE-THIS', 'AGENT/FILE.vue', 'AGENT-CMD', 'review-test']) expect(text).not.toContain(written)
+
+  // Off in Settings: no words about the agent at all.
+  await ui(page, '.dock [data-tool="settings"]').click()
+  await ui(page, '.inspector .settings .form-row').filter({ hasText: 'Show the agent\'s progress' }).locator('input').uncheck()
+  await ui(page, '.dock [data-tool="issues"]').click()
+  await expect(ui(page, '.inspector .status.claude')).toHaveText('Bridge connected')
+  await expect(ui(page, '.inspector .status.claude')).toHaveAttribute('data-state', 'linked')
+  await expect(report).toHaveCount(0)
 })
