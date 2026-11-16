@@ -12,7 +12,7 @@
         "@nuxt/kit": "4.6.4",
         "@nuxt/schema": "4.6.4",
         "@playwright/test": "1.64.1",
-        "@smegg99/s99ab": "git+ssh://git@github.com/smegg99/S99AB.git#v2.0.0",
+        "@smegg99/s99ab": "github:smegg99/S99AB#v2.0.0",
         "@stylistic/eslint-plugin": "5.10.0",
         "@types/node": "26.6.6",
         "@vitejs/plugin-vue": "6.0.11",
@@ -412,7 +412,7 @@
 
     "@sindresorhus/merge-streams": ["@sindresorhus/merge-streams@4.0.0", "", {}, "sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ=="],
 
-    "@smegg99/s99ab": ["@smegg99/s99ab@git+ssh://git@github.com/smegg99/S99AB.git#770ae978b3b4f9f293045c73702ca20bdf6f5af8", { "dependencies": { "@material/material-color-utilities": "^0.4.0" }, "peerDependencies": { "@firecms/neat": "^0.8.0 || ^1.0.0", "@mdi/font": "^7.4.47", "@pinia/colada": "^1.3.0", "nuxt": "^4.6.4", "pinia": "^3.0.0 || ^4.0.0", "sass-embedded": "^1.100.0", "vue": "^3.5.0", "vue-i18n": "^11.4.18", "vue-router": "^5.0.0", "vuetify": "^4.0.0", "zod": "^4.6.7" }, "optionalPeers": ["@firecms/neat", "vue-i18n", "zod"] }, "770ae978b3b4f9f293045c73702ca20bdf6f5af8"],
+    "@smegg99/s99ab": ["@smegg99/s99ab@github:smegg99/S99AB#40f84e0", { "dependencies": { "@material/material-color-utilities": "^0.4.0" }, "peerDependencies": { "@firecms/neat": "^0.8.0 || ^1.0.0", "@mdi/font": "^7.4.47", "@pinia/colada": "^1.3.0", "nuxt": "^4.6.4", "pinia": "^3.0.0 || ^4.0.0", "sass-embedded": "^1.100.0", "vue": "^3.5.0", "vue-i18n": "^11.4.18", "vue-router": "^5.0.0", "vuetify": "^4.0.0", "zod": "^4.6.7" }, "optionalPeers": ["@firecms/neat", "vue-i18n", "zod"] }, "smegg99-S99AB-40f84e0", "sha512-bxaRWAvVKS8ouhySBDQ9RK3CVKbSGNimIRlhXn62S8btnSkBC2oBvOzX7QaI0j89U6lmU4uxEQ4Tr7dBTFPetg=="],
 
     "@speed-highlight/core": ["@speed-highlight/core@1.2.24", "", {}, "sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw=="],
 

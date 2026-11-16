@@ -67,6 +67,7 @@
   "scripts": {
     "dev": "vite --config playground/vite.config.ts",
     "build": "vite build && vite build --config vite.node.config.ts && vue-tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
@@ -80,7 +81,7 @@
     "@nuxt/kit": "4.6.4",
     "@nuxt/schema": "4.6.4",
     "@playwright/test": "1.64.1",
-    "@smegg99/s99ab": "git+ssh://git@github.com/smegg99/S99AB.git#v2.0.0",
+    "@smegg99/s99ab": "github:smegg99/S99AB#v2.0.0",
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/node": "26.6.6",
     "@vitejs/plugin-vue": "6.0.11",

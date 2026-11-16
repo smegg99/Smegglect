@@ -11,7 +11,7 @@
     "@fontsource-variable/overpass": "5.3.0",
     "@mdi/font": "7.4.47",
     "@pinia/colada": "1.4.9",
-    "@smegg99/s99ab": "git+ssh://git@github.com/smegg99/S99AB.git#v2.0.0",
+    "@smegg99/s99ab": "github:smegg99/S99AB#v2.0.0",
     "nuxt": "4.6.4",
     "pinia": "4.1.0",
     "sass-embedded": "1.108.1",
