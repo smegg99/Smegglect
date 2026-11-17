@@ -35,11 +35,12 @@ page can switch it on.
    Shift-, Ctrl- or Cmd-click adds an element to a group. Measure (Alt+Shift+M) lets a
    click pick a margin, a padding or a gap instead; it goes with Pick, never with Region:
    turning one of those two on turns the other off. As in CAD, a region dragged to the
-   right lists the elements fully inside it (solid, in the accent colour) and one dragged
-   to the left the elements it touches (dashed, in the accent's opposite colour); Claude
-   gets them with their components and files. A region stays on what it was drawn
-   around: it moves with it when the page or a box inside it scrolls, and when a resize
-   reflows the page.
+   right selects the elements fully inside it (solid, in the accent colour) and one
+   dragged to the left the elements it touches (dashed, in the accent's opposite colour).
+   The rectangle is not kept: one element becomes a plain selection and more become a
+   group, as picking them would, so the selection stays on them when the page scrolls or
+   a resize reflows it. A region that holds no element selects the one it is drawn on,
+   such as a canvas. Claude gets each member's component and file.
 2. The Element tab names the selection and shows its measurements. Under them is the tree
    of issue types: Size and space, Fit, Alignment, Look, Behaviour and access, Differs
    from another and Other, from "text clipped", "unnecessary ellipsis" and "too small to
@@ -69,7 +70,7 @@ re-renders the selected element, the selection moves onto the new one.
 - [x] Views kept mounted behind `v-show`: their issues hide with them
 - [ ] Exact template line and column mapping (only component-level ownership)
 - [ ] Contents of closed shadow roots, cross-origin frames and canvas (select them whole
-      or draw a region)
+      and say which part in the note)
 - [ ] Playwright WebKit (cannot launch on the development host)
 - [ ] Windows and macOS WebViews (not tested)
 

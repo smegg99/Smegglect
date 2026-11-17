@@ -13,9 +13,9 @@ the page: the person reads your replies and answers in this conversation.
 
 1. Call `next_work`. It lists sent issues nobody has answered yet, each with what you need
    to begin: `batch_id`, `issue_id`, the task, the person's note, the scope, the target A,
-   its source file and the viewport and colour scheme it was seen at. A region the person
-   drew lists the elements in it (`contents`: fully inside or touching, their files and the
-   total): start from those files; the rectangle only shows where they are. The issues it returns
+   its source file and the viewport and colour scheme it was seen at. A group, which a
+   region the person drew becomes when it holds several elements, lists each member's file
+   once in `files`: start from those files. The issues it returns
    are yours: another agent's `next_work` skips them while you keep calling. Pass
    `claim: false` only to look without taking them. Its `link` says which pages are open,
    their viewports, and whether the page that sent each batch is among them. If `open` is
