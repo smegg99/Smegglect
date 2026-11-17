@@ -35,21 +35,29 @@ page can switch it on.
    Shift-, Ctrl- or Cmd-click adds an element to a group. Measure (Alt+Shift+M) lets a
    click pick a margin, a padding or a gap instead; it goes with Pick, never with Region:
    turning one of those two on turns the other off. As in CAD, a region dragged to the
-   right lists the elements fully inside it and one dragged to the left the elements it
-   touches; Claude gets them with their components and files.
+   right lists the elements fully inside it (solid, in the accent colour) and one dragged
+   to the left the elements it touches (dashed, in the accent's opposite colour); Claude
+   gets them with their components and files. A region stays on what it was drawn
+   around: it moves with it when the page or a box inside it scrolls, and when a resize
+   reflows the page.
 2. The Element tab names the selection and shows its measurements. Under them is the tree
    of issue types: Size and space, Fit, Alignment, Look, Behaviour and access, Differs
-   from another and Other, from "text clipped" and "too small to tap" to "should be
-   another control", "not from the design system" and "should go". Types that compare two
-   elements ask for B, the reference, on the page.
+   from another and Other, from "text clipped", "unnecessary ellipsis" and "too small to
+   tap" to "should be another control", "not from the design system" and "should go".
+   Types that compare two elements ask for B, the reference, on the page.
 3. Write what is wrong in the note, paste a screenshot with Ctrl+V if it helps, and press
-   Add issue (Ctrl+Enter). The same issue twice is refused.
+   Add issue (Ctrl+Enter): the Issues tab and key light up once. The same issue twice is
+   refused; Undo (Alt+Shift+Z) takes the last change back.
 4. The Issues tab lists everything by page. Send to Claude, Copy prompt or Download .zip
    freezes the issues into a report; new ones start the next.
 5. The History tab shows what was added, edited, deleted, undone, copied and sent.
 
 Escape steps back one level at a time. Opening an issue never navigates or scrolls your
 app; only its Show on page key scrolls to it.
+
+A reload of the page, as a dev server does after an edit, keeps the toolbar open or folded,
+the tab the panel showed, the selection and a half-written note. When a hot update
+re-renders the selected element, the selection moves onto the new one.
 
 ### Support
 
@@ -216,7 +224,8 @@ Open Claude Code in `showcase/`, run `/smegglect`, and report what you see.
 
 Settings is the last tab. Appearance: the language (Auto follows the app's `locale`
 option, else the browser; English, Polski), the theme and the accent colour. Toolbar:
-labels under the keys, larger keys, the same size on the side edges, animations, and the
+labels under the keys, larger keys, the same size on the side edges (while one column
+holds the captioned keys), animations, and the
 Alt+Shift shortcuts. On the page: whether plates move out of the pointer's way. Agent:
 whether the overlay shows the agent's progress (states, checks, toasts, History), and
 "Only watch this page". Data: where drafts and history are kept, and clearing them.
