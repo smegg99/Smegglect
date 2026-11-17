@@ -1,7 +1,7 @@
 // src/bridge/work.ts
 // What waits for an agent, with what it needs to begin, and the long-poll that wakes when it changes.
 
-import type { CaptureConditions, ContentsMode, Issue, Scope } from '../core/model'
+import type { CaptureConditions, Issue, Scope } from '../core/model'
 import type { PresetRegistry } from '../core/presets'
 import { intentSentence, targetText } from '../core/task'
 import type { Feed } from './feed'
@@ -27,10 +27,10 @@ export interface WorkItem {
   scope: Scope
   /** A, the element to change. */
   target: string
-  /** A's component file relative to the bridge root, when the page knew it. */
+  /** A's component file relative to the bridge root, when the page knew it; for a group its main member's. */
   source: string | null
-  /** A region's elements: how they were chosen, their files (each once) and how many there were in all. */
-  contents: { mode: ContentsMode, files: string[], total: number } | null
+  /** A group's member files, each once, when the page knew them; null for one element. */
+  files: string[] | null
   /** The conditions the person saw it under, which decide a responsive layout. */
   viewport: CaptureConditions['viewport']
   colorScheme: CaptureConditions['colorScheme']
@@ -44,11 +44,10 @@ interface Open {
   images: number
 }
 
-function contentsOf(issue: Issue): WorkItem['contents'] {
-  const contents = issue.evidence.a.contents
-  if (!contents) return null
-  const files = contents.elements.flatMap(({ source }) => source.file ? [source.file] : [])
-  return { mode: contents.mode, files: [...new Set(files)], total: contents.total }
+function filesOf(issue: Issue): string[] | null {
+  const sources = issue.evidence.a.memberSources
+  if (!sources) return null
+  return [...new Set(sources.flatMap(({ file }) => file ? [file] : []))]
 }
 
 function itemOf(issue: Issue, registry: PresetRegistry, open: Open): WorkItem {
@@ -63,7 +62,7 @@ function itemOf(issue: Issue, registry: PresetRegistry, open: Open): WorkItem {
     scope: issue.intent.scope,
     target: targetText(issue.operands.a),
     source: issue.evidence.a.source.file ?? null,
-    contents: contentsOf(issue),
+    files: filesOf(issue),
     viewport: issue.evidence.capture.viewport,
     colorScheme: issue.evidence.capture.colorScheme,
     images: open.images,

@@ -2,17 +2,15 @@
 // The inspect state: modes and the selection, what is selected, the hover that follows it while measuring,
 // and the selection described for an agent.
 
-import { shift } from '../../core/geometry'
-import type { ContentsMode, Rect } from '../../core/model'
+import type { ContentsMode } from '../../core/contents'
+import type { Rect } from '../../core/model'
 import { reduce, type InspectEvent, type InspectState, type Mode, type Point } from '../../core/modes'
 import { cleanLocation } from '../../core/redact'
 import { readout } from '../boxmodel'
 import { pageConditions, type SelectionReport } from '../check'
-import { anchorOf } from '../anchor'
-import { regionContents } from '../contents'
+import { regionSelection } from '../contents'
 import { boundaryOf, chipOf, describe, parentOf, pickable } from '../describe'
 import type { Operand } from '../issue'
-import { pageKey } from '../pins'
 import { sourceOf } from '../providers'
 import { patch, type EngineBase, type EngineContext } from './context'
 import { sample } from './geometry'
@@ -31,11 +29,6 @@ export const choosing = (mode: Mode) => mode.kind === 'reference' || mode.kind =
 function selectedInfo(context: EngineBase, state: InspectState<Element>): SelectedInfo | null {
   const selection = state.selection
   if (selection.kind === 'none') return null
-  if (selection.kind === 'region') {
-    const held = selection.contents
-    const contents = held ? { contents: { mode: held.mode, count: held.total } } : {}
-    return { kind: 'region', chips: [], descriptors: [], canEscalate: false, ...contents }
-  }
   const elements = selection.kind === 'dom' ? [selection.handle] : selection.handles
   const descriptors = elements.map(element => describe(element, context.attributes))
   const single = selection.kind === 'dom' ? selection.handle : null
@@ -147,22 +140,18 @@ function escalate(context: EngineContext): void {
   setInspect(context, { mode, selection: { kind: 'dom', handle: parent } })
 }
 
-/** Ends a drag: `rect` is in viewport coordinates, which the page's elements are compared in. */
+/**
+ * Ends a drag: `rect` is in viewport coordinates, which the page's elements are compared in. The region is
+ * not kept: what it selects is, so the selection follows its elements as the page scrolls and reflows.
+ */
 function regionEnd(context: EngineContext, rect: Rect, mode: ContentsMode): void {
-  const { geometry, store, win, options } = context
+  const { geometry, store } = context
   geometry.set({ ...geometry.get(), region: null })
   if (rect.width < MIN_REGION || rect.height < MIN_REGION) {
     setInspect(context, { mode: { kind: 'region' }, selection: store.get().inspect.selection })
     return
   }
-  const page = pageKey(win, options.screen?.())
-  // The mode stays with the region even when it found nothing, so the panel can say so.
-  const found = regionContents(context.doc, rect, mode)
-  const contents = { mode, handles: found.elements, total: found.total }
-  // Whatever the mode lists, a region is anchored on what lies wholly inside it, if anything does.
-  const inside = mode === 'inside' ? found.elements : regionContents(context.doc, rect, 'inside').elements
-  const anchor = anchorOf(context.doc, rect, inside) ?? undefined
-  dispatch(context, { type: 'drag-end', rect: shift(rect, win.scrollX, win.scrollY), page, contents, anchor })
+  dispatch(context, { type: 'drag-end', handles: regionSelection(context.doc, rect, mode) })
 }
 
 async function describeSelection(context: EngineBase): Promise<SelectionReport> {
@@ -171,7 +160,6 @@ async function describeSelection(context: EngineBase): Promise<SelectionReport> 
   const page = { location: cleanLocation(win.location.href), conditions: pageConditions(doc) }
   if (selection.kind === 'none') return { status: 'none', ...page }
   const drawn = context.geometry.get()
-  if (selection.kind === 'region') return { status: 'live', ...page, kind: 'region', bounds: drawn.a }
   const elements = selection.kind === 'dom' ? [selection.handle] : selection.handles
   const descriptors = elements.map(element => describe(element, attributes))
   const targets = descriptors.map(chipOf)

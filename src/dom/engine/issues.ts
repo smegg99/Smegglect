@@ -13,12 +13,11 @@ import { sample } from './geometry'
 import { operandA } from './inspect'
 import type { Engine } from './types'
 
-/** The history's name for an issue's target: its label, its members' labels, or "region". */
+/** The history's name for an issue's target: its label, or its members' labels. */
 export function targetChip(issue: Issue): string {
   const a = issue.operands.a
   if (a.kind === 'dom') return chipOf(a.element)
-  if (a.kind === 'group') return a.members.map(chipOf).join(', ').slice(0, 120)
-  return 'region'
+  return a.members.map(chipOf).join(', ').slice(0, 120)
 }
 
 /** Issues whose A is this target. Refs are plain data built in one key order, so equal ones print alike. */

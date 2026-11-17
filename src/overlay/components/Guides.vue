@@ -16,19 +16,13 @@
       v-bind="box(member)"
     />
     <rect
-      v-if="geo.a && sel !== 'region'"
+      v-if="geo.a"
       class="box a-halo"
       v-bind="box(geo.a)"
     />
     <rect
-      v-if="geo.a && sel !== 'region'"
+      v-if="geo.a"
       class="box a"
-      v-bind="box(geo.a)"
-    />
-    <rect
-      v-if="geo.a && sel === 'region'"
-      class="box region"
-      :class="state.selected?.contents?.mode"
       v-bind="box(geo.a)"
     />
     <path
@@ -95,7 +89,7 @@
   >
     {{ sizeLabel.text }}
   </div>
-  <!-- Which elements the region being drawn will list, at its top-left corner. -->
+  <!-- Which elements the region being drawn will select, at its top-left corner. -->
   <div
     v-if="geo.region && ui.regionMode"
     class="measure-label region-mode"

@@ -22,9 +22,6 @@ clear:
 removeMember:
   value: "Remove from group"
   description: "Key on a group member's row that takes it out of the selection"
-drawInstead:
-  value: "Draw a region instead"
-  description: "Link next to a notice that the element cannot be inspected inside"
 picking:
   value: "Click an element to select it. Shift- or Ctrl-click to select several."
   description: "Inspector header while pick mode is on"
@@ -32,7 +29,7 @@ grouping:
   value: "Click elements to add or remove."
   description: "Inspector header while picks extend a group"
 drawing:
-  value: "Drag to draw a region: rightwards it lists what is inside, leftwards what it touches."
+  value: "Drag to draw a region: rightwards it selects what is inside, leftwards what it touches."
   description: "Inspector header while region mode is on"
 measurements:
   value: "Measurements"
@@ -150,25 +147,7 @@ several:
   description: "Element tab action when nothing is selected: start picking and keep every pick in the selection"
 regionInside:
   value: "Inside"
-  description: "Label on a region being dragged to the right: it will list the elements fully inside it"
+  description: "Label on a region being dragged to the right: it will select the elements fully inside it"
 regionTouching:
   value: "Touching"
-  description: "Label on a region being dragged to the left: it will list every element it touches"
-elementsInside:
-  plural:
-    argument: count
-    forms:
-      one: "{count} element inside"
-      other: "{count} elements inside"
-  description: "After a region's size in the Element tab: how many elements lie fully inside it"
-  placeholders:
-    count: {type: integer}
-elementsTouching:
-  plural:
-    argument: count
-    forms:
-      one: "{count} element touching"
-      other: "{count} elements touching"
-  description: "After a region's size in the Element tab: how many elements it touches"
-  placeholders:
-    count: {type: integer}
+  description: "Label on a region being dragged to the left: it will select every element it touches"

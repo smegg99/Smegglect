@@ -14,7 +14,7 @@
     >
       <rect
         class="box mark"
-        :class="{ region: item.region, on: item.active }"
+        :class="{ on: item.active }"
         :x="item.rect.x"
         :y="item.rect.y"
         :width="Math.max(item.rect.width, 0)"
@@ -46,7 +46,7 @@
   >
     <div
       class="plate"
-      :class="{ on: item.active, region: item.region }"
+      :class="{ on: item.active }"
       :style="{ left: `${item.x}px`, top: `${item.y}px`, transform: `translate(${item.dx}px, ${item.dy}px)` }"
       :data-id="item.id"
       @pointerenter="ui.hover = item.id"
@@ -200,7 +200,6 @@ interface Item {
   seq: number
   rect: Rect
   b: Rect | null
-  region: boolean
   icon: string
   title: string
   text: string
@@ -244,7 +243,6 @@ const items = computed<Item[]>(() => {
       seq: issue.seq,
       rect,
       b: pin.b,
-      region: issue.operands.a.kind === 'region',
       icon: engine.registry.byId.get(issue.intent.preset.id)?.icon ?? 'note',
       title,
       text: describe(subjectOf(issue, t), engine.registry, t),

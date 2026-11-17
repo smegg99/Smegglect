@@ -74,9 +74,10 @@ feedback:
     a: {type: string}
     choice: {type: string}
 layout:
-  value: "Problem z układem w tym obszarze: {choice}"
+  value: "Problem z układem ({a}): {choice}"
   description: "Issue description"
   placeholders:
+    a: {type: string}
     choice: {type: string}
 note:
   value: "Notatka do {a}"
@@ -100,9 +101,6 @@ offScale:
   placeholders:
     a: {type: string}
     choice: {type: string}
-region:
-  value: "ten obszar"
-  description: "Target name for a region"
 group:
   value: "te elementy ({count})"
   description: "Target name for a group"

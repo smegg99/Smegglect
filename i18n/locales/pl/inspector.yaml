@@ -22,9 +22,6 @@ clear:
 removeMember:
   value: "Usuń z grupy"
   description: "Key on a group member's row that takes it out of the selection"
-drawInstead:
-  value: "Zaznacz obszar zamiast tego"
-  description: "Link next to a notice that the element cannot be inspected inside"
 picking:
   value: "Kliknij element, żeby go zaznaczyć. Z Shift lub Ctrl zaznaczysz kilka."
   description: "Inspector header while pick mode is on"
@@ -32,7 +29,7 @@ grouping:
   value: "Klikaj elementy, by dodać lub usunąć."
   description: "Inspector header while picks extend a group"
 drawing:
-  value: "Przeciągnij, by zaznaczyć obszar: w prawo obejmie to, co w środku, w lewo to, czego dotyka."
+  value: "Przeciągnij, by zaznaczyć obszar: w prawo wybierze to, co w środku, w lewo to, czego dotyka."
   description: "Inspector header while region mode is on"
 measurements:
   value: "Pomiary"
@@ -150,29 +147,7 @@ several:
   description: "Element tab action when nothing is selected: start picking and keep every pick in the selection"
 regionInside:
   value: "Wewnątrz"
-  description: "Label on a region being dragged to the right: it will list the elements fully inside it"
+  description: "Label on a region being dragged to the right: it will select the elements fully inside it"
 regionTouching:
   value: "Dotyka"
-  description: "Label on a region being dragged to the left: it will list every element it touches"
-elementsInside:
-  plural:
-    argument: count
-    forms:
-      one: "{count} element wewnątrz"
-      few: "{count} elementy wewnątrz"
-      many: "{count} elementów wewnątrz"
-      other: "{count} elementu wewnątrz"
-  description: "After a region's size in the Element tab: how many elements lie fully inside it"
-  placeholders:
-    count: {type: integer}
-elementsTouching:
-  plural:
-    argument: count
-    forms:
-      one: "{count} element dotyka"
-      few: "{count} elementy dotykają"
-      many: "{count} elementów dotyka"
-      other: "{count} elementu dotyka"
-  description: "After a region's size in the Element tab: how many elements it touches"
-  placeholders:
-    count: {type: integer}
+  description: "Label on a region being dragged to the left: it will select every element it touches"

@@ -49,19 +49,11 @@ export interface ElementDescriptor {
   shadowDepth: number
 }
 
-export type BoundaryKind = 'canvas' | 'iframe' | 'closed-root' | 'native' | 'manual'
-
-/** The element a region was drawn on and the region's top-left corner from that element's, in CSS px. */
-export interface RegionAnchor {
-  element: ElementDescriptor
-  offset: { x: number, y: number }
-}
+export type BoundaryKind = 'canvas' | 'iframe' | 'closed-root' | 'native'
 
 export type TargetRef =
   | { kind: 'dom', element: ElementDescriptor }
   | { kind: 'group', members: ElementDescriptor[], anchor?: number }
-  /** `anchor`: drawn where its element is now; without one, or with the element gone, at `rect`. */
-  | { kind: 'region', rect: Rect, frame: CoordinateFrame, boundary: BoundaryKind, anchor?: RegionAnchor }
 
 export type TargetKind = TargetRef['kind']
 
@@ -91,26 +83,10 @@ export interface TargetEvidence {
   /** Group targets: the compared properties of each member, in member order. */
   memberProperties?: Record<string, string>[]
   parent?: { element: ElementDescriptor, bounds: Rect }
+  /** For a group, the source of its anchor member, or of its first. */
   source: SourceRef
-  /** Region targets: the elements the region holds, when it holds any. */
-  contents?: RegionContents
-}
-
-/** Which elements a region lists: those fully inside it (dragged left to right) or those it touches. */
-export type ContentsMode = 'inside' | 'touching'
-
-/** One element a region holds, described as an element target would be. */
-export interface ContentsElement {
-  element: ElementDescriptor
-  bounds: Rect
-  source: SourceRef
-}
-
-/** The elements a region holds, in document order: the first `LIMITS.members` and how many there were. */
-export interface RegionContents {
-  mode: ContentsMode
-  elements: ContentsElement[]
-  total: number
+  /** Group targets: the source of each member, in member order. */
+  memberSources?: SourceRef[]
 }
 
 export type AxisRelation =

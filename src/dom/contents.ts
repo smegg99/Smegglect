@@ -1,11 +1,12 @@
 // src/dom/contents.ts
-// The elements a region holds, read from the page once, when the drag ends.
+// What a drawn region selects, read from the page once, when the drag ends.
 
-import { selectContents, type Placed } from '../core/contents'
+import { selectContents, type ContentsMode, type Placed } from '../core/contents'
 import { intersection } from '../core/geometry'
 import { LIMITS } from '../core/limits'
-import type { ContentsMode, Rect } from '../core/model'
+import type { Rect } from '../core/model'
 import { rectOf } from './capture'
+import { parentOf, pickable, under } from './describe'
 import { HOST_TAG } from './host'
 
 /** The page is where a region is drawn, never what it holds; head and Smegglect's own tree hold nothing. */
@@ -71,13 +72,32 @@ function seen(element: Element, rect: Rect, region: Rect): boolean {
   })
 }
 
-/** What a region in viewport coordinates holds: the first `LIMITS.members` elements and how many in all. */
-export function regionContents(
-  doc: Document,
-  region: Rect,
-  mode: ContentsMode,
-): { elements: Element[], total: number } {
+/** Whether `outer` holds all of `inner`, to the half pixel a rounded box can be off by. */
+function holds(outer: Rect, inner: Rect): boolean {
+  return inner.x >= outer.x - 0.5
+    && inner.y >= outer.y - 0.5
+    && inner.x + inner.width <= outer.x + outer.width + 0.5
+    && inner.y + inner.height <= outer.y + outer.height + 0.5
+}
+
+/**
+ * The deepest element under a region's middle whose box holds all of it, through open shadow roots: what a
+ * region on blank space, on a canvas or inside one block of text is drawn on. Never the root element.
+ */
+function holderOf(doc: Document, region: Rect): Element | null {
+  let element = under(doc, region.x + region.width / 2, region.y + region.height / 2)
+  while (element && !holds(rectOf(element), region)) element = parentOf(element)
+  return element && element !== doc.documentElement ? pickable(element) : null
+}
+
+/**
+ * What a region in viewport coordinates selects: the first `LIMITS.members` elements it holds, or when it
+ * holds none, the element it is drawn on.
+ */
+export function regionSelection(doc: Document, region: Rect, mode: ContentsMode): Element[] {
   const visible = (element: Element, rect: Rect) => seen(element, rect, region)
-  const { items, total } = selectContents(placedIn(doc), region, mode, LIMITS.members, visible)
-  return { elements: items, total }
+  const held = selectContents(placedIn(doc), region, mode, LIMITS.members, visible)
+  if (held.length) return held
+  const holder = holderOf(doc, region)
+  return holder ? [holder] : []
 }

@@ -77,8 +77,7 @@ function registerBatchTools(server: McpServer, client: BrokerClient): void {
     description: 'Issues waiting for you: sent and not yet answered. Each has what you need to begin:'
       + ' batch_id, issue_id, the task, the person\'s note, the scope, the target A, its source file'
       + ' and the viewport and colour scheme it was seen at, and how many images the person attached.'
-      + ' A region that names the elements in it has `contents`: inside or touching, their files, the'
-      + ' total; start from those files.'
+      + ' A group lists each member\'s file once in `files`; start from those files.'
       + ' Empty when there is nothing to do.'
       + ' The issues listed are yours until you report them; another agent does not get them.'
       + ' Pass claim: false to look without taking them. `link` has the versions and the open pages.',

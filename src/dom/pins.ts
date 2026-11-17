@@ -1,7 +1,7 @@
 // src/dom/pins.ts
 // Where each issue's target is now. Live handles first; descriptors only when a handle is gone.
 
-import { shift, union } from '../core/geometry'
+import { union } from '../core/geometry'
 import type { ElementDescriptor, Issue, Rect, TargetRef } from '../core/model'
 import { cleanLocation } from '../core/redact'
 import { rectOf, rendered, screenName } from './capture'
@@ -84,9 +84,7 @@ interface Sampling {
 }
 
 function descriptorsOf(ref: TargetRef): ElementDescriptor[] {
-  if (ref.kind === 'dom') return [ref.element]
-  if (ref.kind === 'group') return ref.members
-  return ref.anchor ? [ref.anchor.element] : []
+  return ref.kind === 'dom' ? [ref.element] : ref.members
 }
 
 function live(state: PinState, id: string): Element[] | null {
@@ -112,15 +110,8 @@ function locate(state: PinState, issue: Issue, location: string): Cached {
   return next
 }
 
-/** What a target is held by: its elements, or for a region the element it was drawn on. */
-function heldBy(a: Operand): Element[] {
-  if (a.kind !== 'region') return elementsOf(a)
-  return a.anchor ? [a.anchor.handle] : []
-}
-
 function remember(state: PinState, id: string, a: Operand, b?: Operand): void {
-  const elements = heldBy(a)
-  if (elements.length) state.handles.set(id, elements.map(element => new WeakRef(element)))
+  state.handles.set(id, elementsOf(a).map(element => new WeakRef(element)))
   if (b?.kind === 'dom') state.refs.set(id, new WeakRef(b.element))
 }
 
@@ -169,41 +160,10 @@ function away(state: PinState, base: PinBase): Pin {
   return { ...base, rect: null, status: 'elsewhere' }
 }
 
-/**
- * A region on the element it was drawn on, through its live handle or found again by its descriptor; where
- * it was drawn in the document while that element is not found, and nowhere while it has no box.
- */
-function regionPin(state: PinState, issue: Issue, sampling: Sampling, base: PinBase): Pin {
-  const { win, location, screen } = sampling
-  const a = issue.operands.a
-  if (a.kind !== 'region') return away(state, base)
-  if (elsewhere(issue, location, screen)) return away(state, base)
-  const size = { width: a.rect.width, height: a.rect.height }
-  const anchored = (element: Element): Pin => {
-    if (!rendered(element) || !a.anchor) return hidden(base)
-    const box = rectOf(element)
-    const rect = { x: box.x + a.anchor.offset.x, y: box.y + a.anchor.offset.y, ...size }
-    return { ...base, rect, status: 'live' }
-  }
-  if (a.anchor) {
-    const held = live(state, issue.id)?.[0]
-    if (held) return anchored(held)
-    const found = locate(state, issue, location).elements[0]
-    if (found) return anchored(found)
-  }
-  const cap = issue.evidence.capture
-  const rect = a.frame === 'document'
-    ? shift(a.rect, -win.scrollX, -win.scrollY)
-    : shift(a.rect, cap.scroll.x - win.scrollX, cap.scroll.y - win.scrollY)
-  return { ...base, rect, status: 'live' }
-}
-
 function pinOf(state: PinState, issue: Issue, sampling: Sampling): Pin {
   const { location, screen } = sampling
   const b = issue.operands.b ? referenceRect(state, issue, sampling) : null
   const base = { id: issue.id, seq: issue.seq, b }
-  const a = issue.operands.a
-  if (a.kind === 'region') return regionPin(state, issue, sampling, base)
   const held = live(state, issue.id)
   if (held?.every(rendered)) return shown(base, held)
   if (elsewhere(issue, location, screen)) return away(state, base)

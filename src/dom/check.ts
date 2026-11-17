@@ -2,7 +2,7 @@
 // An agent's live check: the issue's target found again on this page and measured now.
 
 import { compare, type Comparison } from '../core/compare'
-import { px, shift } from '../core/geometry'
+import { px } from '../core/geometry'
 import type { CaptureConditions, ElementDescriptor, Issue, Rect, SourceRef, TargetEvidence } from '../core/model'
 import type { PresetRegistry } from '../core/presets'
 import { cleanLocation } from '../core/redact'
@@ -62,7 +62,7 @@ export interface SelectionReport {
   status: 'live' | 'none'
   location: string
   conditions: PageConditions
-  kind?: 'dom' | 'group' | 'region'
+  kind?: 'dom' | 'group'
   targets?: string[]
   descriptors?: ElementDescriptor[]
   bounds?: Rect | null
@@ -121,14 +121,6 @@ function findOne(doc: Document, descriptor: ElementDescriptor, attrs: readonly s
 
 function target(issue: Issue, doc: Document, attrs: readonly string[]): Located {
   const a = issue.operands.a
-  if (a.kind === 'region') {
-    const win = windowOf(doc)
-    const cap = issue.evidence.capture
-    const rect = a.frame === 'document'
-      ? a.rect
-      : shift(a.rect, cap.scroll.x - win.scrollX, cap.scroll.y - win.scrollY)
-    return { status: 'live', op: { kind: 'region', rect, frame: a.frame } }
-  }
   if (a.kind === 'dom') {
     const hit = findOne(doc, a.element, attrs)
     if (!('element' in hit)) return hit
@@ -185,11 +177,11 @@ export function checkIssue(
   if (!elementsOf(found.op).every(rendered)) return { status: 'hidden', ...said }
   const def = registry.byId.get(issue.intent.preset.id)
   if (!def) return { status: 'unknown', ...said }
-  const a = measure(found.op, def, doc, attrs)
+  const a = measure(found.op, def, attrs)
   const bRef = issue.operands.b
   const bHit = bRef?.kind === 'dom' ? resolveAgain(doc, bRef.element, attrs) : null
   const b = bHit?.status === 'resolved'
-    ? measure({ kind: 'dom', element: bHit.element }, def, doc, attrs)
+    ? measure({ kind: 'dom', element: bHit.element }, def, attrs)
     : undefined
   const source = issue.evidence.a.source
   return {

@@ -153,7 +153,7 @@ export function notify(context: EngineBase, value: Notice): void {
   context.store.update(state => ({ ...state, notice }))
 }
 
-/** The elements of a dom or group selection; none for a region or no selection. */
+/** The elements of a dom or group selection; none without a selection. */
 export function selectedElements(context: EngineBase): Element[] {
   const selection = context.store.get().inspect.selection
   if (selection.kind === 'dom') return [selection.handle]

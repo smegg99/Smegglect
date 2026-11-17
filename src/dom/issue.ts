@@ -1,24 +1,18 @@
 // src/dom/issue.ts
 // Live operands -> one draft issue: authored intent kept apart from captured evidence.
 
-import { relate, shift, union } from '../core/geometry'
+import { relate, union } from '../core/geometry'
 import { createId } from '../core/ids'
-import type { ConstraintId, Issue, Rect, RegionContents, Scope, TargetEvidence, TargetRef } from '../core/model'
-import type { Anchor, Held } from '../core/modes'
+import type { ConstraintId, Issue, Scope, TargetEvidence, TargetRef } from '../core/model'
 import type { PresetDef } from '../core/presets'
 import { LIMITS } from '../core/limits'
-import { conditions, evidenceOf, rectOf, transformed } from './capture'
+import { conditions, evidenceOf, transformed } from './capture'
 import { describe } from './describe'
-import { contextOf, sourceOf, VISUAL_ONLY, type ContextProvider, type SourceProvider } from './providers'
-import { windowOf } from './window'
+import { contextOf, sourceOf, type ContextProvider, type SourceProvider } from './providers'
 
 export type Operand =
   | { kind: 'dom', element: Element }
   | { kind: 'group', elements: Element[], anchor?: number }
-  | {
-    kind: 'region', rect: Rect, frame: 'viewport' | 'document'
-    contents?: Held<Element>, anchor?: Anchor<Element>
-  }
 
 interface IssueInput {
   doc: Document
@@ -35,80 +29,47 @@ interface IssueInput {
   screen?: string
 }
 
-/** The elements an operand stands on; a region has none. */
+/** The elements an operand stands on. */
 export function elementsOf(op: Operand): Element[] {
-  if (op.kind === 'dom') return [op.element]
-  if (op.kind === 'group') return op.elements
-  return []
+  return op.kind === 'dom' ? [op.element] : op.elements
 }
 
 export function refOf(op: Operand, attrs: readonly string[]): TargetRef {
   if (op.kind === 'dom') return { kind: 'dom', element: describe(op.element, attrs) }
-  if (op.kind === 'group') {
-    const members = op.elements.map(element => describe(element, attrs))
-    return op.anchor === undefined
-      ? { kind: 'group', members }
-      : { kind: 'group', members, anchor: op.anchor }
-  }
-  const region = { kind: 'region' as const, rect: op.rect, frame: op.frame, boundary: 'manual' as const }
-  if (!op.anchor) return region
-  return { ...region, anchor: { element: describe(op.anchor.handle, attrs), offset: op.anchor.offset } }
+  const members = op.elements.map(element => describe(element, attrs))
+  return op.anchor === undefined
+    ? { kind: 'group', members }
+    : { kind: 'group', members, anchor: op.anchor }
 }
 
 /** Captured geometry and properties without source lookup; also what the issue form previews. */
 export function measure(
   op: Operand,
   def: PresetDef,
-  doc: Document,
   attrs: readonly string[],
 ): Omit<TargetEvidence, 'source'> {
   const needs = def.evidence
   const extra = def.compare ?? []
   if (op.kind === 'dom') return evidenceOf(op.element, needs, attrs, extra)
-  if (op.kind === 'group') {
-    const main = op.elements[op.anchor ?? 0] as Element
-    const base = evidenceOf(main, needs.filter(need => need !== 'parent'), attrs, extra)
-    const each = op.elements.map(element => evidenceOf(element, [], attrs, extra))
-    const members = each.map(member => member.bounds)
-    return {
-      bounds: union(members),
-      members,
-      transformed: op.elements.some(transformed),
-      properties: base.properties,
-      ...(extra.length ? { memberProperties: each.map(member => member.properties) } : {}),
-    }
+  const main = op.elements[op.anchor ?? 0] as Element
+  const base = evidenceOf(main, needs.filter(need => need !== 'parent'), attrs, extra)
+  const each = op.elements.map(element => evidenceOf(element, [], attrs, extra))
+  const members = each.map(member => member.bounds)
+  return {
+    bounds: union(members),
+    members,
+    transformed: op.elements.some(transformed),
+    properties: base.properties,
+    ...(extra.length ? { memberProperties: each.map(member => member.properties) } : {}),
   }
-  const win = windowOf(doc)
-  const bounds = op.frame === 'document' ? shift(op.rect, -win.scrollX, -win.scrollY) : op.rect
-  return { bounds, transformed: false, properties: {} }
 }
 
-/** A region's elements as the agent gets them; those gone from the page since the drag are left out. */
-/** How many elements a region holds now: those it found, less the ones that have left the page. */
-export function heldTotal(held: Held<Element>): number {
-  return held.total - held.handles.filter(element => !element.isConnected).length
-}
-
-async function contentsOf(held: Held<Element>, input: IssueInput): Promise<RegionContents | undefined> {
-  const live = held.handles.filter(element => element.isConnected)
-  if (!live.length) return undefined
-  const elements = await Promise.all(live.map(async element => ({
-    element: describe(element, input.attrs),
-    bounds: rectOf(element),
-    source: await sourceOf(element, input.sources),
-  })))
-  return { mode: held.mode, elements, total: heldTotal(held) }
-}
-
+/** A group gives each member's source as well, so the agent can start from every file it touches. */
 async function evidence(op: Operand, input: IssueInput): Promise<TargetEvidence> {
-  const base = measure(op, input.def, input.doc, input.attrs)
+  const base = measure(op, input.def, input.attrs)
   if (op.kind === 'dom') return { ...base, source: await sourceOf(op.element, input.sources) }
-  if (op.kind === 'group') return {
-    ...base,
-    source: await sourceOf(op.elements[op.anchor ?? 0] as Element, input.sources),
-  }
-  const contents = op.contents ? await contentsOf(op.contents, input) : undefined
-  return contents ? { ...base, source: VISUAL_ONLY, contents } : { ...base, source: VISUAL_ONLY }
+  const sources = await Promise.all(op.elements.map(element => sourceOf(element, input.sources)))
+  return { ...base, source: sources[op.anchor ?? 0] as TargetEvidence['source'], memberSources: sources }
 }
 
 export async function createIssue(input: IssueInput): Promise<Omit<Issue, 'seq'>> {

@@ -147,7 +147,7 @@ const SENTENCES: Record<string, Sentence> = {
   'inconsistent': 'Reported: A looks inconsistent with B. Make A follow B; B is the reference.',
   'feedback': ({ params }) => `Reported behaviour of A: ${words(params.observed)}.`
     + ' The note says what should happen.',
-  'layout': ({ params }) => `Reported in the marked region: ${words(params.observed)}.`,
+  'layout': ({ params }) => `Reported layout problem in A: ${words(params.observed)}.`,
   'note': 'See the note.',
   'touch-target': 'Reported: A is too small to tap or click reliably.'
     + ' Give it a hit area of at least 24 x 24 CSS pixels (44 x 44 on touch screens),'
@@ -192,7 +192,7 @@ const UNSPECIFIED: Record<string, string> = {
   'equal-gaps': 'Make the gaps between the group members equal. No member is the reference.',
   'readability': 'Reported: A is hard to read.',
   'feedback': 'Reported: A does not behave as expected. The note says what should happen.',
-  'layout': 'Reported: a layout problem in the marked region.',
+  'layout': 'Reported: a layout problem in A.',
   'overflow': 'Reported: content of A overflows its box.'
     + ' Make it fit; hide or scroll it only if that is intended.',
   'center': 'Reported: A is not centred in its container.'

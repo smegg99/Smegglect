@@ -1,7 +1,6 @@
 // src/core/modes.ts
 // Input mode and selection as one value, so impossible combinations cannot be represented.
 
-import type { ContentsMode, Rect } from './model'
 import { LIMITS } from './limits'
 
 export interface Point {
@@ -9,29 +8,11 @@ export interface Point {
   y: number
 }
 
-/** The elements a region holds, found when it was drawn: the first of them and how many there were. */
-export interface Held<H> {
-  mode: ContentsMode
-  handles: H[]
-  total: number
-}
-
-/**
- * The element a region was drawn on, the deepest whose box held it all, and the region's top-left corner from
- * that element's: the region goes where the element goes, scrolled in its box or moved as the page reflows.
- */
-export interface Anchor<H> {
-  handle: H
-  offset: Point
-}
-
 /** H is the engine's opaque live-element handle; it never reaches persisted records. */
 export type Selection<H> =
   | { kind: 'none' }
   | { kind: 'dom', handle: H }
   | { kind: 'group', handles: H[], anchor?: number }
-  /** `page`: where it was drawn (see pageKey in src/dom/pins.ts); it is drawn only there. */
-  | { kind: 'region', rect: Rect, page?: string, contents?: Held<H>, anchor?: Anchor<H> }
 
 /** Where to return after a reference or anchor choice finishes or is cancelled. */
 export type Resume = 'pass' | 'pick'
@@ -55,7 +36,8 @@ export type InspectEvent<H> =
   | { type: 'select-group', handles: H[] }
   | { type: 'drop', index: number }
   | { type: 'drag-start', point: Point }
-  | { type: 'drag-end', rect: Rect, page?: string, contents?: Held<H>, anchor?: Anchor<H> }
+  /** `handles`: the elements the drawn region holds, in document order. */
+  | { type: 'drag-end', handles: H[] }
   | { type: 'need-reference', preset: string, params: Record<string, string> }
   | { type: 'need-anchor', preset: string, params: Record<string, string> }
   | { type: 'chosen' }
@@ -66,15 +48,10 @@ export function initial<H>(): InspectState<H> {
   return { mode: { kind: 'pass' }, selection: { kind: 'none' } }
 }
 
-function regionOf<H>(event: Extract<InspectEvent<H>, { type: 'drag-end' }>): Selection<H> {
-  const { rect, page, contents, anchor } = event
-  return {
-    kind: 'region',
-    rect,
-    ...(page === undefined ? {} : { page }),
-    ...(contents === undefined ? {} : { contents }),
-    ...(anchor === undefined ? {} : { anchor }),
-  }
+/** One element as a plain selection, more as a group of the first `LIMITS.members`. */
+function selectionOf<H>(handles: readonly H[]): Selection<H> {
+  if (handles.length === 1) return { kind: 'dom', handle: handles[0] as H }
+  return { kind: 'group', handles: handles.slice(0, LIMITS.members) }
 }
 
 function resumeOf(mode: Mode): Resume {
@@ -127,11 +104,13 @@ export function reduce<H>(state: InspectState<H>, event: InspectEvent<H>): Inspe
     case 'drag-start':
       if (mode.kind !== 'region') return state
       return { mode: { kind: 'region', start: event.point }, selection }
+    // A drawn region selects what it holds, as picking it would; holding nothing, it waits for another drag.
     case 'drag-end':
       if (mode.kind !== 'region' || !mode.start) return state
-      return { mode: { kind: 'pass' }, selection: regionOf(event) }
+      if (!event.handles.length) return { mode: { kind: 'region' }, selection }
+      return { mode: { kind: 'pass' }, selection: selectionOf(event.handles) }
     case 'need-reference':
-      if (selection.kind === 'none' || selection.kind === 'region') return state
+      if (selection.kind === 'none') return state
       if (mode.kind === 'reference' || mode.kind === 'anchor') return state
       return {
         mode: { kind: 'reference', preset: event.preset, params: event.params, resume: resumeOf(mode) },

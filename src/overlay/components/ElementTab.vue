@@ -53,7 +53,6 @@
             @click="engine.escalate()"
           />
           <Key
-            v-if="info.kind !== 'region'"
             icon="group"
             :label="t('strip.group')"
             :pressed="state.extend"
@@ -81,13 +80,6 @@
           role="status"
         >
           <span class="warn">{{ boundaryText }}</span>
-          <button
-            type="button"
-            class="link"
-            @click="engine.toggleRegion()"
-          >
-            {{ t('inspector.drawInstead') }}
-          </button>
         </p>
       </section>
       <section
@@ -134,19 +126,13 @@ const info = computed(() => state.value.selected)
 const chip = computed(() => {
   const selected = info.value
   if (!selected) return ''
-  if (selected.kind === 'region') return t('strip.region')
   if (selected.kind === 'group') return t('strip.elements', { count: selected.descriptors.length })
   return selected.chips[0] ?? ''
 })
 
 const dims = computed(() => {
   const a = geo.value.a
-  if (!a) return ''
-  const size = `${px(a.width)} x ${px(a.height)}`
-  const contents = info.value?.contents
-  if (!contents) return size
-  const key = contents.mode === 'inside' ? 'inspector.elementsInside' : 'inspector.elementsTouching'
-  return `${size}, ${t(key, { count: contents.count })}`
+  return a ? `${px(a.width)} x ${px(a.height)}` : ''
 })
 
 const boundaryText = computed(() => {

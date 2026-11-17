@@ -15,18 +15,15 @@ elements:
   description: "Chip text for a group selection"
   placeholders:
     count: {type: integer}
-region:
-  value: "Obszar"
-  description: "Chip text for a region selection"
 rendered:
   value: "renderowane"
   description: "Suffix after dimensions when an element is transformed"
 canvas:
-  value: "Zawartości canvas nie da się zbadać. Zaznacz obszar."
+  value: "Zawartości canvas nie da się zbadać. Opisz w notatce, o którą część chodzi."
   description: "Chip warning for a canvas target"
 iframe:
-  value: "Zawartości ramki nie da się zbadać. Zaznacz obszar."
+  value: "Zawartości ramki nie da się zbadać. Opisz w notatce, o którą część chodzi."
   description: "Chip warning for an iframe target"
 closedRoot:
-  value: "Ten komponent ukrywa swoją zawartość. Zaznacz obszar."
+  value: "Ten komponent ukrywa swoją zawartość. Opisz w notatce, o którą część chodzi."
   description: "Chip warning for a closed shadow root"

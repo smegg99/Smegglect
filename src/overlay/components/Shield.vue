@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { normalise } from '../../core/geometry'
-import type { ContentsMode } from '../../core/model'
+import type { ContentsMode } from '../../core/contents'
 import { useRuntime } from '../runtime'
 
 // Region drawing owns the whole viewport only while region mode is on, including over frames and canvases.

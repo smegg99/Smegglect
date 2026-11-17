@@ -21,10 +21,8 @@ export const LIMITS = {
   component: 128,
   /** A project-relative source file. */
   file: 512,
-  /** Group members whose compared properties the evidence lists. */
+  /** Group members: how many a group holds, and whose properties and sources the evidence lists. */
   members: 64,
-  /** How far a region's corner may lie from the element it was drawn on, in CSS px. */
-  offset: 1_000_000,
 }
 
 /** The characters of every id: batches, issues, attachments, follow-ups, projects. */

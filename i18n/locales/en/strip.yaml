@@ -13,18 +13,15 @@ elements:
   description: "Chip text for a group selection"
   placeholders:
     count: {type: integer}
-region:
-  value: "Region"
-  description: "Chip text for a region selection"
 rendered:
   value: "rendered"
   description: "Suffix after dimensions when an element is transformed"
 canvas:
-  value: "Canvas content cannot be inspected. Draw a region for a part of it."
+  value: "Canvas content cannot be inspected. Say in the note which part you mean."
   description: "Chip warning for a canvas target"
 iframe:
-  value: "Frame content cannot be inspected. Draw a region over it."
+  value: "Frame content cannot be inspected. Say in the note which part you mean."
   description: "Chip warning for an iframe target"
 closedRoot:
-  value: "This component hides its internals. Draw a region for a part of it."
+  value: "This component hides its internals. Say in the note which part you mean."
   description: "Chip warning for a closed shadow root"

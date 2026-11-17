@@ -15,7 +15,6 @@ const SAVE_MS = 150
 const FIND_MS = 5000
 const VIEWS: readonly string[] = ['element', 'issues', 'history', 'settings', 'issue']
 const BACKS: readonly string[] = ['element', 'issues', 'history']
-const MODES: readonly string[] = ['inside', 'touching']
 
 /** What the issue form held: the type picked, its option, the note and the scope switch. */
 export interface Draft {
@@ -44,10 +43,7 @@ const isShort = (value: unknown, max: number): value is string =>
 
 function isSelection(value: unknown): value is KeptSelection {
   if (value === null || typeof value !== 'object') return false
-  const { target, page, mode } = value as Record<string, unknown>
-  if (checkTarget(target, 'target').length) return false
-  const paged = page === undefined || isShort(page, LIMITS.file)
-  return paged && (mode === undefined || MODES.includes(mode as string))
+  return !checkTarget((value as Record<string, unknown>).target, 'target').length
 }
 
 function isDraft(value: unknown): value is Draft {

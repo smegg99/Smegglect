@@ -14,7 +14,7 @@ export type GroupId =
   | 'differs'
   | 'other'
   | 'project'
-export type TargetKind = 'dom' | 'group' | 'region'
+export type TargetKind = 'dom' | 'group'
 
 export interface Tile {
   preset: string

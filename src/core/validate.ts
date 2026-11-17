@@ -9,8 +9,7 @@ import { LIMITS, isId } from './limits'
 import { hasNumbers, isBoundedList, isNum, isObj, isStr, isStringMap, oneOf, stop, type Obj } from './shape'
 
 const SCOPES: ReadonlySet<string> = new Set(['occurrence', 'screen', 'component'])
-const KINDS: ReadonlySet<string> = new Set(['dom', 'group', 'region'])
-const BOUNDARIES: ReadonlySet<string> = new Set(['canvas', 'iframe', 'closed-root', 'native', 'manual'])
+const KINDS: ReadonlySet<string> = new Set(['dom', 'group'])
 const QUALITIES: ReadonlySet<string> = new Set(['exact', 'component', 'visual-only'])
 const STATUSES: ReadonlySet<string> = new Set(['draft', 'submitted'])
 const FRAMES: ReadonlySet<string> = new Set(['viewport', 'document'])
@@ -18,7 +17,6 @@ const REVIEWS: ReadonlySet<string> = new Set(['pending', 'approved'])
 const SCHEMES: ReadonlySet<string> = new Set(['light', 'dark', 'unknown'])
 const AXES: ReadonlySet<string> = new Set(['gap', 'touch', 'overlap'])
 const PROVIDER_STATUSES: ReadonlySet<string> = new Set(['failed', 'timeout'])
-const CONTENTS_MODES: ReadonlySet<string> = new Set(['inside', 'touching'])
 const RECT_KEYS = ['x', 'y', 'width', 'height'] as const
 const DELTA_KEYS = ['left', 'right', 'top', 'bottom', 'centerX', 'centerY', 'width', 'height'] as const
 const OPTIONAL_NAMES = ['role', 'id', 'testId'] as const
@@ -68,30 +66,11 @@ function checkGroup(value: Obj, at: string, out: Problems): void {
   if (anchor !== undefined && !inRange) out.push(`${at}.anchor: out of range`)
 }
 
-const isOffset = (value: unknown) => isNum(value) && Math.abs(value) <= LIMITS.offset
-
-/** The element a region was drawn on, described as an element target is, and two bounded numbers. */
-function checkAnchor(value: unknown, at: string, out: Problems): void {
-  if (!isObj(value)) return void out.push(`${at}: element and offset expected`)
-  checkElement(value.element, `${at}.element`, out)
-  const { offset } = value
-  const fits = isObj(offset) && isOffset(offset.x) && isOffset(offset.y)
-  if (!fits) out.push(`${at}.offset: two bounded numbers expected`)
-}
-
-function checkRegion(value: Obj, at: string, out: Problems): void {
-  checkRect(value.rect, `${at}.rect`, out)
-  if (!oneOf(FRAMES, value.frame)) out.push(`${at}.frame: invalid`)
-  if (!oneOf(BOUNDARIES, value.boundary)) out.push(`${at}.boundary: invalid`)
-  if (value.anchor !== undefined) checkAnchor(value.anchor, `${at}.anchor`, out)
-}
-
-/** A target: one element, a group of two or more, or a region. */
+/** A target: one element, or a group of two or more. */
 export function checkTarget(value: unknown, at: string, out: Problems = []): Problems {
   if (!isObj(value) || !oneOf(KINDS, value.kind)) return stop(out, `${at}: target kind expected`)
   if (value.kind === 'dom') checkElement(value.element, `${at}.element`, out)
   if (value.kind === 'group') checkGroup(value, at, out)
-  if (value.kind === 'region') checkRegion(value, at, out)
   return out
 }
 
@@ -127,24 +106,14 @@ function checkMembers(value: unknown, at: string, out: Problems): Problems {
   return out
 }
 
-/** The elements a region holds: a non-empty bounded list, each part checked as for an element target. */
-function checkContents(value: unknown, at: string, out: Problems): Problems {
-  if (!isObj(value)) return stop(out, `${at}: contents expected`)
-  if (!oneOf(CONTENTS_MODES, value.mode)) out.push(`${at}.mode: invalid`)
-  const { elements, total } = value
-  const bounded = Array.isArray(elements) && elements.length > 0 && elements.length <= LIMITS.members
-  if (!bounded) return stop(out, `${at}.elements: bounded list expected`)
-  if (!isNum(total) || total < elements.length) out.push(`${at}.total: at least the listed count expected`)
-  elements.forEach((item, i) => {
-    const listed: Obj = isObj(item) ? item : {}
-    checkElement(listed.element, `${at}.elements[${i}].element`, out)
-    checkRect(listed.bounds, `${at}.elements[${i}].bounds`, out)
-    checkSource(listed.source, `${at}.elements[${i}].source`, out)
-  })
+/** A group's member sources, in member order. */
+function checkMemberSources(value: unknown, at: string, out: Problems): Problems {
+  if (!Array.isArray(value) || value.length > LIMITS.members) return stop(out, `${at}: bounded list expected`)
+  value.forEach((source, i) => checkSource(source, `${at}[${i}]`, out))
   return out
 }
 
-/** What was measured on one target: bounds, computed properties, its parent, source and contents. */
+/** What was measured on one target: bounds, computed properties, its parent and its sources. */
 export function checkEvidence(value: unknown, at: string, out: Problems = []): Problems {
   if (!isObj(value)) return stop(out, `${at}: evidence expected`)
   checkRect(value.bounds, `${at}.bounds`, out)
@@ -161,15 +130,18 @@ export function checkEvidence(value: unknown, at: string, out: Problems = []): P
     checkRect(parent.bounds, `${at}.parent.bounds`, out)
   }
   checkSource(value.source, `${at}.source`, out)
-  if (value.contents !== undefined) checkContents(value.contents, `${at}.contents`, out)
+  if (value.memberSources !== undefined) checkMemberSources(value.memberSources, `${at}.memberSources`, out)
   return out
 }
 
-/** Only a region lists the elements it holds. */
-function checkHolder(evidence: unknown, operand: unknown, at: string, out: Problems): void {
-  const listed = isObj(evidence) && evidence.contents !== undefined
-  const region = isObj(operand) && operand.kind === 'region'
-  if (listed && !region) out.push(`${at}.contents: only a region lists contents`)
+/** Only a group lists member sources, one for each of its members. */
+function checkSourcesOf(evidence: unknown, operand: unknown, at: string, out: Problems): void {
+  const sources = isObj(evidence) ? evidence.memberSources : undefined
+  if (sources === undefined) return
+  const members = isObj(operand) && operand.kind === 'group' ? operand.members : undefined
+  if (!Array.isArray(members)) return void out.push(`${at}.memberSources: only a group lists member sources`)
+  const each = Array.isArray(sources) && sources.length === members.length
+  if (!each) out.push(`${at}.memberSources: one per member expected`)
 }
 
 /** The conditions the page was seen under, as task.md and the work list show them. */
@@ -232,8 +204,8 @@ function checkIssueEvidence(evidence: Obj, operands: Obj, at: string, out: Probl
     if (operands.b === undefined) out.push(`${at}.operands.b: evidence without a reference operand`)
     checkEvidence(evidence.b, `${at}.evidence.b`, out)
   }
-  checkHolder(evidence.a, operands.a, `${at}.evidence.a`, out)
-  checkHolder(evidence.b, operands.b, `${at}.evidence.b`, out)
+  checkSourcesOf(evidence.a, operands.a, `${at}.evidence.a`, out)
+  checkSourcesOf(evidence.b, operands.b, `${at}.evidence.b`, out)
   checkCapture(evidence.capture, `${at}.evidence.capture`, out)
   if (evidence.relation !== undefined) checkRelation(evidence.relation, `${at}.evidence.relation`, out)
   const context = evidence.context

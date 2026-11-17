@@ -7,7 +7,7 @@ import { compare } from './compare'
 import { px } from './geometry'
 import type {
   Attachment, AxisRelation, Batch, CaptureConditions, ContextEntry, ElementDescriptor, FollowUp, Issue, Rect,
-  RegionContents, Relation, SourceRef, TargetEvidence, TargetRef,
+  Relation, SourceRef, TargetEvidence, TargetRef,
 } from './model'
 import type { PresetRegistry } from './presets'
 import { intentSentence, KEEP, quote, SCOPE } from './sentences'
@@ -55,17 +55,14 @@ function rectText(rect: Rect): string {
   return `x ${px(rect.x)}, y ${px(rect.y)}, ${px(rect.width)} x ${px(rect.height)}`
 }
 
-/** A target as a short phrase: an element by tag, label and ids, a group by its members, or a region. */
+/** A target as a short phrase: an element by tag, label and ids, a group by its members. */
 export function targetText(ref: TargetRef): string {
   if (ref.kind === 'dom') return descriptor(ref.element)
-  if (ref.kind === 'group') {
-    const members = ref.members.map((member, i) => {
-      const anchor = ref.anchor === i ? ' (anchor)' : ''
-      return `${i + 1}. ${descriptor(member)}${anchor}`
-    })
-    return `group of ${ref.members.length}: ${members.join('; ')}`
-  }
-  return `region ${rectText(ref.rect)} in ${ref.frame} coordinates`
+  const members = ref.members.map((member, i) => {
+    const anchor = ref.anchor === i ? ' (anchor)' : ''
+    return `${i + 1}. ${descriptor(member)}${anchor}`
+  })
+  return `group of ${ref.members.length}: ${members.join('; ')}`
 }
 
 /** ` file:line:column`, as much as is known: a line only with a file, a column only with a line. */
@@ -76,11 +73,18 @@ function location(source: SourceRef): string {
   return ` ${source.file}:${source.line}:${source.column}`
 }
 
-function sourceLine(letter: string, source: SourceRef): string {
-  const parts = [`- ${letter} source: ${source.quality} via ${source.provenance}${location(source)}`]
+function sourceText(source: SourceRef): string {
+  const parts = [`${source.quality} via ${source.provenance}${location(source)}`]
   if (source.component) parts.push(`component ${source.component}`)
   if (source.owners?.length) parts.push(`owners ${source.owners.join(' < ')}`)
   return parts.join(', ')
+}
+
+/** One source, or a group's per member, numbered as the target lists its members. */
+function sourceLines(letter: string, evidence: TargetEvidence): string[] {
+  const members = evidence.memberSources
+  if (!members?.length) return [`- ${letter} source: ${sourceText(evidence.source)}`]
+  return [`- ${letter} sources:`, ...members.map((source, i) => `  - ${i + 1}. ${sourceText(source)}`)]
 }
 
 /** Where an element sits: its ancestor path, its classes and which of its repeated siblings it is. */
@@ -96,30 +100,16 @@ function elementLines(letter: string, element: ElementDescriptor): string[] {
   return out
 }
 
-/** The elements a region holds, each with the component and file that render it when the page knew them. */
-function contentsLines(letter: string, contents: RegionContents): string[] {
-  const inside = contents.mode === 'inside'
-  const head = inside ? `- Elements fully inside ${letter}:` : `- Elements ${letter} touches:`
-  const items = contents.elements.map(({ element, source }) => {
-    const component = source.component ? `component ${source.component}` : ''
-    const where = [component, location(source).trim()].filter(Boolean)
-    return `  - ${descriptor(element)}${where.length ? ` (${where.join(', ')})` : ''}`
-  })
-  const more = contents.total - contents.elements.length
-  return [head, ...items, ...more > 0 ? [`  - and ${more} more`] : []]
-}
-
 function evidenceLines(letter: string, ref: TargetRef, evidence: TargetEvidence): string[] {
   const transformed = evidence.transformed ? ', rendered bounds of a transformed element' : ''
   const out = [`- ${letter} bounds: ${rectText(evidence.bounds)} CSS px${transformed}`]
   if (evidence.members?.length) out.push(`- ${letter} members: ${evidence.members.map(rectText).join(' | ')}`)
-  out.push(sourceLine(letter, evidence.source))
+  out.push(...sourceLines(letter, evidence))
   if (ref.kind === 'dom') out.push(...elementLines(letter, ref.element))
   const properties = Object.entries(evidence.properties).map(([name, value]) => `${name}: ${value}`)
   if (properties.length) out.push(`- ${letter} computed: ${properties.join('; ')}`)
   const parent = evidence.parent
   if (parent) out.push(`- ${letter} parent: ${descriptor(parent.element)}, ${rectText(parent.bounds)}`)
-  if (evidence.contents) out.push(...contentsLines(letter, evidence.contents))
   return out
 }
 
@@ -274,14 +264,8 @@ const HOW_TO_USE = [
   + 'report_result. Say what you changed in your reply to the person, who reviews the result.',
 ]
 
-/** Told only when a region in the batch lists the elements in it. */
-const HOW_TO_USE_CONTENTS = '- When a region lists the elements in it, '
-  + 'start from their components and files; the rectangle shows where they are on the page.'
-
 export function renderMarkdown(input: RenderInput): string {
-  const held = input.batch.issues.some(({ evidence }) => evidence.a.contents || evidence.b?.contents)
-  const how = held ? [...HOW_TO_USE, HOW_TO_USE_CONTENTS] : HOW_TO_USE
-  const out = [...headerLines(input.batch), '', '## How to use this batch', '', ...how, '']
+  const out = [...headerLines(input.batch), '', '## How to use this batch', '', ...HOW_TO_USE, '']
   for (const issue of input.batch.issues) out.push(...issueLines(issue, input))
   return `${out.join('\n').trimEnd()}\n`
 }

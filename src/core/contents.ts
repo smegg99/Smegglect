@@ -1,8 +1,11 @@
 // src/core/contents.ts
-// Which elements a region holds, CAD-style: a window lists what lies inside, a crossing what it touches.
+// Which elements a drawn region selects, CAD-style: a window what lies inside, a crossing what it touches.
 
 import { TOUCH_EPSILON, bottom, intersection, right } from './geometry'
-import type { ContentsMode, Rect } from './model'
+import type { Rect } from './model'
+
+/** Which elements a region selects: those fully inside it (dragged left to right) or those it touches. */
+export type ContentsMode = 'inside' | 'touching'
 
 /** One element of a walk, in document order; parent is its nearest placed ancestor. */
 export interface Placed<T> {
@@ -22,7 +25,7 @@ function within(inner: Rect, outer: Rect): boolean {
  * The elements a region holds. Inside: the outermost ones fully within it. Touching: the ones it meets,
  * except those around all of it; a crossed container that holds two or more touched things gives way to
  * them, as a toolbar does to its buttons. `seen` says whether the person can see an element; one they
- * cannot gives way to what it holds. Returns the first `max` in document order and how many there were.
+ * cannot gives way to what it holds. Returns the first `max` in document order.
  */
 export function selectContents<T>(
   placed: readonly Placed<T>[],
@@ -30,7 +33,7 @@ export function selectContents<T>(
   mode: ContentsMode,
   max: number,
   seen: (item: T, rect: Rect) => boolean = () => true,
-): { items: T[], total: number } {
+): T[] {
   const children = new Map<T | null, Placed<T>[]>()
   for (const entry of placed) {
     const siblings = children.get(entry.parent)
@@ -50,6 +53,5 @@ export function selectContents<T>(
     const found = inner()
     return found.length >= 2 ? found : shown(entry, () => found)
   }
-  const all = unitsOf(children.get(null) ?? [])
-  return { items: all.slice(0, max), total: all.length }
+  return unitsOf(children.get(null) ?? []).slice(0, max)
 }

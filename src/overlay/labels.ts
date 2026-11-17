@@ -76,11 +76,10 @@ export function describe(sub: Subject, registry: PresetRegistry, t: Translate): 
     : presetLabel(def, sub.preset, t)
 }
 
-/** A target as the overlay names it: an element by its label, a group by its size, or a region. */
+/** A target as the overlay names it: an element by its label, a group by its size. */
 function targetName(ref: TargetRef, t: Translate): string {
   if (ref.kind === 'dom') return chipOf(ref.element)
-  if (ref.kind === 'group') return t('issue.group', { count: ref.members.length })
-  return t('issue.region')
+  return t('issue.group', { count: ref.members.length })
 }
 
 export function subjectOf(issue: Issue, t: Translate): Subject {

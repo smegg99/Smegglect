@@ -25,11 +25,10 @@ interface Choice {
   a: Operand
 }
 
-/** How the form names an operand: an element by its label, a group by its size, a region not at all. */
+/** How the form names an operand: an element by its label, a group by its size. */
 function operandChip(context: EngineContext, operand: Operand): string {
   if (operand.kind === 'dom') return chipOf(describe(operand.element, context.attributes))
-  if (operand.kind === 'group') return `${operand.elements.length}`
-  return ''
+  return `${operand.elements.length}`
 }
 
 /** A draft that already reports this preset and choice on the same A and B. */
@@ -44,9 +43,9 @@ function sameDraft(context: EngineContext, draft: Draft, params: Record<string, 
 }
 
 function composeView(context: EngineContext, draft: Draft, params: Record<string, string>): Composing {
-  const { doc, attributes } = context
-  const evidenceA = measure(draft.a, draft.def, doc, attributes)
-  const evidenceB = draft.b ? measure(draft.b, draft.def, doc, attributes) : undefined
+  const { attributes } = context
+  const evidenceA = measure(draft.a, draft.def, attributes)
+  const evidenceB = draft.b ? measure(draft.b, draft.def, attributes) : undefined
   // The form measures before any source lookup; the recorded issue looks its source up.
   const sourcedB = evidenceB ? { ...evidenceB, source: VISUAL_ONLY } : undefined
   return {

@@ -4,7 +4,8 @@
 import {
   inject, nextTick, onScopeDispose, reactive, shallowRef, watch, type InjectionKey, type ShallowRef,
 } from 'vue'
-import type { ContentsMode, Issue } from '../core/model'
+import type { ContentsMode } from '../core/contents'
+import type { Issue } from '../core/model'
 import type { BridgeHealth, BridgeStatus } from '../dom/bridge'
 import type { Engine, EngineState, Geometry } from '../dom/engine'
 import type { SessionState } from '../dom/session'
@@ -46,7 +47,7 @@ export interface Ui {
   panel: PanelLayout | null
   /** Group member under the pointer in the inspector, marked on the page. */
   member: number | null
-  /** Which elements the region being drawn will list, by the drag's direction; null when not dragging. */
+  /** Which elements the region being drawn will select, by the drag's direction; null when not dragging. */
   regionMode: ContentsMode | null
   /** Folds the person opened or closed in the inspector, by name; unset ones use their default. */
   folds: Record<string, boolean>

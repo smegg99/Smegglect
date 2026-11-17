@@ -3,9 +3,10 @@
 
 import type { KeptSelection } from './keep'
 import type { Comparison } from '../../core/compare'
+import type { ContentsMode } from '../../core/contents'
 import type { Drafts, IntentPatch } from '../../core/drafts'
 import type {
-  BoundaryKind, ConstraintId, ContentsMode, ElementDescriptor, Issue, Rect, Scope, TargetKind,
+  BoundaryKind, ConstraintId, ElementDescriptor, Issue, Rect, Scope, TargetKind,
 } from '../../core/model'
 import type { InspectState, Point } from '../../core/modes'
 import type { PresetDef, PresetRegistry } from '../../core/presets'
@@ -50,13 +51,11 @@ export type Notice =
   | { kind: 'reference-invalid', reason: 'same' | 'member' | 'outside-group' }
 
 export interface SelectedInfo {
-  kind: 'dom' | 'group' | 'region'
+  kind: 'dom' | 'group'
   chips: string[]
   descriptors: ElementDescriptor[]
   boundary?: BoundaryKind
   canEscalate: boolean
-  /** A region's elements: how they were chosen and how many there are. */
-  contents?: { mode: ContentsMode, count: number }
 }
 
 /** An issue being composed: shown to the person before anything is recorded. */
@@ -171,8 +170,8 @@ export interface Engine {
   /** Live rectangle while dragging, viewport frame. */
   regionDraft: (rect: Rect) => void
   /**
-   * Viewport rectangle; stored as a document-frame region so it scrolls with the page, with the elements it
-   * holds by `mode`: fully inside, or touching it.
+   * Viewport rectangle; selects the elements it holds by `mode`, fully inside or touching it, as picking them
+   * would: one as an element, more as a group. Holding none, the element it is drawn on.
    */
   regionEnd: (rect: Rect, mode: ContentsMode) => void
   escape: () => boolean
