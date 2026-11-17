@@ -107,12 +107,8 @@ const props = defineProps<{ kind: TargetKind }>()
 const { engine, state, ui, t } = useRuntime()
 
 const NOTE = { preset: 'note', params: {} as Record<string, string> }
-const note = ref('')
-const everywhere = ref(false)
-/** The type picked in the tree; a plain note until another is picked. */
-const chosen = ref(NOTE)
-
 const def = (id: string) => engine.registry.byId.get(id)
+
 const current = computed(() => def(chosen.value.preset))
 const currentLabel = computed(() => presetLabel(current.value, chosen.value.preset, t))
 
@@ -125,6 +121,22 @@ const stepFirst = (definition: PresetDef) => definition.operands === 'reference'
  * Add.
  */
 const startsAtOnce = (definition: PresetDef) => stepFirst(definition) || definition.operands === 'compare'
+
+/**
+ * What the form held before the page reloaded (keep.ts). A type that is chosen on the page first comes back
+ * as a plain note: the click it waited for is gone with the page.
+ */
+const kept = ui.draft
+const keptDef = kept ? def(kept.preset) : undefined
+const note = ref(kept?.note ?? '')
+const everywhere = ref(kept?.everywhere ?? false)
+/** The type picked in the tree; a plain note until another is picked. */
+const restorable = kept && keptDef && !startsAtOnce(keptDef)
+const chosen = ref(restorable ? { preset: kept.preset, params: kept.params } : NOTE)
+watch([note, everywhere, chosen], () => {
+  const { preset, params } = chosen.value
+  ui.draft = { preset, params: { ...params }, note: note.value, everywhere: everywhere.value }
+})
 
 const composing = computed(() => state.value.composing)
 const comparison = computed(() => composing.value?.comparison && composing.value.comparison.rows.length

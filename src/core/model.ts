@@ -51,10 +51,17 @@ export interface ElementDescriptor {
 
 export type BoundaryKind = 'canvas' | 'iframe' | 'closed-root' | 'native' | 'manual'
 
+/** The element a region was drawn on and the region's top-left corner from that element's, in CSS px. */
+export interface RegionAnchor {
+  element: ElementDescriptor
+  offset: { x: number, y: number }
+}
+
 export type TargetRef =
   | { kind: 'dom', element: ElementDescriptor }
   | { kind: 'group', members: ElementDescriptor[], anchor?: number }
-  | { kind: 'region', rect: Rect, frame: CoordinateFrame, boundary: BoundaryKind }
+  /** `anchor`: drawn where its element is now; without one, or with the element gone, at `rect`. */
+  | { kind: 'region', rect: Rect, frame: CoordinateFrame, boundary: BoundaryKind, anchor?: RegionAnchor }
 
 export type TargetKind = TargetRef['kind']
 

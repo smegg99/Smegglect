@@ -4,6 +4,7 @@
 import { shift, union } from '../../core/geometry'
 import type { Rect } from '../../core/model'
 import { ownsPointer } from '../../core/modes'
+import { anchoredRect } from '../anchor'
 import { boxModel, composedContains, readout } from '../boxmodel'
 import { rendered } from '../capture'
 import { boundaryOf, chipOf, describe } from '../describe'
@@ -20,9 +21,12 @@ const isRect = (rect: Rect | null): rect is Rect => rect !== null
 /** What the tracker follows now. Collapsed to the launcher nothing is drawn, so nothing is tracked. */
 export function tracked(context: EngineBase): Tracked {
   const state = context.store.get()
-  const elements = selectedElements(context)
+  const { selection } = state.inspect
+  // A region's anchor is watched as a selected element is: the region goes where it goes.
+  const anchor = selection.kind === 'region' ? selection.anchor?.handle : undefined
+  const elements = anchor ? [...selectedElements(context), anchor] : selectedElements(context)
   const drawn = state.expanded && state.annotations && state.drafts.issues.length > 0
-  const region = state.inspect.selection.kind === 'region'
+  const region = selection.kind === 'region'
   const anything = elements.length > 0
     || region
     || ownsPointer(state.inspect.mode)
@@ -32,7 +36,9 @@ export function tracked(context: EngineBase): Tracked {
   // The plates' targets are watched too: one hidden or shown with its view resizes, and nothing else changes.
   const watched = drawn ? [...elements, ...context.pins.targets()] : elements
   // A view switched by the host adds and removes nodes: plates and a region drawn on it go with it.
-  return { elements: watched, continuous, structure: drawn || region, any: state.expanded && anything }
+  // A selection too: the page replacing its elements (a hot update) is how it is found again (inspect.ts).
+  const structure = drawn || selection.kind !== 'none'
+  return { elements: watched, continuous, structure, any: state.expanded && anything }
 }
 
 /** Whether `outer` holds all of `inner`. */
@@ -88,14 +94,19 @@ function hoveredOf(context: EngineBase, selected: Rect | null): Hovered | null {
   }
 }
 
-/** A region in viewport coordinates, only on the page and screen it was drawn on; else the selection. */
+/**
+ * A region in viewport coordinates, only on the page and screen it was drawn on: on its anchor while that is
+ * on the page and has a box, else where it was drawn in the document. Else the selection.
+ */
 function selectedRect(context: EngineBase, members: Rect[]): Rect | null {
   const { store, win, options } = context
   const selection = store.get().inspect.selection
   if (selection.kind !== 'region') return members.length ? union(members) : null
   const here = pageKey(win, options.screen?.())
   if (selection.page !== undefined && selection.page !== here) return null
-  return shift(selection.rect, -win.scrollX, -win.scrollY)
+  const { anchor, rect } = selection
+  if (anchor?.handle.isConnected && rendered(anchor.handle)) return anchoredRect(anchor, rect)
+  return shift(rect, -win.scrollX, -win.scrollY)
 }
 
 /** Reads the page once and publishes the geometry when it draws differently from the last sample. */

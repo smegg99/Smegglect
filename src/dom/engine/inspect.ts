@@ -8,6 +8,7 @@ import { reduce, type InspectEvent, type InspectState, type Mode, type Point } f
 import { cleanLocation } from '../../core/redact'
 import { readout } from '../boxmodel'
 import { pageConditions, type SelectionReport } from '../check'
+import { anchorOf } from '../anchor'
 import { regionContents } from '../contents'
 import { boundaryOf, chipOf, describe, parentOf, pickable } from '../describe'
 import type { Operand } from '../issue'
@@ -15,6 +16,7 @@ import { pageKey } from '../pins'
 import { sourceOf } from '../providers'
 import { patch, type EngineBase, type EngineContext } from './context'
 import { sample } from './geometry'
+import { handlesOf, keptOf, operandOf, selectionAgain, type KeptSelection } from './keep'
 import type { Engine, SelectedInfo } from './types'
 
 /** A region smaller than this on either side is a click, not a drag. */
@@ -68,7 +70,10 @@ export function setInspect(context: EngineContext, next: InspectState<Element>):
   const current = context.store.get()
   if (next === current.inspect) return
   const selectionChanged = next.selection !== current.inspect.selection
-  if (selectionChanged) context.live.draft = null
+  if (selectionChanged) {
+    context.live.draft = null
+    context.live.refindAt = null
+  }
   context.store.set({
     ...current,
     inspect: next,
@@ -80,6 +85,7 @@ export function setInspect(context: EngineContext, next: InspectState<Element>):
     space: selectionChanged ? null : current.space,
     composing: selectionChanged ? null : current.composing,
   })
+  if (selectionChanged) context.live.kept = keptOf(context)
   if (PICKING.has(next.mode.kind)) context.picker.start()
   else context.picker.stop()
   syncHover(context)
@@ -94,16 +100,34 @@ export function dispatch(context: EngineContext, event: InspectEvent<Element>): 
 
 /** The selection as the operand A of an issue. */
 export function operandA(context: EngineBase): Operand | null {
-  const selection = context.store.get().inspect.selection
-  if (selection.kind === 'dom') return { kind: 'dom', element: selection.handle }
-  if (selection.kind === 'group') {
-    return { kind: 'group', elements: selection.handles, anchor: selection.anchor }
-  }
-  if (selection.kind === 'region') {
-    const { rect, contents } = selection
-    return { kind: 'region', rect, frame: 'document', ...(contents ? { contents } : {}) }
-  }
-  return null
+  return operandOf(context.store.get().inspect.selection)
+}
+
+/**
+ * After the page replaced the selected elements (a hot update re-renders them), the selection on the ones
+ * that replaced them, found by their descriptions; the issue form stays. True when it changed.
+ */
+export function refind(context: EngineBase): boolean {
+  const state = context.store.get()
+  const { selection } = state.inspect
+  const handles = handlesOf(selection)
+  if (!handles.length || handles.every(handle => handle.isConnected)) return false
+  const { live, doc } = context
+  const nodes = doc.getElementsByTagName('*').length
+  if (!live.kept || live.refindAt === nodes) return false
+  const again = selectionAgain(context, live.kept)
+  live.refindAt = again ? null : nodes
+  if (!again) return false
+  const inspect = { ...state.inspect, selection: again }
+  context.store.set({ ...state, inspect, selected: selectedInfo(context, inspect) })
+  return true
+}
+
+function restoreSelection(context: EngineContext, kept: KeptSelection): boolean {
+  const again = selectionAgain(context, kept)
+  if (!again) return false
+  setInspect(context, { mode: context.store.get().inspect.mode, selection: again })
+  return true
 }
 
 export function setMeasuring(context: EngineContext, on: boolean): void {
@@ -135,7 +159,10 @@ function regionEnd(context: EngineContext, rect: Rect, mode: ContentsMode): void
   // The mode stays with the region even when it found nothing, so the panel can say so.
   const found = regionContents(context.doc, rect, mode)
   const contents = { mode, handles: found.elements, total: found.total }
-  dispatch(context, { type: 'drag-end', rect: shift(rect, win.scrollX, win.scrollY), page, contents })
+  // Whatever the mode lists, a region is anchored on what lies wholly inside it, if anything does.
+  const inside = mode === 'inside' ? found.elements : regionContents(context.doc, rect, 'inside').elements
+  const anchor = anchorOf(context.doc, rect, inside) ?? undefined
+  dispatch(context, { type: 'drag-end', rect: shift(rect, win.scrollX, win.scrollY), page, contents, anchor })
 }
 
 async function describeSelection(context: EngineBase): Promise<SelectionReport> {
@@ -158,7 +185,7 @@ async function describeSelection(context: EngineBase): Promise<SelectionReport> 
 type InspectApi = Pick<Engine,
   | 'togglePick' | 'toggleRegion' | 'setExtend' | 'clear' | 'drop' | 'escalate'
   | 'regionStart' | 'regionDraft' | 'regionEnd'
-  | 'setMeasuring' | 'setAnnotations' | 'describeSelection'
+  | 'setMeasuring' | 'setAnnotations' | 'describeSelection' | 'keptSelection' | 'restoreSelection'
 >
 
 export function inspectApi(context: EngineContext): InspectApi {
@@ -180,5 +207,7 @@ export function inspectApi(context: EngineContext): InspectApi {
       sample(context)
     },
     describeSelection: () => describeSelection(context),
+    keptSelection: () => keptOf(context),
+    restoreSelection: kept => restoreSelection(context, kept),
   }
 }

@@ -1,6 +1,7 @@
 // src/dom/engine/types.ts
 // What the engine offers a UI: its options, its state, its geometry and its operations.
 
+import type { KeptSelection } from './keep'
 import type { Comparison } from '../../core/compare'
 import type { Drafts, IntentPatch } from '../../core/drafts'
 import type {
@@ -215,5 +216,9 @@ export interface Engine {
   check: (issue: Issue) => IssueCheck
   /** For an agent: what is selected now, with its size, box values and source when known. */
   describeSelection: () => Promise<SelectionReport>
+  /** The selection as plain data, to be found again after the page reloads; null when nothing is selected. */
+  keptSelection: () => KeptSelection | null
+  /** Selects what was kept, found again on this page; false when it is not found here. */
+  restoreSelection: (kept: KeptSelection) => boolean
   destroy: () => void
 }

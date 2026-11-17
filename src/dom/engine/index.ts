@@ -15,6 +15,7 @@ import { createServices, followTopLayer, keyHooks, setExpanded } from './wiring'
 export type {
   ApplyResult, Engine, EngineOptions, EngineState, Geometry, Notice, SelectedInfo,
 } from './types'
+export type { KeptSelection } from './keep'
 
 function destroy(context: EngineContext, stopKeys: () => void): void {
   const { live, layers } = context

@@ -3,7 +3,7 @@
 
 export { createEngine } from './engine'
 export type {
-  ApplyResult, Engine, EngineOptions, EngineState, Geometry, Notice, SelectedInfo,
+  ApplyResult, Engine, EngineOptions, EngineState, Geometry, KeptSelection, Notice, SelectedInfo,
 } from './engine'
 export { createHost, HOST_TAG } from './host'
 export type { OwnedHost } from './host'

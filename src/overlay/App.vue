@@ -51,6 +51,7 @@ import Toast from './components/Toast.vue'
 import { DOC, KIT } from './context'
 import { refreshStatus, startFeed } from './feed'
 import { restart } from './progress'
+import { keepOverlay } from './keep'
 import { createRuntime, RUNTIME, SURFACE, type Surface } from './runtime'
 
 const root = ref<HTMLElement | null>(null)
@@ -141,6 +142,9 @@ watch(() => state.value.expanded, (open) => {
   stopFeed = open ? startFeed(runtime) : null
 }, { immediate: true })
 onBeforeUnmount(() => stopFeed?.())
+// What the overlay showed comes back after the page reloads; the last state is kept as it goes.
+const stopKeeping = keepOverlay(runtime)
+onBeforeUnmount(stopKeeping)
 
 // Turned back on, the status is read at once, as a fresh start: what came meanwhile is not news.
 watch(() => settings.agentStatus, (on) => {

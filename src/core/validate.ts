@@ -68,10 +68,22 @@ function checkGroup(value: Obj, at: string, out: Problems): void {
   if (anchor !== undefined && !inRange) out.push(`${at}.anchor: out of range`)
 }
 
+const isOffset = (value: unknown) => isNum(value) && Math.abs(value) <= LIMITS.offset
+
+/** The element a region was drawn on, described as an element target is, and two bounded numbers. */
+function checkAnchor(value: unknown, at: string, out: Problems): void {
+  if (!isObj(value)) return void out.push(`${at}: element and offset expected`)
+  checkElement(value.element, `${at}.element`, out)
+  const { offset } = value
+  const fits = isObj(offset) && isOffset(offset.x) && isOffset(offset.y)
+  if (!fits) out.push(`${at}.offset: two bounded numbers expected`)
+}
+
 function checkRegion(value: Obj, at: string, out: Problems): void {
   checkRect(value.rect, `${at}.rect`, out)
   if (!oneOf(FRAMES, value.frame)) out.push(`${at}.frame: invalid`)
   if (!oneOf(BOUNDARIES, value.boundary)) out.push(`${at}.boundary: invalid`)
+  if (value.anchor !== undefined) checkAnchor(value.anchor, `${at}.anchor`, out)
 }
 
 /** A target: one element, a group of two or more, or a region. */

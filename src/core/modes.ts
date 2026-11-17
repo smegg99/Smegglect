@@ -16,13 +16,22 @@ export interface Held<H> {
   total: number
 }
 
+/**
+ * The element a region was drawn on, the deepest whose box held it all, and the region's top-left corner from
+ * that element's: the region goes where the element goes, scrolled in its box or moved as the page reflows.
+ */
+export interface Anchor<H> {
+  handle: H
+  offset: Point
+}
+
 /** H is the engine's opaque live-element handle; it never reaches persisted records. */
 export type Selection<H> =
   | { kind: 'none' }
   | { kind: 'dom', handle: H }
   | { kind: 'group', handles: H[], anchor?: number }
   /** `page`: where it was drawn (see pageKey in src/dom/pins.ts); it is drawn only there. */
-  | { kind: 'region', rect: Rect, page?: string, contents?: Held<H> }
+  | { kind: 'region', rect: Rect, page?: string, contents?: Held<H>, anchor?: Anchor<H> }
 
 /** Where to return after a reference or anchor choice finishes or is cancelled. */
 export type Resume = 'pass' | 'pick'
@@ -46,7 +55,7 @@ export type InspectEvent<H> =
   | { type: 'select-group', handles: H[] }
   | { type: 'drop', index: number }
   | { type: 'drag-start', point: Point }
-  | { type: 'drag-end', rect: Rect, page?: string, contents?: Held<H> }
+  | { type: 'drag-end', rect: Rect, page?: string, contents?: Held<H>, anchor?: Anchor<H> }
   | { type: 'need-reference', preset: string, params: Record<string, string> }
   | { type: 'need-anchor', preset: string, params: Record<string, string> }
   | { type: 'chosen' }
@@ -57,12 +66,14 @@ export function initial<H>(): InspectState<H> {
   return { mode: { kind: 'pass' }, selection: { kind: 'none' } }
 }
 
-function regionOf<H>(rect: Rect, page?: string, contents?: Held<H>): Selection<H> {
+function regionOf<H>(event: Extract<InspectEvent<H>, { type: 'drag-end' }>): Selection<H> {
+  const { rect, page, contents, anchor } = event
   return {
     kind: 'region',
     rect,
     ...(page === undefined ? {} : { page }),
     ...(contents === undefined ? {} : { contents }),
+    ...(anchor === undefined ? {} : { anchor }),
   }
 }
 
@@ -118,7 +129,7 @@ export function reduce<H>(state: InspectState<H>, event: InspectEvent<H>): Inspe
       return { mode: { kind: 'region', start: event.point }, selection }
     case 'drag-end':
       if (mode.kind !== 'region' || !mode.start) return state
-      return { mode: { kind: 'pass' }, selection: regionOf(event.rect, event.page, event.contents) }
+      return { mode: { kind: 'pass' }, selection: regionOf(event) }
     case 'need-reference':
       if (selection.kind === 'none' || selection.kind === 'region') return state
       if (mode.kind === 'reference' || mode.kind === 'anchor') return state

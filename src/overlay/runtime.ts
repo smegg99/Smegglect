@@ -13,6 +13,7 @@ import { ENGINE, INSTANCE, KIT, SAVE, SETTINGS, TRANSLATE, type SaveBundle, type
 import { say } from './exporting'
 import type { Translate } from './i18n'
 import type { DockSpot, PanelLayout } from './inspector'
+import type { Draft } from './keep'
 import { canPopOut, openPopout, type Popout } from './popout'
 import { STYLES } from './styles'
 
@@ -75,6 +76,8 @@ export interface Ui {
   hover: string | null
   /** Changes to the issue list so far: each lights the Issues tab and key once (see flash.ts). */
   flash: number
+  /** What the issue form holds, kept through a reload of the page (keep.ts). */
+  draft: Draft | null
 }
 
 export interface Runtime {
@@ -159,6 +162,7 @@ function initialUi(doc: Document): Ui {
     checking: null,
     pointed: null,
     flash: 0,
+    draft: null,
   }
 }
 

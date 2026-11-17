@@ -12,7 +12,7 @@ import { cancelCompose, onPick } from './compose'
 import { patch, type EngineBase, type EngineContext, type Services } from './context'
 import { escape } from './escape'
 import { sample, tracked } from './geometry'
-import { dispatch, onHover, setInspect, setMeasuring, syncHover } from './inspect'
+import { dispatch, onHover, refind, setInspect, setMeasuring, syncHover } from './inspect'
 import { redo, replaceDrafts, undo } from './issues'
 
 /** Overlay parts that shield the page: a click on them never picks. Duck-typed, for a pop-out's realm. */
@@ -34,7 +34,11 @@ export function createServices(base: EngineBase, context: () => EngineContext): 
     setDrafts: drafts => replaceDrafts(context(), drafts),
     onError,
   })
-  const tracker = createTracker(win, scope, () => tracked(base), () => sample(base))
+  // Before each sample, a selection whose elements the page replaced is moved onto their successors.
+  const tracker = createTracker(win, scope, () => tracked(base), () => {
+    if (refind(base)) tracker.sync()
+    sample(base)
+  })
   const hovered = (element: Element | null, point?: Point) => onHover(context(), element, point)
   const picker = createPicker(win, scope, {
     owned: options.owns,

@@ -4,7 +4,7 @@
 import { relate, shift, union } from '../core/geometry'
 import { createId } from '../core/ids'
 import type { ConstraintId, Issue, Rect, RegionContents, Scope, TargetEvidence, TargetRef } from '../core/model'
-import type { Held } from '../core/modes'
+import type { Anchor, Held } from '../core/modes'
 import type { PresetDef } from '../core/presets'
 import { LIMITS } from '../core/limits'
 import { conditions, evidenceOf, rectOf, transformed } from './capture'
@@ -15,7 +15,10 @@ import { windowOf } from './window'
 export type Operand =
   | { kind: 'dom', element: Element }
   | { kind: 'group', elements: Element[], anchor?: number }
-  | { kind: 'region', rect: Rect, frame: 'viewport' | 'document', contents?: Held<Element> }
+  | {
+    kind: 'region', rect: Rect, frame: 'viewport' | 'document'
+    contents?: Held<Element>, anchor?: Anchor<Element>
+  }
 
 interface IssueInput {
   doc: Document
@@ -47,7 +50,9 @@ export function refOf(op: Operand, attrs: readonly string[]): TargetRef {
       ? { kind: 'group', members }
       : { kind: 'group', members, anchor: op.anchor }
   }
-  return { kind: 'region', rect: op.rect, frame: op.frame, boundary: 'manual' }
+  const region = { kind: 'region' as const, rect: op.rect, frame: op.frame, boundary: 'manual' as const }
+  if (!op.anchor) return region
+  return { ...region, anchor: { element: describe(op.anchor.handle, attrs), offset: op.anchor.offset } }
 }
 
 /** Captured geometry and properties without source lookup; also what the issue form previews. */

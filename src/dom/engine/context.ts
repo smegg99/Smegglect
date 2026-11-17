@@ -15,6 +15,7 @@ import type { Session } from '../session'
 import type { SpaceHit } from '../spaces'
 import { createStore, type Store } from '../store'
 import type { HostWindow } from '../window'
+import type { KeptSelection } from './keep'
 import type { EngineOptions, EngineState, Geometry, LayerOrder, Notice } from './types'
 
 /** A preset waiting for the person to click its reference or anchor. */
@@ -57,6 +58,10 @@ export interface Live {
   draft: Draft | null
   noticeSeq: number
   destroyed: boolean
+  /** The selection described when it was made, to find it again when the page replaces its elements. */
+  kept: KeptSelection | null
+  /** The page's element count when that last failed: tried again only once the page has changed. */
+  refindAt: number | null
 }
 
 /** Everything the services read; they are made from it (wiring.ts). */
@@ -132,6 +137,8 @@ export function createBase(options: EngineOptions): EngineBase {
       draft: null,
       noticeSeq: 0,
       destroyed: false,
+      kept: null,
+      refindAt: null,
     },
   }
 }
