@@ -34,7 +34,10 @@ export interface Settings {
   agentStatus: boolean
   /** The toolbar and panel move, scale and open with transitions; off, they change at once. */
   motion: boolean
-  /** On the left and right edges too, the toolbar keeps its captions and so the size it has on the others. */
+  /**
+   * On the left and right edges too, the toolbar keeps its captions and so the size it has on the others,
+   * while one column holds them.
+   */
   steadySize: boolean
   /** Plates slide out of the pointer's way, like magnets of the same polarity; off, they stay put. */
   dodge: boolean

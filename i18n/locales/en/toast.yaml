@@ -9,9 +9,6 @@ removed:
 undone:
   value: "Undone"
   description: "Toast after undo"
-undo:
-  value: "Undo"
-  description: "Toast key that undoes the last change"
 redone:
   value: "Redone"
   description: "Toast after redo"

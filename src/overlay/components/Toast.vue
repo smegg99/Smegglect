@@ -1,15 +1,21 @@
 <!-- src/overlay/components/Toast.vue -->
 <template>
-  <!-- The live region stays mounted: one that appears together with its words is often not read out. -->
+  <!-- The live region stays mounted: one that appears together with its words is often not read out. A change
+       to the issue list is only said here; on screen the Issues tab and key light up instead (flash.ts). -->
   <div
     class="toast-live"
     role="status"
   >
+    <span
+      v-if="spoken"
+      :key="spoken.id"
+      class="spoken"
+    >{{ spoken.text }}</span>
     <div
       v-if="shown"
       ref="el"
       class="float toast"
-      :class="{ plain: !undoable && !action, 'in-panel': pos.width > 0 }"
+      :class="{ plain: !action, 'in-panel': pos.width > 0 }"
       :style="{
         left: `${pos.x}px`,
         top: `${pos.y}px`,
@@ -22,17 +28,9 @@
       @focusin="hold = true"
       @focusout="hold = false"
     >
-      <span :class="{ warn: ui.message?.id === shownMessage && ui.message?.warn }">{{ text }}</span>
+      <span :class="{ warn: ui.message?.warn }">{{ text }}</span>
       <button
-        v-if="undoable"
-        type="button"
-        class="key wide"
-        @click="undo"
-      >
-        <Icon name="undo" />{{ t('toast.undo') }}
-      </button>
-      <button
-        v-else-if="action"
+        v-if="action"
         type="button"
         class="key wide"
         @click="act"
@@ -45,45 +43,33 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import type { Notice } from '../../dom/engine/types'
 import { useRuntime, useSurface } from '../runtime'
 import Icon from './Icon.vue'
 
 const SHOW_MS = 5000
 
-const { engine, state, settings, ui, t, doc } = useRuntime()
+const { state, settings, ui, t, doc } = useRuntime()
 const surface = useSurface()
 const shown = ref(false)
 const hold = ref(false)
 let timer: number | undefined
 
 const notice = computed(() => state.value.notice)
-const value = computed(() => notice.value?.value)
-/** The newest of the two sources wins: an engine notice or an overlay message. */
-const shownMessage = ref<number | null>(null)
-/** Undo is offered only while it can still act: submission empties the queue and its history. */
-const undoable = computed(() => {
-  const latest = value.value
-  if (shownMessage.value !== null || !latest || !state.value.drafts.undo.length) return false
-  if (latest.kind === 'added') return state.value.drafts.issues.some(issue => issue.id === latest.issueId)
-  return latest.kind === 'removed'
-})
+/** What a change to the issue list said last, for screen readers; a new id reads it out again. */
+const spoken = ref<{ id: number, text: string } | null>(null)
 
-/** The key the shown message offers, e.g. Show on page; none for an engine notice. */
-const action = computed(() => {
-  const message = ui.message
-  return shownMessage.value !== null && message?.id === shownMessage.value ? message.action : undefined
-})
+/** The key the shown message offers, e.g. Show on page. */
+const action = computed(() => ui.message?.action)
+const text = computed(() => ui.message?.text ?? '')
 
-const text = computed(() => {
-  if (shownMessage.value !== null && ui.message?.id === shownMessage.value) return ui.message.text
-  const latest = value.value
-  if (!latest) return ''
-  if (latest.kind === 'added') return t('toast.added', { number: latest.seq })
-  if (latest.kind === 'removed') return t('toast.removed')
-  if (latest.kind === 'undone') return t('toast.undone')
-  if (latest.kind === 'redone') return t('toast.redone')
+function said(raised: Notice): string {
+  if (raised.kind === 'added') return t('toast.added', { number: raised.seq })
+  if (raised.kind === 'removed') return t('toast.removed')
+  if (raised.kind === 'undone') return t('toast.undone')
+  if (raised.kind === 'redone') return t('toast.redone')
   return ''
-})
+}
 
 const el = ref<HTMLElement | null>(null)
 /** Where the toast sits, and the width it may take there (none: its own maximum). */
@@ -150,23 +136,17 @@ function arm() {
 }
 
 watch(notice, (raised) => {
-  if (!raised || raised.value.kind === 'reference-invalid') return
-  shownMessage.value = null
-  if (!text.value) return
-  shown.value = true
-  arm()
+  const words = raised ? said(raised.value) : ''
+  if (!words) return
+  spoken.value = { id: (spoken.value?.id ?? 0) + 1, text: words }
+  ui.flash += 1
 })
 
 watch(() => ui.message, (message) => {
   if (!message) return
-  shownMessage.value = message.id
   shown.value = true
   arm()
 })
-
-function undo() {
-  engine.undo()
-}
 
 function act() {
   action.value?.run()

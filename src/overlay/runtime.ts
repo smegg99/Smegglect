@@ -73,6 +73,8 @@ export interface Ui {
   pointed: { issue: Issue, until: number } | null
   /** Issue under the pointer in the list or on the page. */
   hover: string | null
+  /** Changes to the issue list so far: each lights the Issues tab and key once (see flash.ts). */
+  flash: number
 }
 
 export interface Runtime {
@@ -156,6 +158,7 @@ function initialUi(doc: Document): Ui {
     agentStatus: null,
     checking: null,
     pointed: null,
+    flash: 0,
   }
 }
 

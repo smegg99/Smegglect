@@ -40,6 +40,7 @@
           :key="tool.id"
           :ref="tool.id === 'more' ? setMore : undefined"
           :data-tool="tool.id"
+          :class="tool.id === 'issues' ? flashClass(ui.flash) : undefined"
           :icon="tool.icon"
           :label="tool.label"
           :kbd="tool.kbd"
@@ -66,9 +67,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { unfold, type Spot, type Unfold } from '../button'
+import { lineLength, room, unfold, type Spot, type Unfold } from '../button'
 import { useButtonDrag } from '../button-drag'
 import { dockTools, openLabel as openText, type Tool, type ToolInput } from '../dock-tools'
+import { flashClass } from '../flash'
 import { useRuntime, useSurface } from '../runtime'
 import Key from './Key.vue'
 import MoreMenu from './MoreMenu.vue'
@@ -90,6 +92,20 @@ const { dragSpot, grab, swallowed } = useButtonDrag(settings, ui, () => {
 })
 const remembered = computed<Spot>(() => ({ placement: settings.placement, offset: settings.offset }))
 const spot = computed<Spot>(() => dragSpot.value ?? remembered.value)
+const toolInput = computed<ToolInput>(() => ({
+  engine,
+  state: state.value,
+  ui,
+  t,
+  inWindow: inWindow.value,
+  menuOpen: menu.value,
+  putBack,
+  toggleIssues,
+  toggleSettings,
+  toggleMenu: () => (menu.value = !menu.value),
+}))
+/** The button and the tools of the open toolbar, as many on every edge. */
+const keyCount = computed(() => dockTools(toolInput.value, false).flat().length + 1)
 /**
  * Captions need room; without it the keys fall back to icons with tooltips. A toolbar on a side edge has
  * none: captions differ in width, and the button would be narrower than its column. Set before the toolbar
@@ -98,9 +114,13 @@ const spot = computed<Spot>(() => dragSpot.value ?? remembered.value)
 const captions = computed(() => {
   if (!settings.labels) return false
   if (inWindow.value) return surface.viewport.width >= 380
-  // On a side edge captions differ in width; kept there only when the person asks for one size everywhere.
-  const along = spot.value.placement === 'top' || spot.value.placement === 'bottom'
-  return (along || settings.steadySize) && ui.viewport.width >= 640
+  if (ui.viewport.width < 640) return false
+  if (spot.value.placement === 'top' || spot.value.placement === 'bottom') return true
+  // On a side edge only when the person asks for one size everywhere, and only while one column holds every
+  // key: wrapped, the captioned columns differ in width and leave a few keys stranded in the next.
+  if (!settings.steadySize) return false
+  const row = (settings.large ? 36 : 32) + 8
+  return lineLength(keyCount.value, row) <= room(spot.value, ui.viewport, row + 8)
 })
 /**
  * The row (a key, 8 px taller with captions) plus 3 px padding and a 1 px frame on each side, as
@@ -114,18 +134,6 @@ const lay = computed<Unfold>(() => {
 /** On the page the tools show while expanded, unless they are in the pop-out; a drag carries them along. */
 const tools = computed(() => inWindow.value || (state.value.expanded && !popout.value))
 
-const toolInput = computed<ToolInput>(() => ({
-  engine,
-  state: state.value,
-  ui,
-  t,
-  inWindow: inWindow.value,
-  menuOpen: menu.value,
-  putBack,
-  toggleIssues,
-  toggleSettings,
-  toggleMenu: () => (menu.value = !menu.value),
-}))
 const groups = computed<Tool[][]>(() => dockTools(toolInput.value, lay.value.reversed))
 const openLabel = computed(() => openText(toolInput.value))
 
@@ -239,10 +247,17 @@ const wrapped = ref(false)
 function checkWrap() {
   const element = bar.value
   if (!element || !tools.value) return
-  const vertical = lay.value.vertical
-  const keyCross = Math.max(0, ...keys().map(key => (vertical ? key.offsetWidth : key.offsetHeight)))
+  // A side toolbar is told, not measured: Firefox does not widen a wrapping column, so its last keys spill
+  // out of the frame instead of starting a column the measure below would see. Each rule takes 9 px.
+  if (lay.value.vertical && !inWindow.value) {
+    const rules = groups.value.filter((group, index) => ruleBefore(index, group)).length
+    const length = lineLength(keyCount.value, size.value - 8) + 9 * rules
+    wrapped.value = length > room(spot.value, ui.viewport, size.value)
+    return
+  }
+  const keyCross = Math.max(0, ...keys().map(key => key.offsetHeight))
   // The client box holds 3 px of padding on each side.
-  wrapped.value = (vertical ? element.clientWidth : element.clientHeight) - 6 > keyCross + 1
+  wrapped.value = element.clientHeight - 6 > keyCross + 1
 }
 
 // Only an open toolbar changes size by itself (captions, wrapping); the lone button costs nothing while
@@ -267,7 +282,8 @@ onMounted(async () => {
 // Its room changes with every step of a drag, so whether it wraps and where it is are read again each time.
 watch(
   () => [
-    spot.value, tools.value, settings.large, settings.labels, settings.locale, groups.value.flat().length,
+    spot.value, tools.value, settings.large, settings.labels, settings.steadySize, settings.locale,
+    groups.value.flat().length,
     ui.viewport, surface.viewport.width, surface.viewport.height,
   ],
   () => {

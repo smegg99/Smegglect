@@ -56,6 +56,23 @@ export interface Unfold {
   reversed: boolean
 }
 
+/** The length along the edge the toolbar has from the button's far side, toward the side with more room. */
+export function room(spot: Spot, viewport: Size, size: number): number {
+  const centre = buttonCentre(spot, viewport, size)
+  const half = size / 2
+  const vertical = spot.placement === 'left' || spot.placement === 'right'
+  const [at, length] = vertical ? [centre.y, viewport.height] : [centre.x, viewport.width]
+  return (at > length / 2 ? at + half : length - at + half) - BUTTON_EDGE
+}
+
+/**
+ * The shortest a line of `keys` keys of height `row` can be, as surfaces.css draws it: 3 px padding and
+ * a 1 px frame at each end and a 2 px gap between keys. The rules a wrapped toolbar drops are left out.
+ */
+export function lineLength(keys: number, row: number): number {
+  return 8 + keys * row + 2 * (keys - 1)
+}
+
 /**
  * The toolbar grows from the button toward the side with more room
  * and wraps away from the edge when it runs out.
@@ -67,20 +84,17 @@ export function unfold(spot: Spot, viewport: Size, size: number): Unfold {
   const px = (value: number) => `${Math.round(value)}px`
   const vertical = spot.placement === 'left' || spot.placement === 'right'
   const style: Record<string, string> = {}
-  let reversed: boolean
+  const reversed = vertical ? centre.y > height / 2 : centre.x > width / 2
   if (vertical) {
-    reversed = centre.y > height / 2
     if (reversed) style.bottom = px(height - centre.y - half)
     else style.top = px(centre.y - half)
-    style.maxHeight = px((reversed ? centre.y + half : height - centre.y + half) - BUTTON_EDGE)
-    style[spot.placement] = px(BUTTON_EDGE)
+    style.maxHeight = px(room(spot, viewport, size))
   }
   else {
-    reversed = centre.x > width / 2
     if (reversed) style.right = px(width - centre.x - half)
     else style.left = px(centre.x - half)
-    style.maxWidth = px((reversed ? centre.x + half : width - centre.x + half) - BUTTON_EDGE)
-    style[spot.placement] = px(BUTTON_EDGE)
+    style.maxWidth = px(room(spot, viewport, size))
   }
+  style[spot.placement] = px(BUTTON_EDGE)
   return { style, vertical, reversed }
 }

@@ -39,7 +39,7 @@ large:
   description: "Settings switch"
 steadySize:
   value: "Ten sam rozmiar przy bocznych krawędziach"
-  description: "Settings switch: the toolbar keeps its captions and size on the left and right edges"
+  description: "Settings switch: the toolbar keeps its captions and size on the left and right edges, while one column holds them"
 page:
   value: "Na stronie"
   description: "Settings section: what the overlay draws on the page"

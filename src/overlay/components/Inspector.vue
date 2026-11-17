@@ -61,7 +61,7 @@
           :key="tab.id"
           type="button"
           role="tab"
-          :class="{ pinned: tab.pinned }"
+          :class="[{ pinned: tab.pinned }, tab.id === 'issues' ? flashClass(ui.flash) : undefined]"
           :data-tab="tab.id"
           :aria-controls="current === tab.id ? 'sg-tabpanel' : undefined"
           :aria-selected="current === tab.id"
@@ -109,6 +109,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
+import { flashClass } from '../flash'
 import { panelLayout } from '../inspector'
 import { presetLabel } from '../labels'
 import { hideTip, showTip } from '../tip'
