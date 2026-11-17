@@ -22,6 +22,9 @@ equalGaps:
 clipped:
   value: "Text clipped"
   description: "Preset name"
+unnecessaryEllipsis:
+  value: "Unnecessary ellipsis"
+  description: "Preset name"
 overlap:
   value: "Overlaps another"
   description: "Preset name"

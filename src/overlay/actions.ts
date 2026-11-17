@@ -34,7 +34,7 @@ export interface TileGroup {
 /** Each built-in preset belongs to exactly one group, so no action appears twice. */
 const GROUPS: readonly [GroupId, readonly string[]][] = [
   ['size', ['size', 'spacing', 'edge-room', 'touch-target', 'off-scale']],
-  ['fit', ['clipped', 'overflow', 'scrollbar-covers', 'overlap', 'text-wrap']],
+  ['fit', ['clipped', 'unnecessary-ellipsis', 'overflow', 'scrollbar-covers', 'overlap', 'text-wrap']],
   ['align', ['group-align', 'equal-gaps', 'align', 'center', 'placement', 'match-height', 'match-width']],
   ['look', [
     'readability', 'text-wrong', 'wrong-color', 'icon', 'shape', 'control', 'design-system', 'like-app',

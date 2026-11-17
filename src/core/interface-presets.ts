@@ -19,6 +19,17 @@ export const INTERFACE: readonly PresetDef[] = [
     note: 'optional',
   },
   {
+    id: 'unnecessary-ellipsis',
+    version: 1,
+    category: 'content',
+    icon: 'ellipsis',
+    applies: ['dom', 'group', 'region'],
+    operands: 'single',
+    compare: ['width', 'max-width', 'scroll-width', 'client-width', 'white-space', 'text-overflow'],
+    evidence: ['box', 'overflow', 'type', 'parent'],
+    note: 'optional',
+  },
+  {
     id: 'scrollbar-covers',
     version: 1,
     category: 'layout',

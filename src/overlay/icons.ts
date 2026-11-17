@@ -221,6 +221,7 @@ export const ICONS = {
   matchWidth: mdiArrowExpandHorizontal,
   equalGaps: mdiDistributeHorizontalCenter,
   clipped: mdiFormatTextWrappingClip,
+  ellipsis: mdiDotsHorizontal,
   overlap: mdiVectorIntersection,
   readability: mdiFormatSize,
   inconsistent: mdiPaletteSwatchOutline,

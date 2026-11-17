@@ -44,6 +44,11 @@ clipped:
   description: "Issue description"
   placeholders:
     a: {type: string}
+unnecessaryEllipsis:
+  value: "Text in {a} ends in an ellipsis though there is room"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
 overlap:
   value: "{a} overlaps {b}"
   description: "Issue description"

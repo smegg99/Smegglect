@@ -62,6 +62,9 @@ const INTERFACE_UNSPECIFIED_JUMPS = 'Reported: A moves the app or the page when 
 export const INTERFACE_SENTENCES: Record<string, Sentence> = {
   'edge-room': 'Reported: the content of A sits too close to its edges. Give A more inner padding from the'
     + ' spacing scale, the same on every side unless the note says otherwise.',
+  'unnecessary-ellipsis': 'Reported: text in A ends in an ellipsis although there is room to show it in full.'
+    + ' Find what limits it (a fixed or maximum width, nowrap, hidden overflow) and let it show in full;'
+    + ' keep an ellipsis only where the space really runs out.',
   'scrollbar-covers': 'Reported: a scrollbar covers part of A. Keep the scrollbar\'s strip clear of content;'
     + ' overlay scrollbars, as in WebKitGTK and macOS, ignore scrollbar-gutter.',
   'placement': ({ params }) => 'Reported: A is in the wrong place; it belongs'

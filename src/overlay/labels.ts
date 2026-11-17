@@ -36,7 +36,8 @@ export function issueTitle(issue: Issue, registry: PresetRegistry, t: Translate)
 const DESCRIBE: Record<string, string> = {
   'size': 'issue.size', 'spacing': 'issue.spacing', 'align': 'issue.align', 'group-align': 'issue.groupAlign',
   'match-height': 'issue.matchHeight', 'match-width': 'issue.matchWidth', 'equal-gaps': 'issue.equalGaps',
-  'clipped': 'issue.clipped', 'overlap': 'issue.overlap', 'readability': 'issue.readability',
+  'clipped': 'issue.clipped', 'unnecessary-ellipsis': 'issue.unnecessaryEllipsis',
+  'overlap': 'issue.overlap', 'readability': 'issue.readability',
   'inconsistent': 'issue.inconsistent', 'feedback': 'issue.feedback',
   'layout': 'issue.layout', 'note': 'issue.note',
   'off-scale': 'issue.offScale', 'touch-target': 'issue.touchTarget',

@@ -44,6 +44,11 @@ clipped:
   description: "Issue description"
   placeholders:
     a: {type: string}
+unnecessaryEllipsis:
+  value: "Tekst w {a} kończy się wielokropkiem, choć jest na niego miejsce"
+  description: "Issue description"
+  placeholders:
+    a: {type: string}
 overlap:
   value: "{a} nachodzi na {b}"
   description: "Issue description"
