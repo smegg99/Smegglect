@@ -1,6 +1,6 @@
 {
   "name": "smegglect",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Point at what is wrong in your running UI and hand it to Claude Code: a development-only overlay for web and Wails apps.",
   "keywords": [
