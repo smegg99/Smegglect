@@ -99,6 +99,7 @@
   <div
     v-if="geo.region && ui.regionMode"
     class="measure-label region-mode"
+    :class="ui.regionMode"
     :style="cornerLabel(geo.region)"
   >
     {{ t(ui.regionMode === 'inside' ? 'inspector.regionInside' : 'inspector.regionTouching') }}

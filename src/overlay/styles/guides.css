@@ -22,8 +22,10 @@
 .guides .member { stroke: var(--sg-select); stroke-width: 1; }
 .guides .member-on { stroke-width: 2.5; }
 .guides .region { stroke: var(--sg-select); stroke-dasharray: 6 3; }
-/* As in CAD: a region that lists the elements fully inside is solid; one that lists what it touches stays dashed. */
+/* As in CAD: a region that lists the elements fully inside is solid; one that lists what it touches stays dashed,
+   in the accent's opposite colour, so the direction shows at a glance. */
 .guides .region.inside { stroke-dasharray: none; }
+.guides .region.touching { stroke: var(--sg-select-opposite); }
 /* The target the agent is checking: two beats in the selection colour, then a steady outline until it goes. */
 .guides .pulse { stroke: var(--sg-select); stroke-width: 2; animation: sg-pulse 0.6s ease-in-out 2; }
 @keyframes sg-pulse {
@@ -54,6 +56,8 @@
 .measure-label.dist { border-color: var(--sg-ref); color: var(--sg-ink); }
 .measure-label.hover { border-color: var(--sg-ref); }
 .measure-label.over { border-color: var(--sg-warn); }
+.measure-label.region-mode.inside { border-color: var(--sg-select); }
+.measure-label.region-mode.touching { border-color: var(--sg-select-opposite); }
 
 .letter {
   position: fixed;

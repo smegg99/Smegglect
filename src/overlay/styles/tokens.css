@@ -23,6 +23,8 @@
   --sg-select: rgb(var(--v-theme-accent, 232, 93, 81));
   --sg-on-select: rgb(var(--v-theme-on-accent, 20, 18, 24));
   --sg-ref: #6da8f7;
+  /* The accent's opposite hue, for a region dragged leftwards; the reference blue where colours cannot turn. */
+  --sg-select-opposite: var(--sg-ref);
   --sg-focus: var(--sg-select);
   --sg-warn: rgb(var(--v-theme-warning, 216, 154, 67));
   --sg-ok: rgb(var(--v-theme-success, 89, 184, 120));
@@ -78,9 +80,14 @@
   .sg { --sg-motion: 0ms; }
 }
 
+@supports (color: hsl(from red h s l)) {
+  .sg { --sg-select-opposite: hsl(from var(--sg-select) calc(h + 180) s l); }
+}
+
 @media (forced-colors: active) {
   .sg {
     --sg-select: Highlight;
+    --sg-select-opposite: LinkText;
     --sg-on-select: HighlightText;
     --sg-ref: LinkText;
     --sg-focus: Highlight;
