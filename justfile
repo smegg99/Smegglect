@@ -114,10 +114,13 @@ check-version:
 # Run every repository check.
 check: check-version i18n-check lint typecheck test bridge-test e2e fixtures-test release-check wails-bindings-check wails-test wails-release-check
 
-# Publish VERSION to npm. npm rebuilds dist, then asks you to confirm with your npm passkey.
+# Publish VERSION to npm with an npm token, asked for and not shown; npm rebuilds dist first.
 publish: check-version
-    test -z "$(git status --porcelain)" || (echo "Commit your changes first." && exit 1)
-    npm publish
+    #!/usr/bin/env bash
+    set -euo pipefail
+    test -z "$(git status --porcelain)" || { echo "Commit your changes first."; exit 1; }
+    read -rsp "npm token: " token; echo
+    npm publish --//registry.npmjs.org/:_authToken="$token"
 
 # Run every check, then pack smegglect-VERSION.tgz and SHA256SUMS into release/VERSION.
 release: check
